@@ -7,23 +7,52 @@
     {% if site_desc and site_desc != "" %}
     <meta name="description" content="{{ site_desc | escape }}">
     {% endif %}
-    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+    <meta name="generator" content="dove">
+    <meta name="robots" content="{{ meta_robots | default(value="index,follow") }}">
+    {% if canonical_url %}<link rel="canonical" href="{{ canonical_url }}">{% endif %}
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{ site_title | escape }}">
+    {% if site_desc and site_desc != "" %}<meta property="og:description" content="{{ site_desc | escape }}">{% endif %}
+    {% if canonical_url %}<meta property="og:url" content="{{ canonical_url }}">{% endif %}
+    <meta property="og:site_name" content="{{ site_title | escape }}">
+    <link rel="icon" href="assets/favicon-f.svg" type="image/svg+xml">
     <link rel="stylesheet" href="assets/styles.css">
+    <meta name="theme-color" content="#f45d22">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": {{ site_title | json_encode | safe }},
+      {% if canonical_url %}
+      "url": {{ canonical_url | json_encode | safe }},
+      {% endif %}
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
   </head>
   <body class="theme-{{ color_scheme }}">
-    <header class="site-header">
-      <div>
-        <h1 class="site-title">{{ site_title | escape }}</h1>
-        {% if site_desc and site_desc != "" %}
-        <p class="site-desc">{{ site_desc | escape }}</p>
-        {% endif %}
-      </div>
-      <div class="actions">
-        <input id="q" class="search" type="search" placeholder="搜索站点..." aria-label="搜索">
-        {% if has_intranet %}
-        <a class="btn" id="toggleNet" href="{{ network_switch_href }}" title="切换内/外网">{{ mode_other_label }}</a>
-        {% endif %}
-        <button id="toggleTheme" class="btn" title="切换主题">🌓</button>
+    <header class="hero">
+      <div class="hero-inner">
+        <div class="brand">
+          <img class="brand-logo" src="assets/favicon.svg" alt="logo">
+          <div class="brand-meta">
+            <h1 class="site-title">{{ site_title | escape }}</h1>
+            {% if site_desc and site_desc != "" %}
+            <p class="site-desc">{{ site_desc | escape }}</p>
+            {% endif %}
+          </div>
+        </div>
+        <div class="actions">
+          <input id="q" class="search" type="search" placeholder="搜索站点、域名、描述..." aria-label="搜索">
+          {% if has_intranet %}
+          <a class="btn ghost" id="toggleNet" href="{{ network_switch_href }}" title="切换内/外网">{{ mode_other_label }}</a>
+          {% endif %}
+          <button id="toggleTheme" class="btn ghost" title="切换主题">🌓</button>
+        </div>
       </div>
     </header>
 
@@ -44,7 +73,7 @@
             <div class="desc">{{ l.desc | escape }}</div>
             {% endif %}
             {% if l.host and l.host != "" %}
-            <div class="meta">{{ l.host | escape }}</div>
+            <div class="meta"><span class="chip">{{ l.host | escape }}</span></div>
             {% endif %}
           </a>
           {% endfor %}
@@ -53,7 +82,7 @@
       {% endfor %}
     </main>
 
-    <footer class="site-footer">Made with ❤ by dove</footer>
+    <footer class="site-footer">Made with ❤ by dove · <a href="sitemap.xml">Sitemap</a> · <a href="robots.txt">Robots</a></footer>
     <script src="assets/app.js"></script>
   </body>
 </html>

@@ -11,16 +11,21 @@
     <link rel="stylesheet" href="../../assets/styles.css">
   </head>
   <body class="theme-{{ color_scheme }}">
-    <header class="site-header">
-      <div>
-        <h1 class="site-title">{{ site_title | escape }}</h1>
-        {% if site_desc and site_desc != "" %}
-        <p class="site-desc">{{ site_desc | escape }}</p>
-        {% endif %}
-      </div>
-      <div class="actions">
-        <a class="btn" href="../../index.html">返回首页</a>
-        <button id="toggleTheme" class="btn" title="切换主题">🌓</button>
+    <header class="hero">
+      <div class="hero-inner">
+        <div class="brand">
+          <img class="brand-logo" src="../../assets/favicon.svg" alt="logo">
+          <div class="brand-meta">
+            <h1 class="site-title">{{ site_title | escape }}</h1>
+            {% if site_desc and site_desc != "" %}
+            <p class="site-desc">{{ site_desc | escape }}</p>
+            {% endif %}
+          </div>
+        </div>
+        <div class="actions">
+          <a class="btn ghost" href="../../index.html">返回首页</a>
+          <button id="toggleTheme" class="btn ghost" title="切换主题">🌓</button>
+        </div>
       </div>
     </header>
 
@@ -37,50 +42,82 @@
           <div class="meta">
             <span class="badge risk-{{ risk_class }}">风险等级：{{ risk_label }}</span>
           </div>
-          {% if link_desc and link_desc != "" %}
-          <div class="desc">{{ link_desc | escape }}</div>
+          {% if link_details_html %}
+          <div class="desc">{{ link_details_html | safe }}</div>
+          {% elif link_intro and link_intro != "" %}
+          <div class="desc">{{ link_intro | escape }}</div>
           {% endif %}
           {% if link_host and link_host != "" %}
           <div class="meta">目标域名：{{ link_host | escape }}</div>
           {% endif %}
           <div class="meta">目标地址：<code>{{ link_url | escape }}</code></div>
-          {% if has_delay %}
-          <div class="meta">本页将在 <strong id="cd">{{ delay_seconds }}</strong> 秒后自动跳转。</div>
-          {% endif %}
+          <div class="meta" id="cdWrap" style="display:none;">将于 <strong id="cd">{{ delay_seconds }}</strong> 秒后跳转……</div>
           <div style="margin-top:12px; display:flex; gap:8px;">
-            <a class="btn" id="proceed" target="_blank" rel="noopener noreferrer" href="{{ link_url | escape }}">继续前往</a>
+            <a class="btn" id="proceed" target="_self" rel="noopener noreferrer" href="{{ link_url | escape }}">继续前往</a>
             <a class="btn" href="../../index.html">返回</a>
-            {% if has_delay %}
-            <button class="btn" id="cancelAuto">取消自动跳转</button>
-            {% endif %}
+            {% if has_delay %}<button class="btn" id="cancelAuto" style="display:none;">取消</button>{% endif %}
+          </div>
+        </div>
+      </section>
+
+      <section class="group">
+        <h2 class="group-title">风险提示</h2>
+        <div class="card">
+          <div class="desc">
+            <ul>
+              <li>确认目标域名是否正确：<code>{{ link_host | escape }}</code></li>
+              <li>优先访问 HTTPS（地址栏应显示锁形标识）。</li>
+              <li>谨慎输入账号、密码、验证码等敏感信息。</li>
+              <li>如来自不明来源，请勿下载或运行可执行文件。</li>
+            </ul>
           </div>
         </div>
       </section>
     </main>
 
     <script src="../../assets/app.js"></script>
-    {% if has_delay %}
     <script>
       (function(){
-        var remain = {{ delay_seconds }};
+        var hasDelay = {{ has_delay | json_encode | safe }};
+        var delay = {{ delay_seconds | json_encode | safe }} || 0;
+        var url = {{ link_url | json_encode | safe }};
+        var proceed = document.getElementById('proceed');
+        var cdWrap = document.getElementById('cdWrap');
         var cd = document.getElementById('cd');
-        var canceled = false;
-        var timer = setInterval(function(){
-          if (canceled) { clearInterval(timer); return; }
-          remain -= 1;
-          if (cd) cd.textContent = String(remain);
-          if (remain <= 0) {
-            clearInterval(timer);
-            window.location.href = {{ link_url | json_encode | safe }};
-          }
-        }, 1000);
         var cancelBtn = document.getElementById('cancelAuto');
-        cancelBtn && cancelBtn.addEventListener('click', function(){
-          canceled = true;
-          if (cd) cd.textContent = '已取消';
-        });
+        var timer = null, remain = delay;
+
+        if (proceed) {
+          proceed.addEventListener('click', function(ev){
+            if (!hasDelay || delay <= 0) { return; } // 直接让浏览器按默认跳转
+            ev.preventDefault();
+            // 显示倒计时并启动
+            cdWrap && (cdWrap.style.display = 'block');
+            cancelBtn && (cancelBtn.style.display = 'inline-block');
+            proceed.setAttribute('disabled', 'true');
+            proceed.textContent = '准备跳转…';
+            remain = delay;
+            if (cd) cd.textContent = String(remain);
+            timer = setInterval(function(){
+              remain -= 1;
+              if (cd) cd.textContent = String(remain);
+              if (remain <= 0) {
+                clearInterval(timer); timer=null;
+                window.location.href = url;
+              }
+            }, 1000);
+          });
+        }
+        if (cancelBtn) {
+          cancelBtn.addEventListener('click', function(){
+            if (timer) { clearInterval(timer); timer=null; }
+            proceed.removeAttribute('disabled');
+            proceed.textContent = '继续前往';
+            cdWrap && (cdWrap.style.display = 'none');
+            cancelBtn.style.display = 'none';
+          });
+        }
       })();
     </script>
-    {% endif %}
   </body>
 </html>

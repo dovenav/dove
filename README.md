@@ -60,10 +60,19 @@ groups:
 - `site.base_path` 可选：将站点输出到 `dist/<base_path>/`，部署后访问路径形如 `https://domain/<base_path>/index.html`。
 - `icon` 可为相对路径或外链 URL。若不设置，也可不显示图标。
 - `links[].intranet` 可选，配置后会在“内网版页面”使用该地址；未配置时会回退到外网地址。
+- `links[].slug` 可选：显式指定外网中间页路径 `go/<slug>/` 的目录名；若未指定，则：
+  - 默认用 `name` 生成 slug；
+  - 当同名重复时，重复项将改用 `name+host` 组合生成 slug；
+  - 若仍冲突，会在末尾追加 `-2`、`-3` 等序号确保唯一。
 - `site.redirect` 跳转页设置（仅外网模式生成）：
   - `delay_seconds` 自动跳转倒计时；为 0 或缺省时不自动跳转。
   - `default_risk` 默认风险等级（low|medium|high）。
   - `utm` 站点级 UTM 参数（source/medium/campaign/term/content）。
+- `site.sitemap` 站点地图默认设置：
+  - `default_changefreq` 默认变更频率：`always|hourly|daily|weekly|monthly|yearly|never`
+  - `default_priority` 默认优先级：`0.0 - 1.0`
+  - `lastmod` 站点级最近更新时间（不设置则用构建时间）
+- `links[].lastmod`、`links[].changefreq`、`links[].priority`：覆盖单个链接的站点地图字段。
 - `links[].risk` 可选：覆盖默认风险等级。
 - `links[].utm` 可选：覆盖站点级 UTM 参数。
 
@@ -86,6 +95,8 @@ groups:
 - `index.html` 外网版导航（若设置 `base_path`，在 `dist/<base_path>/index.html`）
 - `intranet.html` 内网版导航（同上；若 `--no-intranet` 则不生成且页面不显示切换按钮）
 - `go/<slug>/index.html` 每个链接的详情/跳转提示页（仅外网版生成；导航页会将链接指向这些中间页）
+- `sitemap.xml` 站点地图：包含 `index.html` 与所有外网详情页（带 `lastmod`、`changefreq`、`priority`）。
+- `robots.txt` 基础抓取策略（默认 Allow: /）。
 
 ## 高级用法
 

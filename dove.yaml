@@ -14,6 +14,12 @@ site:
   # 站点根路径（相对子路径）。默认留空，输出到 dist/ 根目录
   base_path: ""
 
+  # 站点地图默认设置
+  sitemap:
+    default_changefreq: weekly   # 默认变更频率：always/hourly/daily/weekly/monthly/yearly/never
+    default_priority: 0.5        # 默认优先级（0.0 - 1.0）
+    # lastmod: 2025-09-09        # 可选：站点级最后修改时间（不设置则用构建时间）
+
   # 跳转页设置（仅外网链接生效）
   redirect:
     delay_seconds: 3            # 自动跳转倒计时（秒）；0 表示不自动跳转
@@ -30,7 +36,10 @@ groups:
     links:
       - name: Google
         url: https://www.google.com      # 外网地址（必填）
-        desc: 搜索引擎                   # 描述（可选）
+        intro: 搜索引擎                   # 简介（用于列表页；兼容旧字段 desc）
+        details: |                       # 详情（用于详情页，可写富文本；未填则回退到简介）
+          <p>Google 是一个<strong>搜索引擎</strong>。</p>
+        slug: google                      # 可选：显式指定 slug，用于 go/<slug>/ 目录名
         icon: assets/favicon.svg         # 图标（可选：相对路径或外链）
         intranet: http://google.corp     # 内网地址（可选；内网页未配置则回退 url）
         risk: medium                     # 可选：风险等级（low|medium|high）
@@ -38,6 +47,10 @@ groups:
           source: nav
           medium: card
           campaign: homepage
+        # 覆盖站点地图设置（可选）
+        lastmod: 2025-09-09
+        changefreq: monthly
+        priority: 0.6
       - name: GitHub
         url: https://github.com
         desc: 代码托管
@@ -48,8 +61,13 @@ groups:
     links:
       - name: Rust Docs
         url: https://doc.rust-lang.org
-        desc: Rust 官方文档
+        intro: Rust 官方文档
       - name: crates.io
         url: https://crates.io
-        desc: Rust 包仓库
+        intro: Rust 包仓库
         intranet: http://crates.corp
+
+      # 仅内网的链接（外网页不会显示，仅在内网页可见）
+      - name: 内部系统
+        intranet: http://intranet.corp
+        intro: 公司内部系统

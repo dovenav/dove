@@ -11,7 +11,7 @@ use tera::{Context as TContext, Tera};
 use include_dir::{include_dir, Dir};
 #[cfg(feature = "remote")]
 use ureq::Response;
-use std::collections::HashSet;
+use std::collections::{HashSet, HashMap};
 use url::Url;
 
 // 内置示例（用于 init）
@@ -116,6 +116,15 @@ struct Site {
     /// 跳转页设置（延迟倒计时、UTM 参数、默认风险等级）
     #[serde(default)]
     redirect: Option<RedirectSettings>,
+    /// 可选：站点基础 URL（包含协议与域名，末尾可不带 `/`），用于 canonical、sitemap、OG。
+    #[serde(default)]
+    base_url: Option<String>,
+    /// 可选：用于社交分享的图片地址（相对或绝对）。缺省使用 `assets/favicon.svg`。
+    #[serde(default)]
+    og_image: Option<String>,
+    /// 站点地图默认设置
+    #[serde(default)]
+    sitemap: Option<SitemapSettings>,
 }
 
 #[derive(Debug, Deserialize, Clone, Copy)]
@@ -138,9 +147,17 @@ struct Group {
 #[derive(Debug, Deserialize)]
 struct Link {
     name: String,
-    url: String,
     #[serde(default)]
-    desc: String,
+    url: Option<String>,
+    /// 简介（用于列表页显示）。兼容旧字段名 `desc`。
+    #[serde(default, alias = "desc")]
+    intro: String,
+    /// 详情（用于详情页，可写富文本 HTML）。未填写时默认回退为简介。
+    #[serde(default)]
+    details: Option<String>,
+    /// 可选：显式指定 slug（将用于外网详情页路径 go/<slug>/）
+    #[serde(default)]
+    slug: Option<String>,
     /// 可选：图标 URL（相对/绝对）
     #[serde(default)]
     icon: Option<String>,
@@ -153,6 +170,15 @@ struct Link {
     /// 可选：UTM 参数（若设置，将覆盖 site.redirect.utm；只对外网跳转页生效）
     #[serde(default)]
     utm: Option<UtmParams>,
+    /// 站点地图：最近修改时间（ISO 8601/RFC3339 或 YYYY-MM-DD）
+    #[serde(default)]
+    lastmod: Option<String>,
+    /// 站点地图：变更频率（always/hourly/daily/weekly/monthly/yearly/never）
+    #[serde(default)]
+    changefreq: Option<ChangeFreq>,
+    /// 站点地图：优先级（0.0 - 1.0）
+    #[serde(default)]
+    priority: Option<f32>,
 }
 
 #[derive(Debug, Deserialize, Clone, Copy)]
@@ -179,6 +205,20 @@ struct UtmParams {
     #[serde(default)] campaign: Option<String>,
     #[serde(default)] term: Option<String>,
     #[serde(default)] content: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Clone, Copy)]
+#[serde(rename_all = "lowercase")]
+enum ChangeFreq { Always, Hourly, Daily, Weekly, Monthly, Yearly, Never }
+
+#[derive(Debug, Deserialize, Clone, Default)]
+struct SitemapSettings {
+    #[serde(default)]
+    default_changefreq: Option<ChangeFreq>,
+    #[serde(default)]
+    default_priority: Option<f32>,
+    #[serde(default)]
+    lastmod: Option<String>,
 }
 
 fn main() -> Result<()> {
@@ -503,7 +543,7 @@ fn build(
     }
 
     // 渲染 HTML via Tera 到 site_dir
-    render_with_theme(
+    let externals = render_with_theme(
         &config,
         &theme_dir,
         &site_dir,
@@ -512,6 +552,11 @@ fn build(
         title_override,
         desc_override,
     )?;
+
+    // 生成 robots.txt 与 sitemap.xml（若提供 base_url 则写绝对 URL）
+    write_robots(&site_dir)?;
+    let build_time = chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
+    write_sitemap(&site_dir, &config.site, base_path_effective.as_deref(), &externals, &build_time)?;
 
     println!("✅ 生成完成 -> {}", site_dir.display());
     Ok(())
@@ -627,7 +672,7 @@ fn render_with_theme(
     color_scheme_override: Option<ColorScheme>,
     title_override: Option<String>,
     desc_override: Option<String>,
-) -> Result<()> {
+) -> Result<Vec<LinkDetail>> {
     // 匹配主题模板目录
     let pattern = theme_dir.join("templates").join("**/*");
     let pattern_str = pattern.to_string_lossy().to_string();
@@ -644,14 +689,14 @@ fn render_with_theme(
     if generate_intranet {
         let _internals = render_one(&tera, cfg, out_dir, NetMode::Intranet, generate_intranet, color_scheme_override, title_ref, desc_ref)?;
     }
-    Ok(())
+    Ok(externals)
 }
 
 #[derive(Clone, Copy)]
 enum NetMode { External, Intranet }
 
 #[derive(Clone)]
-struct LinkDetail { slug: String, name: String, desc: String, icon: Option<String>, host: String, final_url: String, risk: Option<RiskLevel>, delay_seconds: u32, utm: Option<UtmParams> }
+struct LinkDetail { slug: String, name: String, intro: String, details: Option<String>, icon: Option<String>, host: String, final_url: String, risk: Option<RiskLevel>, delay_seconds: u32, utm: Option<UtmParams>, s_lastmod: Option<String>, s_changefreq: Option<ChangeFreq>, s_priority: Option<f32> }
 
 fn render_one(
     tera: &Tera,
@@ -680,14 +725,19 @@ fn render_one(
     ctx.insert("mode_other_label", &other_label);
     ctx.insert("network_switch_href", &switch_href);
     ctx.insert("has_intranet", &has_intranet);
+    // SEO: 内网页默认 noindex,nofollow
+    if matches!(mode, NetMode::Intranet) {
+        ctx.insert("meta_robots", &"noindex,nofollow");
+    }
 
     use serde::Serialize;
-    #[derive(Serialize)]
-    struct RLink { name: String, href: String, desc: String, icon: Option<String>, host: String }
+#[derive(Serialize)]
+struct RLink { name: String, href: String, desc: String, icon: Option<String>, host: String }
     #[derive(Serialize)]
     struct RGroup { name: String, links: Vec<RLink> }
 
     let mut used_slugs: HashSet<String> = HashSet::new();
+    let mut name_counts: HashMap<String, u32> = HashMap::new();
     let mut details: Vec<LinkDetail> = Vec::new();
     let mut rgroups: Vec<RGroup> = Vec::new();
     for g in &cfg.groups {
@@ -695,22 +745,42 @@ fn render_one(
         for l in &g.links {
             match mode {
                 NetMode::External => {
-                    // 最终跳转目标为外网地址
-                    let final_url = l.url.clone();
+                    // 仅当存在外网地址时参与外网页面与详情页
+                    let final_url = match l.url.as_ref().and_then(|s| if s.trim().is_empty(){None}else{Some(s)}) {
+                        Some(u) => u.to_string(),
+                        None => { continue; }
+                    };
                     let host = hostname_from_url(&final_url).unwrap_or_default();
-                    let base_slug = slugify(&l.name);
+                    let base_slug = if let Some(user_slug) = &l.slug {
+                        slugify(user_slug)
+                    } else {
+                        // 默认：按 name 生成；若 name 重复，则使用 name+host 组合
+                        let key = l.name.to_lowercase();
+                        let entry = name_counts.entry(key).or_insert(0);
+                        *entry += 1;
+                        if *entry == 1 {
+                            slugify(&l.name)
+                        } else if !host.is_empty() {
+                            slugify(&format!("{}-{}", l.name, host))
+                        } else {
+                            slugify(&l.name)
+                        }
+                    };
                     let slug = unique_slug(&base_slug, &mut used_slugs);
                     let href = format!("go/{}/", slug);
-                    rlinks.push(RLink { name: l.name.clone(), href: href.clone(), desc: l.desc.clone(), icon: l.icon.clone(), host: host.clone() });
+                    let icon_res = l.icon.as_ref().map(|s| resolve_icon_for_page(s));
+                    rlinks.push(RLink { name: l.name.clone(), href: href.clone(), desc: l.intro.clone(), icon: icon_res, host: host.clone() });
                     let delay = cfg.site.redirect.as_ref().and_then(|r| r.delay_seconds).unwrap_or(0);
                     let risk = l.risk.or_else(|| cfg.site.redirect.as_ref().and_then(|r| r.default_risk));
                     let utm = l.utm.clone().or_else(|| cfg.site.redirect.as_ref().and_then(|r| r.utm.clone()));
-                    details.push(LinkDetail { slug, name: l.name.clone(), desc: l.desc.clone(), icon: l.icon.clone(), host, final_url, risk, delay_seconds: delay, utm });
+                    details.push(LinkDetail { slug, name: l.name.clone(), intro: l.intro.clone(), details: l.details.clone(), icon: l.icon.clone(), host, final_url, risk, delay_seconds: delay, utm, s_lastmod: l.lastmod.clone(), s_changefreq: l.changefreq, s_priority: l.priority });
                 }
                 NetMode::Intranet => {
-                    let href = l.intranet.clone().unwrap_or_else(|| l.url.clone());
+                    let href = l.intranet.clone().or_else(|| l.url.clone()).unwrap_or_default();
+                    if href.trim().is_empty() { continue; }
                     let host = hostname_from_url(&href).unwrap_or_default();
-                    rlinks.push(RLink { name: l.name.clone(), href, desc: l.desc.clone(), icon: l.icon.clone(), host });
+                    let icon_res = l.icon.as_ref().map(|s| resolve_icon_for_page(s));
+                    rlinks.push(RLink { name: l.name.clone(), href, desc: l.intro.clone(), icon: icon_res, host });
                 }
             }
         }
@@ -744,8 +814,12 @@ fn render_link_details(
         ctx.insert("site_desc", &site_desc);
         ctx.insert("color_scheme", &scheme);
         ctx.insert("link_name", &d.name);
-        ctx.insert("link_desc", &d.desc);
-        ctx.insert("link_icon", &d.icon);
+        ctx.insert("link_intro", &d.intro);
+        // 详情 HTML：若配置了 details，用原样 HTML；否则使用简介文本（将在模板中 escape）
+        let details_html: Option<String> = d.details.clone();
+        ctx.insert("link_details_html", &details_html);
+        let icon_href: Option<String> = d.icon.as_ref().map(|s| resolve_icon_for_detail(s));
+        ctx.insert("link_icon", &icon_href);
         ctx.insert("link_host", &d.host);
         let final_url = apply_utm(&d.final_url, d.utm.as_ref());
         ctx.insert("link_url", &final_url);
@@ -815,6 +889,110 @@ fn risk_meta(r: Option<RiskLevel>) -> (String, String) {
         RiskLevel::Low => ("low".into(), "低风险".into()),
         RiskLevel::Medium => ("medium".into(), "中风险".into()),
         RiskLevel::High => ("high".into(), "高风险".into()),
+    }
+}
+
+fn write_robots(root: &Path) -> Result<()> {
+    let content = "User-agent: *\nAllow: /\n";
+    fs::write(root.join("robots.txt"), content.as_bytes()).context("写入 robots.txt 失败")?;
+    Ok(())
+}
+
+fn write_sitemap(root: &Path, site: &Site, base_path: Option<&str>, details: &[LinkDetail], build_time: &str) -> Result<()> {
+    // Helper to join base_url + base_path + subpath
+    fn url_join(base_url: Option<&str>, base_path: Option<&str>, sub: &str) -> String {
+        if let Some(b) = base_url {
+            let mut u = String::from(b.trim_end_matches('/'));
+            if let Some(bp) = base_path { if !bp.is_empty() { u.push('/'); u.push_str(bp.trim_matches('/')); } }
+            if !sub.is_empty() { u.push('/'); u.push_str(sub.trim_start_matches('/')); }
+            u
+        } else {
+            let mut s = String::new();
+            if let Some(bp) = base_path { if !bp.is_empty() { s.push_str(bp.trim_matches('/')); s.push('/'); } }
+            s.push_str(sub.trim_start_matches('/'));
+            s
+        }
+    }
+    let mut entries: Vec<String> = Vec::new();
+    // Defaults
+    let def_cf = site.sitemap.as_ref().and_then(|s| s.default_changefreq);
+    let def_pr = site.sitemap.as_ref().and_then(|s| s.default_priority);
+    let site_lastmod = site.sitemap.as_ref().and_then(|s| s.lastmod.as_ref()).map(|s| s.as_str()).unwrap_or(build_time);
+
+    // Index entry
+    {
+        let loc = url_join(site.base_url.as_deref(), base_path, "index.html");
+        let mut e = String::new();
+        e.push_str("  <url>");
+        e.push_str(&format!("<loc>{}</loc>", loc));
+        if let Some(cf) = def_cf { e.push_str(&format!("<changefreq>{}</changefreq>", changefreq_str(cf))); }
+        if let Some(pr) = sanitize_priority(def_pr) { e.push_str(&format!("<priority>{:.1}</priority>", pr)); }
+        e.push_str(&format!("<lastmod>{}</lastmod>", site_lastmod));
+        e.push_str("</url>");
+        entries.push(e);
+    }
+
+    for d in details {
+        let loc = url_join(site.base_url.as_deref(), base_path, &format!("go/{}/", d.slug));
+        let mut e = String::new();
+        e.push_str("  <url>");
+        e.push_str(&format!("<loc>{}</loc>", loc));
+        if let Some(cf) = d.s_changefreq.or(def_cf) { e.push_str(&format!("<changefreq>{}</changefreq>", changefreq_str(cf))); }
+        if let Some(pr) = sanitize_priority(d.s_priority.or(def_pr)) { e.push_str(&format!("<priority>{:.1}</priority>", pr)); }
+        let lm = d.s_lastmod.as_deref().unwrap_or(site_lastmod);
+        e.push_str(&format!("<lastmod>{}</lastmod>", lm));
+        e.push_str("</url>");
+        entries.push(e);
+    }
+    let xml = format!(
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n{}\n</urlset>\n",
+        entries.join("\n")
+    );
+    fs::write(root.join("sitemap.xml"), xml.as_bytes()).context("写入 sitemap.xml 失败")?;
+    Ok(())
+}
+
+fn changefreq_str(cf: ChangeFreq) -> &'static str {
+    match cf {
+        ChangeFreq::Always => "always",
+        ChangeFreq::Hourly => "hourly",
+        ChangeFreq::Daily => "daily",
+        ChangeFreq::Weekly => "weekly",
+        ChangeFreq::Monthly => "monthly",
+        ChangeFreq::Yearly => "yearly",
+        ChangeFreq::Never => "never",
+    }
+}
+
+fn sanitize_priority(p: Option<f32>) -> Option<f32> {
+    p.map(|v| if v < 0.0 { 0.0 } else if v > 1.0 { 1.0 } else { (v * 10.0).round() / 10.0 })
+}
+
+fn resolve_icon_for_detail(icon: &str) -> String {
+    let s = icon.trim();
+    let lower = s.to_ascii_lowercase();
+    if lower.starts_with("http://") || lower.starts_with("https://") || lower.starts_with("//") || lower.starts_with("data:") {
+        s.to_string()
+    } else if s.starts_with('/') {
+        // 站点根相对路径，详情页在 go/<slug>/ 下，回到站点根需 ../../
+        let trimmed = s.trim_start_matches('/');
+        format!("../../{}", trimmed)
+    } else {
+        // 普通相对路径，按站点根相对资源处理
+        format!("../../{}", s)
+    }
+}
+
+fn resolve_icon_for_page(icon: &str) -> String {
+    let s = icon.trim();
+    let lower = s.to_ascii_lowercase();
+    if lower.starts_with("http://") || lower.starts_with("https://") || lower.starts_with("//") || lower.starts_with("data:") {
+        s.to_string()
+    } else if s.starts_with('/') {
+        // 将站点根相对路径转为页面相对（首页位于站点根）
+        s.trim_start_matches('/').to_string()
+    } else {
+        s.to_string()
     }
 }
 
