@@ -60,6 +60,33 @@ enum Command {
         #[arg(value_name = "DIR")] 
         dir: Option<PathBuf>,
     },
+    /// 预览生成结果（本地静态文件服务）
+    Preview {
+        /// 指定服务目录（优先于根据配置推导的 dist/<base_path>）
+        #[arg(long, value_name = "DIR")]
+        dir: Option<PathBuf>,
+        /// 监听地址，默认 127.0.0.1:8787
+        #[arg(long, value_name = "ADDR")]
+        addr: Option<String>,
+        /// 启动前触发一次构建
+        #[arg(long)]
+        build_first: bool,
+        /// 以下参数用于可选构建（与 build 子命令相同）
+        #[arg(short, long)]
+        input: Option<PathBuf>,
+        #[arg(long, value_name = "URL")]
+        input_url: Option<String>,
+        #[arg(short, long)]
+        out: Option<PathBuf>,
+        #[arg(long, value_name = "DIR")]
+        static_dir: Option<PathBuf>,
+        #[arg(long, value_name = "DIR")]
+        theme: Option<PathBuf>,
+        #[arg(long, value_name = "PATH")]
+        base_path: Option<String>,
+        #[arg(long)]
+        no_intranet: bool,
+    },
 }
 
 #[derive(Debug, Deserialize)]
@@ -211,6 +238,84 @@ fn main() -> Result<()> {
         Command::Init { force, dir } => {
             let dir = dir.unwrap_or_else(|| PathBuf::from("."));
             init_scaffold(&dir, force)
+        }
+        Command::Preview { dir, addr, build_first, input, input_url, out, static_dir, theme, base_path, no_intranet } => {
+            // 环境变量
+            let env_addr = env_opt_string("DOVE_PREVIEW_ADDR");
+            let env_input = env_opt_path("DOVE_INPUT");
+            let env_input_url = env_opt_string("DOVE_INPUT_URL").or(env_opt_string("DOVE_GIST_URL"));
+            let env_gist_id = env_opt_string("DOVE_GIST_ID");
+            let env_gist_file = env_opt_string("DOVE_GIST_FILE");
+            let env_out = env_opt_path("DOVE_OUT");
+            let env_static = env_opt_path("DOVE_STATIC");
+            let env_theme = env_opt_path("DOVE_THEME");
+            let env_theme_dir = env_opt_path("DOVE_THEME_DIR");
+            let env_base_path = env_opt_string("DOVE_BASE_PATH");
+            let env_no_intranet = env_bool_truthy("DOVE_NO_INTRANET").unwrap_or(false);
+            let env_color_scheme = env_opt_string("DOVE_COLOR_SCHEME").and_then(parse_color_scheme);
+            let env_title = env_opt_string("DOVE_TITLE");
+            let env_description = env_opt_string("DOVE_DESCRIPTION");
+            let env_github_token = env_opt_string("DOVE_GITHUB_TOKEN");
+            let env_auth_scheme = env_opt_string("DOVE_AUTH_SCHEME");
+
+            let effective_addr = addr.or(env_addr).unwrap_or_else(|| "127.0.0.1:8787".to_string());
+            let effective_input = input.or(env_input);
+            let effective_input_url = input_url.or(env_input_url);
+            let effective_out = out.or(env_out).unwrap_or_else(|| PathBuf::from("dist"));
+            let effective_static = static_dir.or(env_static);
+            let effective_theme = theme.or(env_theme).or(env_theme_dir);
+            let effective_base_path = base_path.or(env_base_path);
+            let effective_no_intranet = if no_intranet { true } else { env_no_intranet };
+            let effective_color_scheme = env_color_scheme;
+            let effective_title = env_title;
+            let effective_desc = env_description;
+
+            // 可选构建
+            if build_first {
+                let raw_cfg = load_config_text(
+                    effective_input.as_deref(),
+                    effective_input_url.as_deref(),
+                    env_opt_string("DOVE_GIST_ID").as_deref(),
+                    env_opt_string("DOVE_GIST_FILE").as_deref(),
+                    env_opt_string("DOVE_GITHUB_TOKEN").as_deref(),
+                    env_opt_string("DOVE_AUTH_SCHEME").as_deref(),
+                )?;
+                let config: Config = serde_yaml::from_str(&raw_cfg).with_context(|| "解析 YAML 失败（预览构建）")?;
+                build(
+                    config,
+                    &effective_out,
+                    effective_static.as_deref(),
+                    effective_theme.as_deref(),
+                    effective_base_path.clone(),
+                    effective_no_intranet,
+                    effective_color_scheme,
+                    effective_title.clone(),
+                    effective_desc.clone(),
+                )?;
+            }
+
+            // 计算服务目录
+            let serve_dir = if let Some(d) = dir { d } else {
+                // 尝试从配置推导 base_path
+                let raw_opt = load_config_text(
+                    effective_input.as_deref(),
+                    effective_input_url.as_deref(),
+                    env_gist_id.as_deref(),
+                    env_gist_file.as_deref(),
+                    env_github_token.as_deref(),
+                    env_auth_scheme.as_deref(),
+                ).ok();
+                if let Some(raw) = raw_opt { 
+                    if let Ok(cfg) = serde_yaml::from_str::<Config>(&raw) {
+                        let base_path_effective = effective_base_path.or(cfg.site.base_path.clone());
+                        match base_path_effective {
+                            Some(bp) => match safe_subpath(&bp) { Some(sub) => effective_out.join(sub), None => effective_out.clone() },
+                            None => effective_out.clone(),
+                        }
+                    } else { effective_out.clone() }
+                } else { effective_out.clone() }
+            };
+            serve(&serve_dir, &effective_addr)
         }
     }
 }
@@ -677,7 +782,7 @@ fn apply_utm(url_str: &str, utm: Option<&UtmParams>) -> String {
             if let Some(ref v) = utm.term { qp.append_pair("utm_term", v); }
             if let Some(ref v) = utm.content { qp.append_pair("utm_content", v); }
         }
-        u.into_string()
+        u.to_string()
     } else {
         url_str.to_string()
     }
@@ -688,6 +793,59 @@ fn risk_meta(r: Option<RiskLevel>) -> (String, String) {
         RiskLevel::Low => ("low".into(), "低风险".into()),
         RiskLevel::Medium => ("medium".into(), "中风险".into()),
         RiskLevel::High => ("high".into(), "高风险".into()),
+    }
+}
+
+fn serve(root: &Path, addr: &str) -> Result<()> {
+    if !root.exists() {
+        bail!("预览目录不存在: {}", root.display());
+    }
+    println!("🔎 预览目录: {}", root.display());
+    println!("🚀 访问: http://{}", addr);
+    let server = tiny_http::Server::http(addr).map_err(|e| anyhow::anyhow!("绑定地址失败: {}: {}", addr, e))?;
+    for rq in server.incoming_requests() {
+        let method_owned = rq.method().as_str().to_string();
+        let url = rq.url(); // 形如 /path?query
+        let path_only = url.split('?').next().unwrap_or("/");
+        let mut segs = Vec::new();
+        for s in path_only.split('/') { let t = s.trim(); if t.is_empty() || t=="." || t==".." { continue; } segs.push(t); }
+        let mut fpath = root.to_path_buf();
+        for s in &segs { fpath.push(s); }
+        let is_dir_req = path_only.ends_with('/') || segs.is_empty();
+        if is_dir_req { fpath.push("index.html"); }
+        // 静态文件存在性
+        let mut status = 200;
+        if !fpath.exists() || fpath.is_dir() {
+            status = 404;
+        }
+        let content_type = content_type_for_path(&fpath);
+        let resp = if status == 200 {
+            match fs::read(&fpath) {
+                Ok(bytes) => tiny_http::Response::from_data(bytes).with_header(tiny_http::Header::from_bytes(&b"Content-Type"[..], content_type.as_bytes()).unwrap()),
+                Err(_) => { status = 404; tiny_http::Response::from_string("Not Found") }
+            }
+        } else {
+            tiny_http::Response::from_string("Not Found")
+        };
+        let _ = rq.respond(resp.with_status_code(status));
+        if method_owned.as_str() != "GET" && method_owned.as_str() != "HEAD" { /* 忽略 */ }
+    }
+    Ok(())
+}
+
+fn content_type_for_path(p: &Path) -> String {
+    match p.extension().and_then(|e| e.to_str()).unwrap_or("").to_ascii_lowercase().as_str() {
+        "html" => "text/html; charset=utf-8".into(),
+        "css" => "text/css; charset=utf-8".into(),
+        "js" => "text/javascript; charset=utf-8".into(),
+        "svg" => "image/svg+xml".into(),
+        "png" => "image/png".into(),
+        "jpg" | "jpeg" => "image/jpeg".into(),
+        "gif" => "image/gif".into(),
+        "ico" => "image/x-icon".into(),
+        "json" => "application/json; charset=utf-8".into(),
+        "txt" => "text/plain; charset=utf-8".into(),
+        _ => "application/octet-stream".into(),
     }
 }
 fn write_default_theme(target_dir: &Path) -> Result<()> {

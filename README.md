@@ -12,6 +12,10 @@
 
  `cargo run -- build`
 
+- 启动本地预览（默认监听 `127.0.0.1:8787`，启动前会先构建一次）：
+
+  `cargo run -- preview --build-first`
+
 生成完成后，打开 `dist/index.html`（外网版）或 `dist/intranet.html`（内网版）预览即可；若配置了 `base_path`，则文件位于 `dist/<base_path>/` 下。页头可相互切换。
 
 如需“本地仅保留模板、配置放在 Gist”：不放置 `dove.yaml`，用 `--input-url` 或环境变量 `DOVE_INPUT_URL`/`DOVE_GIST_ID` 指定远程配置。
@@ -89,6 +93,11 @@ groups:
 cargo run --features remote -- build \
   --input-url https://gist.githubusercontent.com/<user>/<id>/raw/config.yaml \
   --out public --static static --theme themes/default --base-path secretPath --no-intranet
+
+# 预览更多参数
+cargo run -- preview --addr 127.0.0.1:9090 --dir dist/secretPath
+# 或基于远程配置推导目录（需启用 remote 特性）：
+cargo run --features remote -- preview --build-first --input-url https://gist.githubusercontent.com/<user>/<id>/raw/config.yaml
 ```
 
 - `--input` 指定配置文件（默认自动寻找 `dove.yaml|dove.yml`）。
@@ -97,6 +106,10 @@ cargo run --features remote -- build \
 - `--theme` 指定主题目录，优先级高于 `site.theme_dir`。
 - `--base-path` 指定站点根路径（相对子路径），优先级高于 `site.base_path`。
 - `--no-intranet` 仅生成外网版本页面（不生成 `intranet.html`，且页面不显示切换按钮）。
+- 预览命令（preview）：
+  - `--build-first` 启动前先构建一次。
+  - `--addr` 监听地址（默认 `127.0.0.1:8787`）。
+  - `--dir` 指定服务目录（若未指定，将根据配置推导 `dist/<base_path>`）。
 
 ### 环境变量（可覆盖/提供与 CLI 同等的参数）
 
@@ -108,6 +121,7 @@ cargo run --features remote -- build \
 - `DOVE_GITHUB_TOKEN`：访问私有 Gist 时的 token（会作为 `Authorization: token <TOKEN>` 加到请求头）
 - `DOVE_AUTH_SCHEME`：可选，授权方案（默认 `token`，也可设为 `Bearer` 或其他值，最终头格式为 `Authorization: <SCHEME> <TOKEN>`）
 - `DOVE_OUT`：输出目录（等价于 `--out`）
+- `DOVE_PREVIEW_ADDR`：预览监听地址（等价于 `--addr`）
 - `DOVE_STATIC`：静态资源目录（等价于 `--static`）
 - `DOVE_THEME`：主题目录（等价于 `--theme`）
 - `DOVE_THEME_DIR`：主题目录（`DOVE_THEME` 的别名）
