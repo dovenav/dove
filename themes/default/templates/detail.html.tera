@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ link_name | escape }} · {{ site_title | escape }}</title>
+    {% if site_desc and site_desc != "" %}
+    <meta name="description" content="{{ site_desc | escape }}">
+    {% endif %}
+    <link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../../assets/styles.css">
+  </head>
+  <body class="theme-{{ color_scheme }}">
+    <header class="site-header">
+      <div>
+        <h1 class="site-title">{{ site_title | escape }}</h1>
+        {% if site_desc and site_desc != "" %}
+        <p class="site-desc">{{ site_desc | escape }}</p>
+        {% endif %}
+      </div>
+      <div class="actions">
+        <a class="btn" href="../../index.html">返回首页</a>
+        <button id="toggleTheme" class="btn" title="切换主题">🌓</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="group">
+        <h2 class="group-title">即将前往第三方网站</h2>
+        <div class="card">
+          <div class="card-head">
+            {% if link_icon %}
+            <img class="icon" src="{{ link_icon | escape }}" alt="">
+            {% endif %}
+            <div class="title">{{ link_name | escape }}</div>
+          </div>
+          <div class="meta">
+            <span class="badge risk-{{ risk_class }}">风险等级：{{ risk_label }}</span>
+          </div>
+          {% if link_desc and link_desc != "" %}
+          <div class="desc">{{ link_desc | escape }}</div>
+          {% endif %}
+          {% if link_host and link_host != "" %}
+          <div class="meta">目标域名：{{ link_host | escape }}</div>
+          {% endif %}
+          <div class="meta">目标地址：<code>{{ link_url | escape }}</code></div>
+          {% if has_delay %}
+          <div class="meta">本页将在 <strong id="cd">{{ delay_seconds }}</strong> 秒后自动跳转。</div>
+          {% endif %}
+          <div style="margin-top:12px; display:flex; gap:8px;">
+            <a class="btn" id="proceed" target="_blank" rel="noopener noreferrer" href="{{ link_url | escape }}">继续前往</a>
+            <a class="btn" href="../../index.html">返回</a>
+            {% if has_delay %}
+            <button class="btn" id="cancelAuto">取消自动跳转</button>
+            {% endif %}
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="../../assets/app.js"></script>
+    {% if has_delay %}
+    <script>
+      (function(){
+        var remain = {{ delay_seconds }};
+        var cd = document.getElementById('cd');
+        var canceled = false;
+        var timer = setInterval(function(){
+          if (canceled) { clearInterval(timer); return; }
+          remain -= 1;
+          if (cd) cd.textContent = String(remain);
+          if (remain <= 0) {
+            clearInterval(timer);
+            window.location.href = {{ link_url | json_encode | safe }};
+          }
+        }, 1000);
+        var cancelBtn = document.getElementById('cancelAuto');
+        cancelBtn && cancelBtn.addEventListener('click', function(){
+          canceled = true;
+          if (cd) cd.textContent = '已取消';
+        });
+      })();
+    </script>
+    {% endif %}
+  </body>
+</html>

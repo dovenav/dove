@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" fill="none">
+  <rect width="128" height="128" rx="24" fill="#2b65d9"/>
+  <!-- More realistic dove (side profile, flying) -->
+  <!-- Tail feathers -->
+  <path d="M30 84 L42 90 L46 78 L32 76 Z" fill="#ffffff"/>
+  <!-- Body + back -->
+  <path fill="#ffffff" d="
+    M34 86
+    C 46 98, 74 98, 92 84
+    C 102 76, 106 66, 104 56
+    C 100 58, 94 58, 88 56
+    C 92 52, 96 46, 98 40
+    C 86 48, 74 52, 64 52
+    C 52 52, 44 56, 40 64
+    C 38 68, 38 74, 40 78
+    C 36 80, 34 83, 34 86 Z"/>
+  <!-- Wing (layered, softer color) -->
+  <path fill="#f2f6ff" d="
+    M48 80
+    C 64 64, 80 58, 98 56
+    C 90 66, 78 82, 62 92
+    C 54 92, 50 88, 48 80 Z"/>
+  <!-- Head -->
+  <circle cx="88" cy="50" r="9" fill="#ffffff"/>
+  <!-- Beak -->
+  <polygon points="96,50 104,48 96,46" fill="#f5b24f"/>
+  <!-- Eye -->
+  <circle cx="90" cy="49" r="2" fill="#0b0c0f"/>
+</svg>

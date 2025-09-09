@@ -1,0 +1,78 @@
+# 这是一个完整注释的示例配置文件。
+#
+# 用法：
+#   cargo run -- init          # 生成示例与默认主题
+#   cargo run -- build         # 生成 dist/ 静态站点
+#
+# 你也可以将配置放到 Gist（启用 --features remote），只在本地保留主题模板。
+
+site:
+  # 站点标题（显示在页面标题与页头处）
+  title: 我的导航站
+
+  # 站点描述（可选，显示在页头副标题与 meta description）
+  description: 常用站点与工具集合
+
+  # 页面配色方案（auto|light|dark）。
+  # - auto：跟随系统/浏览器偏好，在网页中可继续切换并本地记忆
+  # - light：始终使用明亮模式
+  # - dark：始终使用深色模式
+  color_scheme: auto
+
+  # 主题目录（相对或绝对路径），需要包含 templates/ 与 assets/ 子目录。
+  # - templates/ 下的 index.html.tera、detail.html.tera 用于渲染页面
+  # - assets/ 下的样式/脚本/图标会复制到输出的 assets/ 下
+  theme_dir: themes/default
+
+  # 站点根路径（相对子路径），将把站点输出到 dist/<base_path>/ 下。
+  # - 默认留空或删除此项：输出到 dist/ 根目录
+  # - 示例："secretPath" 或 "a/b"（注意仅支持相对子路径，. 与 .. 会被忽略）
+  base_path: ""
+
+  # 跳转页设置（仅外网链接生效）
+  redirect:
+    # 跳转延迟秒数（为 0 或缺省则不自动跳转）
+    delay_seconds: 3
+    # 默认风险等级（low|medium|high），当链接未单独设置时沿用此值
+    default_risk: low
+    # 站点级 UTM 参数（链接未单独设置 utm 时使用），以下字段任意留空都不会追加
+    utm:
+      source: nav
+      medium: referral
+      campaign: homepage
+      term: ""
+      content: ""
+
+groups:
+  # 一个分组（组名会作为小标题显示）
+  - name: 常用
+    links:
+      # 链接项（外网链接会在首页指向中间页 go/<slug>/，中间页内展示信息并提供“继续前往”按钮）
+      - name: Google              # 显示名称
+        url: https://www.google.com  # 外网地址（必填）
+        desc: 搜索引擎             # 文字描述（可选）
+        icon: assets/favicon.svg   # 图标路径或外链（可选）
+        intranet: http://google.corp  # 内网地址（可选；内网页直接跳转，若缺省则回退 url）
+        risk: medium                # 风险等级（low|medium|high，可选）
+        utm:                        # 可选：覆盖站点级 UTM 参数
+          source: nav
+          medium: card
+          campaign: homepage
+
+      - name: GitHub
+        url: https://github.com
+        desc: 代码托管
+        icon: https://github.githubassets.com/favicons/favicon.svg
+        intranet: http://git.corp
+        risk: low
+
+  - name: 开发
+    links:
+      - name: Rust Docs
+        url: https://doc.rust-lang.org
+        desc: Rust 官方文档
+
+      - name: crates.io
+        url: https://crates.io
+        desc: Rust 包仓库
+        intranet: http://crates.corp

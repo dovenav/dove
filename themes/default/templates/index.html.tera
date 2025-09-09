@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ site_title | escape }}</title>
+    {% if site_desc and site_desc != "" %}
+    <meta name="description" content="{{ site_desc | escape }}">
+    {% endif %}
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="assets/styles.css">
+  </head>
+  <body class="theme-{{ color_scheme }}">
+    <header class="site-header">
+      <div>
+        <h1 class="site-title">{{ site_title | escape }}</h1>
+        {% if site_desc and site_desc != "" %}
+        <p class="site-desc">{{ site_desc | escape }}</p>
+        {% endif %}
+      </div>
+      <div class="actions">
+        <input id="q" class="search" type="search" placeholder="搜索站点..." aria-label="搜索">
+        {% if has_intranet %}
+        <a class="btn" id="toggleNet" href="{{ network_switch_href }}" title="切换内/外网">{{ mode_other_label }}</a>
+        {% endif %}
+        <button id="toggleTheme" class="btn" title="切换主题">🌓</button>
+      </div>
+    </header>
+
+    <main class="container">
+      {% for g in groups %}
+      <section class="group">
+        <h2 class="group-title">{{ g.name | escape }}</h2>
+        <div class="grid">
+          {% for l in g.links %}
+          <a class="card" href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer">
+            <div class="card-head">
+              {% if l.icon %}
+              <img class="icon" src="{{ l.icon | escape }}" alt="">
+              {% endif %}
+              <div class="title">{{ l.name | escape }}</div>
+            </div>
+            {% if l.desc and l.desc != "" %}
+            <div class="desc">{{ l.desc | escape }}</div>
+            {% endif %}
+            {% if l.host and l.host != "" %}
+            <div class="meta">{{ l.host | escape }}</div>
+            {% endif %}
+          </a>
+          {% endfor %}
+        </div>
+      </section>
+      {% endfor %}
+    </main>
+
+    <footer class="site-footer">Made with ❤ by dove</footer>
+    <script src="assets/app.js"></script>
+  </body>
+</html>

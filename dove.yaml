@@ -1,0 +1,55 @@
+site:
+  # 站点标题（显示在页面标题与页头处）
+  title: 我的导航站
+
+  # 站点描述（可选，显示在页头副标题与 meta description）
+  description: 常用站点与工具集合
+
+  # 页面配色方案（auto|light|dark）
+  color_scheme: auto
+
+  # 主题目录（相对或绝对路径），包含 templates/ 与 assets/
+  theme_dir: themes/default
+
+  # 站点根路径（相对子路径）。默认留空，输出到 dist/ 根目录
+  base_path: ""
+
+  # 跳转页设置（仅外网链接生效）
+  redirect:
+    delay_seconds: 3            # 自动跳转倒计时（秒）；0 表示不自动跳转
+    default_risk: low           # 默认风险等级（low|medium|high）
+    utm:                        # 站点级 UTM 参数（可选）
+      source: nav
+      medium: referral
+      campaign: homepage
+      term: ""
+      content: ""
+
+groups:
+  - name: 常用   # 分组名称
+    links:
+      - name: Google
+        url: https://www.google.com      # 外网地址（必填）
+        desc: 搜索引擎                   # 描述（可选）
+        icon: assets/favicon.svg         # 图标（可选：相对路径或外链）
+        intranet: http://google.corp     # 内网地址（可选；内网页未配置则回退 url）
+        risk: medium                     # 可选：风险等级（low|medium|high）
+        utm:                             # 可选：覆盖站点级 UTM 参数
+          source: nav
+          medium: card
+          campaign: homepage
+      - name: GitHub
+        url: https://github.com
+        desc: 代码托管
+        icon: https://github.githubassets.com/favicons/favicon.svg
+        intranet: http://git.corp
+
+  - name: 开发
+    links:
+      - name: Rust Docs
+        url: https://doc.rust-lang.org
+        desc: Rust 官方文档
+      - name: crates.io
+        url: https://crates.io
+        desc: Rust 包仓库
+        intranet: http://crates.corp
