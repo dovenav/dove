@@ -19,6 +19,13 @@
       const t = `${name} ${host} ${desc}`;
       c.style.display = v ? (t.includes(v) ? '' : 'none') : '';
     });
+    // 搜索时显示所有分类；清空时恢复当前分类筛选
+    if(v){
+      sections.forEach(sec => { sec.style.display = ''; });
+    }else{
+      // 恢复当前分类视图
+      setActiveCat(currentCat || (catList && catList.querySelector('.cat-item') && catList.querySelector('.cat-item').getAttribute('data-cat')) || '');
+    }
   }
   q && q.addEventListener('input', filter);
 
@@ -116,14 +123,19 @@
   setInterval(updateClock, 1000); // 每秒更新以实现冒号闪烁
 
   // Category switching
+  let currentCat = '';
   function setActiveCat(name){
     if(!catList) return;
     const items = Array.from(catList.querySelectorAll('.cat-item'));
     items.forEach(it => it.classList.toggle('active', it.getAttribute('data-cat')===name));
-    sections.forEach(sec => {
-      const cat = sec.getAttribute('data-cat');
-      sec.style.display = (!name || name===cat) ? '' : 'none';
-    });
+    currentCat = name || '';
+    const v = (q && q.value || '').trim();
+    if(!v){
+      sections.forEach(sec => {
+        const cat = sec.getAttribute('data-cat');
+        sec.style.display = (!name || name===cat) ? '' : 'none';
+      });
+    }
     localStorage.setItem('dove-cat', name||'');
   }
   function initCats(){
