@@ -125,6 +125,15 @@ struct Site {
     /// 站点地图默认设置
     #[serde(default)]
     sitemap: Option<SitemapSettings>,
+    /// 搜索引擎列表（名称 + 模板，如 https://www.google.com/search?q={q}）
+    #[serde(default)]
+    search_engines: Option<Vec<SearchEngine>>,
+    /// 默认搜索引擎名（匹配 search_engines[].name），未设置则使用第一个
+    #[serde(default)]
+    default_engine: Option<String>,
+    /// 布局：default | ntp（Chrome 新标签页风格）
+    #[serde(default = "default_layout")]
+    layout: Layout,
 }
 
 #[derive(Debug, Deserialize, Clone, Copy)]
@@ -142,6 +151,9 @@ struct Group {
     name: String,
     #[serde(default)]
     links: Vec<Link>,
+    /// 一级分类（侧边栏）。未设置时默认使用 "全部"。
+    #[serde(default)]
+    category: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -206,6 +218,22 @@ struct UtmParams {
     #[serde(default)] term: Option<String>,
     #[serde(default)] content: Option<String>,
 }
+
+#[derive(Debug, Deserialize, Clone)]
+struct SearchEngine {
+    name: String,
+    template: String,
+    #[serde(default)]
+    icon: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Clone, Copy)]
+#[serde(rename_all = "lowercase")]
+enum Layout { Default, Ntp }
+
+fn default_layout() -> Layout { Layout::Default }
+
+// removed TopLink structure as not needed
 
 #[derive(Debug, Deserialize, Clone, Copy)]
 #[serde(rename_all = "lowercase")]
@@ -730,16 +758,49 @@ fn render_one(
         ctx.insert("meta_robots", &"noindex,nofollow");
     }
 
+    // 搜索引擎：构建选项（页面相对的图标路径）
+    #[derive(serde::Serialize)]
+    struct REngine { name: String, template: String, icon: Option<String> }
+    let engines_src: Vec<SearchEngine> = cfg.site.search_engines.clone().unwrap_or_else(|| vec![
+        SearchEngine { name: "Google".into(), template: "https://www.google.com/search?q={q}".into(), icon: None },
+        SearchEngine { name: "Bing".into(), template: "https://www.bing.com/search?q={q}".into(), icon: None },
+        SearchEngine { name: "DuckDuckGo".into(), template: "https://duckduckgo.com/?q={q}".into(), icon: None },
+    ]);
+    let mut rengines: Vec<REngine> = Vec::new();
+    for e in engines_src {
+        let icon = e.icon.as_ref().map(|s| resolve_icon_for_page(s));
+        rengines.push(REngine { name: e.name, template: e.template, icon });
+    }
+    let mut default_engine = cfg.site.default_engine.clone().unwrap_or_default();
+    if default_engine.is_empty() && !rengines.is_empty() { default_engine = rengines[0].name.clone(); }
+    ctx.insert("search_engines", &rengines);
+    ctx.insert("engine_default", &default_engine);
+    // 布局
+    let layout = match cfg.site.layout { Layout::Default => "default", Layout::Ntp => "ntp" };
+    ctx.insert("layout", &layout);
+    // 顶部文本链接移除，改为固定功能按钮，仅保留切换和主题按钮
+
+    // Canonical 与 OG image（仅外网）
+    if matches!(mode, NetMode::External) {
+        if let Some(base) = cfg.site.base_url.as_deref() {
+            let page = match mode { NetMode::External => "index.html", NetMode::Intranet => "intranet.html" };
+            let canon = build_page_url(Some(base), cfg.site.base_path.as_deref(), page);
+            ctx.insert("canonical_url", &canon);
+        }
+        if let Some(og) = og_image_url(cfg, false) { ctx.insert("og_image", &og); }
+    }
+
     use serde::Serialize;
 #[derive(Serialize)]
 struct RLink { name: String, href: String, desc: String, icon: Option<String>, host: String }
     #[derive(Serialize)]
-    struct RGroup { name: String, links: Vec<RLink> }
+    struct RGroup { name: String, category: String, links: Vec<RLink> }
 
     let mut used_slugs: HashSet<String> = HashSet::new();
     let mut name_counts: HashMap<String, u32> = HashMap::new();
     let mut details: Vec<LinkDetail> = Vec::new();
     let mut rgroups: Vec<RGroup> = Vec::new();
+    let mut categories: Vec<String> = Vec::new();
     for g in &cfg.groups {
         let mut rlinks = Vec::new();
         for l in &g.links {
@@ -784,9 +845,12 @@ struct RLink { name: String, href: String, desc: String, icon: Option<String>, h
                 }
             }
         }
-        rgroups.push(RGroup { name: g.name.clone(), links: rlinks });
+        let cat = g.category.clone().unwrap_or_else(|| "全部".to_string());
+        if !categories.contains(&cat) { categories.push(cat.clone()); }
+        rgroups.push(RGroup { name: g.name.clone(), category: cat, links: rlinks });
     }
     ctx.insert("groups", &rgroups);
+    ctx.insert("categories", &categories);
 
     let html = tera.render("index.html.tera", &ctx)
         .context("渲染模板 index.html.tera 失败")?;
@@ -966,6 +1030,29 @@ fn changefreq_str(cf: ChangeFreq) -> &'static str {
 
 fn sanitize_priority(p: Option<f32>) -> Option<f32> {
     p.map(|v| if v < 0.0 { 0.0 } else if v > 1.0 { 1.0 } else { (v * 10.0).round() / 10.0 })
+}
+
+fn build_page_url(base_url: Option<&str>, base_path: Option<&str>, page: &str) -> String {
+    let mut s = String::new();
+    if let Some(b) = base_url { s.push_str(b.trim_end_matches('/')); }
+    if let Some(bp) = base_path { if !bp.is_empty() { if !s.is_empty(){ s.push('/'); } s.push_str(bp.trim_matches('/')); } }
+    if !page.is_empty() { if !s.is_empty(){ s.push('/'); } s.push_str(page.trim_start_matches('/')); }
+    s
+}
+
+fn og_image_url(cfg: &Config, _detail_page: bool) -> Option<String> {
+    let src = cfg.site.og_image.as_deref().unwrap_or("assets/favicon.svg");
+    let lower = src.to_ascii_lowercase();
+    let is_abs = lower.starts_with("http://") || lower.starts_with("https://") || lower.starts_with("//") || lower.starts_with("data:");
+    if is_abs { return Some(src.to_string()); }
+    // 相对路径转绝对：需要 base_url
+    if let Some(base) = cfg.site.base_url.as_deref() {
+        let mut sub = String::new();
+        sub.push_str(src.trim_start_matches('/'));
+        Some(build_page_url(Some(base), cfg.site.base_path.as_deref(), &sub))
+    } else {
+        None
+    }
 }
 
 fn resolve_icon_for_detail(icon: &str) -> String {

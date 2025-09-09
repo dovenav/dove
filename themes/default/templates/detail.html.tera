@@ -11,21 +11,16 @@
     <link rel="stylesheet" href="../../assets/styles.css">
   </head>
   <body class="theme-{{ color_scheme }}">
+    <div class="top-actions">
+      <button id="toggleTheme" class="btn ghost" title="切换主题">🌓</button>
+    </div>
     <header class="hero">
       <div class="hero-inner">
-        <div class="brand">
-          <img class="brand-logo" src="../../assets/favicon.svg" alt="logo">
-          <div class="brand-meta">
-            <h1 class="site-title">{{ site_title | escape }}</h1>
-            {% if site_desc and site_desc != "" %}
-            <p class="site-desc">{{ site_desc | escape }}</p>
-            {% endif %}
-          </div>
+        <div class="hero-center">
+          <div id="clock" class="clock">--:--</div>
+          <a id="clock-date" class="clock-date" href="https://www.51wnl.com/webcalandar/index.html" target="_blank" rel="noopener"></a>
         </div>
-        <div class="actions">
-          <a class="btn ghost" href="../../index.html">返回首页</a>
-          <button id="toggleTheme" class="btn ghost" title="切换主题">🌓</button>
-        </div>
+        <div class="searchbar" style="height:1px"></div>
       </div>
     </header>
 

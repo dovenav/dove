@@ -23,6 +23,7 @@ site:
   # - templates/ 下的 index.html.tera、detail.html.tera 用于渲染页面
   # - assets/ 下的样式/脚本/图标会复制到输出的 assets/ 下
   theme_dir: themes/default
+  layout: ntp
   
   # 站点根路径（相对子路径），将把站点输出到 dist/<base_path>/ 下。
   # - 默认留空或删除此项：输出到 dist/ 根目录
@@ -34,6 +35,18 @@ site:
     default_changefreq: weekly   # 默认变更频率：always/hourly/daily/weekly/monthly/yearly/never
     default_priority: 0.5        # 默认优先级（0.0 - 1.0）
     # lastmod: 2025-09-09        # 可选：站点级最后修改时间（不设置则用构建时间）
+
+  # 搜索引擎（名称 + 模板，{q} 为查询占位）
+  search_engines:
+    - name: Google
+      template: https://www.google.com/search?q={q}
+    - name: Bing
+      template: https://www.bing.com/search?q={q}
+    - name: DuckDuckGo
+      template: https://duckduckgo.com/?q={q}
+    - name: 百度
+      template: https://www.baidu.com/s?wd={q}
+  default_engine: Google
 
   # 跳转页设置（仅外网链接生效）
   redirect:
@@ -50,51 +63,75 @@ site:
       content: ""
 
 groups:
-  # 一个分组（组名会作为小标题显示）
-  - name: 常用
+  - category: 常用
+    name: 搜索
     links:
-      # 链接项（外网链接会在首页指向中间页 go/<slug>/，中间页内展示信息并提供“继续前往”按钮）
-      - name: Google              # 显示名称
-        url: https://www.google.com  # 外网地址（必填）
-        intro: 搜索引擎           # 简介（用于列表页；兼容旧字段 desc）
-        details: |                # 详情（用于详情页，可写富文本；未填则回退到简介）
+      - name: Google
+        url: https://www.google.com
+        intro: 搜索引擎
+        details: |
           <p>Google 是一个<strong>搜索引擎</strong>。</p>
           <ul>
             <li>面向公众</li>
             <li>覆盖广泛</li>
           </ul>
-        slug: google              # 可选：显式指定 slug（将用于 go/<slug>/）
-        icon: assets/favicon.svg   # 图标路径或外链（可选）
-        intranet: http://google.corp  # 内网地址（可选；内网页直接跳转，若缺省则回退 url）
-        risk: medium                # 风险等级（low|medium|high，可选）
-        utm:                        # 可选：覆盖站点级 UTM 参数
+        slug: google
+        icon: assets/favicon.svg
+        intranet: http://google.corp
+        risk: medium
+        utm:
           source: nav
           medium: card
           campaign: homepage
-        # 覆盖站点地图设置（可选）
         lastmod: 2025-09-09
         changefreq: monthly
         priority: 0.6
+      - { name: Bing, url: https://www.bing.com, intro: 微软搜索 }
+      - { name: DuckDuckGo, url: https://duckduckgo.com, intro: 注重隐私的搜索 }
+      - { name: 百度, url: https://www.baidu.com, intro: 国内搜索 }
 
-      - name: GitHub
-        url: https://github.com
-        intro: 代码托管
-        icon: https://github.githubassets.com/favicons/favicon.svg
-        intranet: http://git.corp
-        risk: low
-
-  - name: 开发
+  - category: 常用
+    name: 媒体/社交
     links:
-      - name: Rust Docs
-        url: https://doc.rust-lang.org
-        intro: Rust 官方文档
+      - { name: YouTube, url: https://www.youtube.com, intro: 视频平台 }
+      - { name: Twitter (X), url: https://twitter.com, intro: 社交网络 }
+      - { name: Reddit, url: https://www.reddit.com, intro: 社区讨论 }
 
-      - name: crates.io
-        url: https://crates.io
-        intro: Rust 包仓库
-        intranet: http://crates.corp
+  - category: 常用
+    name: 百科
+    links:
+      - { name: Wikipedia, url: https://www.wikipedia.org, intro: 自由百科 }
 
-      # 仅内网的链接（外网页不会显示，仅在内网页可见）
-      - name: 内部系统
-        intranet: http://intranet.corp
-        intro: 公司内部系统
+  - category: 开发
+    name: 文档/学习
+    links:
+      - { name: Rust Docs, url: https://doc.rust-lang.org, intro: Rust 官方文档 }
+      - { name: MDN Web Docs, url: https://developer.mozilla.org, intro: Web 开发文档 }
+      - { name: Stack Overflow, url: https://stackoverflow.com, intro: 开发问答 }
+      - { name: GeeksforGeeks, url: https://www.geeksforgeeks.org, intro: 计算机知识 }
+
+  - category: 开发
+    name: 平台/仓库
+    links:
+      - { name: GitHub, url: https://github.com, intro: 代码托管, icon: https://github.githubassets.com/favicons/favicon.svg }
+      - { name: GitLab, url: https://gitlab.com, intro: 代码托管与 CI }
+      - { name: crates.io, url: https://crates.io, intro: Rust 包仓库, intranet: http://crates.corp }
+
+  - category: 开发
+    name: 工具
+    links:
+      - { name: Regex101, url: https://regex101.com, intro: 正则测试 }
+      - { name: JSON Formatter, url: https://jsonformatter.org, intro: JSON 工具 }
+      - { name: TinyPNG, url: https://tinypng.com, intro: 图片压缩 }
+      - { name: CodeSandbox, url: https://codesandbox.io, intro: 在线 IDE }
+      - { name: JSDelivr, url: https://www.jsdelivr.com, intro: 前端 CDN }
+
+  - category: 学习
+    name: 刷题/练习
+    links:
+      - { name: LeetCode, url: https://leetcode.com, intro: 算法练习 }
+
+  - category: 内部
+    name: 内部系统
+    links:
+      - { name: 内部系统, intranet: http://intranet.corp, intro: 公司内部系统 }

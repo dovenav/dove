@@ -164,3 +164,17 @@ cargo run --features remote -- preview --build-first --input-url https://gist.gi
 ## 许可
 
 MIT
+
+## 捐赠支持
+
+如果这个项目对你有帮助，欢迎扫码打赏支持（感谢！）：
+
+<div align="center">
+
+<img src="themes/default/assets/dove.PNG" alt="微信捐赠二维码" width="260"/>
+<img src="themes/default/assets/evm.JPG" alt="区块链EVM: Etherum, BSC, Polygon" width="260"/>
+<img src="themes/default/assets/torn.png" alt="TRON Chain" width="260"/>
+
+</div>
+
+说明：请把你的收款二维码图片放在 `docs/` 目录下并按需命名，上述路径不存在时请替换为实际文件名。

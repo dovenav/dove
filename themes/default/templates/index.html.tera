@@ -15,7 +15,8 @@
     {% if site_desc and site_desc != "" %}<meta property="og:description" content="{{ site_desc | escape }}">{% endif %}
     {% if canonical_url %}<meta property="og:url" content="{{ canonical_url }}">{% endif %}
     <meta property="og:site_name" content="{{ site_title | escape }}">
-    <link rel="icon" href="assets/favicon-f.svg" type="image/svg+xml">
+    {% if og_image %}<meta property="og:image" content="{{ og_image }}">{% endif %}
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="assets/styles.css">
     <meta name="theme-color" content="#f45d22">
     <script type="application/ld+json">
@@ -34,35 +35,53 @@
     }
     </script>
   </head>
-  <body class="theme-{{ color_scheme }}">
+  <body class="theme-{{ color_scheme }} layout-{{ layout }}">
+    <div class="top-actions">
+      {% if has_intranet %}
+      <a class="top-link" id="toggleNet" href="{{ network_switch_href }}" title="切换内/外网">{{ mode_other_label }}</a>
+      {% endif %}
+      <button id="toggleTheme" class="btn ghost" title="切换主题">🌓</button>
+    </div>
     <header class="hero">
       <div class="hero-inner">
-        <div class="brand">
-          <img class="brand-logo" src="assets/favicon.svg" alt="logo">
-          <div class="brand-meta">
-            <h1 class="site-title">{{ site_title | escape }}</h1>
-            {% if site_desc and site_desc != "" %}
-            <p class="site-desc">{{ site_desc | escape }}</p>
-            {% endif %}
-          </div>
+        <div class="hero-center">
+          <div id="clock" class="clock">--:--</div>
+          <a id="clock-date" class="clock-date" href="https://www.51wnl.com/webcalandar/index.html" target="_blank" rel="noopener"></a>
         </div>
-        <div class="actions">
-          <input id="q" class="search" type="search" placeholder="搜索站点、域名、描述..." aria-label="搜索">
-          {% if has_intranet %}
-          <a class="btn ghost" id="toggleNet" href="{{ network_switch_href }}" title="切换内/外网">{{ mode_other_label }}</a>
-          {% endif %}
-          <button id="toggleTheme" class="btn ghost" title="切换主题">🌓</button>
+        <div class="searchbox">
+          <span class="sb-icon" aria-hidden="true">🔎</span>
+          <input id="q" class="search sb-input" type="search" placeholder="搜索站点、域名、描述..." aria-label="搜索">
+          <div class="engine sb-engine">
+            <button id="engineBtn" class="sb-engine-btn" aria-haspopup="listbox" aria-expanded="false"><span id="engineLabel">{{ engine_default }}</span> ▾</button>
+            <ul id="engineMenu" class="engine-menu" role="listbox" hidden>
+              {% for e in search_engines %}
+              <li role="option" tabindex="0" data-name="{{ e.name }}" data-template="{{ e.template }}">
+                {% if e.icon %}<img class="engine-icon" src="{{ e.icon | escape }}" alt="">{% endif %}
+                <span class="engine-name">{{ e.name }}</span>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+          <button id="doSearch" class="sb-action" title="使用所选搜索引擎搜索">↵</button>
         </div>
       </div>
     </header>
 
-    <main class="container">
+    <main class="container appwrap">
+      <aside class="sidebar" id="sidebar">
+        <ul class="cats" id="cats">
+          {% for c in categories %}
+          <li class="cat-item" data-cat="{{ c }}" tabindex="0">{{ c }}</li>
+          {% endfor %}
+        </ul>
+      </aside>
+      <div class="content" id="content">
       {% for g in groups %}
-      <section class="group">
+      <section class="group" data-cat="{{ g.category }}">
         <h2 class="group-title">{{ g.name | escape }}</h2>
         <div class="grid">
           {% for l in g.links %}
-          <a class="card" href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer">
+          <a class="card tile" href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer" data-name="{{ l.name | escape }}" data-host="{{ l.host | escape }}" data-desc="{{ l.desc | escape }}">
             <div class="card-head">
               {% if l.icon %}
               <img class="icon" src="{{ l.icon | escape }}" alt="">
@@ -80,6 +99,7 @@
         </div>
       </section>
       {% endfor %}
+      </div>
     </main>
 
     <footer class="site-footer">Made with ❤ by dove · <a href="sitemap.xml">Sitemap</a> · <a href="robots.txt">Robots</a></footer>
