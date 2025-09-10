@@ -221,6 +221,38 @@ cargo run --features remote -- preview --build-first \
 
 私有 Gist 建议：使用 `DOVE_INPUT_URL` 指向 Gist 的 raw 链接，或设置 `DOVE_GIST_ID` 并提供 `DOVE_GITHUB_TOKEN`（可配合 `DOVE_AUTH_SCHEME=Bearer`）；两种方式都会在请求中自动携带 `Authorization` 头。以上需启用 `remote` 特性。
 
+### 版本信息（页脚）
+
+本主题页脚默认显示构建版本：`… · v{{ build_version }}`。版本号在构建时注入，支持三种来源（按优先级）：
+
+- CLI 参数：`--build-version <VER>`（最高优先级）
+- 环境变量：`DOVE_BUILD_VERSION=<VER>`
+- 回退：crate 版本（`CARGO_PKG_VERSION`）
+
+常用用法：
+
+```
+# 本地构建（推荐其一）
+cargo run -- build --build-version "$(git describe --tags --always --dirty --long)"
+# 或
+DOVE_BUILD_VERSION="$(git describe --tags --always --dirty --long)" cargo run -- build
+
+# 预览时也可带上版本（自动重建将沿用该值）
+cargo run -- preview --build-first --build-version "$(git describe --tags --always --dirty --long)"
+```
+
+GitHub Actions（示例）：工作流中先计算版本，再通过 CLI 传递：
+
+```
+- name: Compute version
+  id: ver
+  run: echo "version=$(git describe --tags --always --dirty --long)" >> $GITHUB_OUTPUT
+- name: Build
+  run: cargo run -- build --build-version "${{ steps.ver.outputs.version }}"
+```
+
+说明：Actions 示例也同时设置了环境变量 `DOVE_BUILD_VERSION`（可选），但最终以 `--build-version` 为准；两者保持一致即可。
+
 ### 分类与分组（一级/二级）
 
 - 一级分类：使用 `groups[].category` 字段；用于侧边栏分类列表（如“常用/开发/学习”）。未填写时默认归入“全部”。
@@ -271,6 +303,14 @@ groups:
 - 若为 Project Pages（`https://<user>.github.io/<repo>/`），建议在 `dove.yaml` 设置 `site.base_path: <repo>`；User/Org Pages 通常无需设置。
 
 完整可用的工作流与详细说明见 [dove-private/README.md](https://github.com/dovenav/dove-private/blob/main/README.md)。
+
+## 部署到 Cloudflare Workers（可选）
+
+也可以将 `dove/dist` 作为静态资源部署到 Cloudflare Workers，参考示例与说明见：
+
+- [dove-private/README.md 中的 Workers 部署章节](https://github.com/dovenav/dove-private/blob/main/README.md)
+- 示例工作流：`dove-private/.github/workflows/deploy-worker.yml`
+- 配置：`dove-private/wrangler.toml`
 
 ## 部署到 Cloudflare Pages
 
