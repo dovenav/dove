@@ -141,6 +141,8 @@ a:focus { outline: none; box-shadow: 0 0 0 3px var(--ring); border-radius: 10px;
 .detail-side { position: sticky; top: 12px; }
 .side-block { margin-bottom: 12px; }
 .side-title { font-size: 13px; color: var(--muted); margin-bottom: 8px; font-weight: 600; }
+/* Extra spacing for inline side blocks on detail header */
+.detail-header .side-block { margin-top: 12px; }
 /* Spacing between header and body on detail page */
 .detail-body-wrap { margin-top: 12px; }
 

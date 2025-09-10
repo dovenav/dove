@@ -95,6 +95,8 @@
       </div>
     </main>
 
+    <footer class="site-footer">Made with ❤ by dove · <a href="../../sitemap.xml">Sitemap</a> · <a href="../../robots.txt">Robots</a> · v{{ build_version | escape }}</footer>
+
     <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
     <div id="qrModal" class="modal" hidden>
       <div class="modal-card">

@@ -75,6 +75,9 @@ enum Command {
         /// 覆盖站点描述（不修改配置文件）
         #[arg(long, value_name = "DESC")]
         description: Option<String>,
+        /// 构建版本号（优先于环境变量 DOVE_BUILD_VERSION）
+        #[arg(long, value_name = "VER")]
+        build_version: Option<String>,
     },
     /// 初始化示例配置与静态资源
     Init {
@@ -139,6 +142,9 @@ enum Command {
         /// 覆盖站点描述（不修改配置文件）
         #[arg(long, value_name = "DESC")]
         description: Option<String>,
+        /// 构建版本号（优先于环境变量 DOVE_BUILD_VERSION）
+        #[arg(long, value_name = "VER")]
+        build_version: Option<String>,
     },
 }
 
@@ -302,7 +308,7 @@ struct SitemapSettings {
 fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.command {
-        Command::Build { input, input_url, #[cfg(feature = "remote")] gist_id, #[cfg(feature = "remote")] gist_file, #[cfg(feature = "remote")] github_token, #[cfg(feature = "remote")] auth_scheme, out, static_dir, theme, base_path, no_intranet, color_scheme, title, description } => {
+        Command::Build { input, input_url, #[cfg(feature = "remote")] gist_id, #[cfg(feature = "remote")] gist_file, #[cfg(feature = "remote")] github_token, #[cfg(feature = "remote")] auth_scheme, out, static_dir, theme, base_path, no_intranet, color_scheme, title, description, build_version } => {
             // 环境变量覆盖（若 CLI 未指定）
             let env_input = env_opt_path("DOVE_INPUT");
             let env_input_url = env_opt_string("DOVE_INPUT_URL").or(env_opt_string("DOVE_GIST_URL"));
@@ -369,13 +375,14 @@ fn main() -> Result<()> {
                 effective_color_scheme,
                 effective_title,
                 effective_desc,
+                build_version,
             )
         }
         Command::Init { force, dir } => {
             let dir = dir.unwrap_or_else(|| PathBuf::from("."));
             init_scaffold(&dir, force)
         }
-        Command::Preview { dir, addr, build_first, input, input_url, #[cfg(feature = "remote")] gist_id, #[cfg(feature = "remote")] gist_file, #[cfg(feature = "remote")] github_token, #[cfg(feature = "remote")] auth_scheme, out, static_dir, theme, base_path, no_intranet, open, color_scheme, title, description } => {
+        Command::Preview { dir, addr, build_first, input, input_url, #[cfg(feature = "remote")] gist_id, #[cfg(feature = "remote")] gist_file, #[cfg(feature = "remote")] github_token, #[cfg(feature = "remote")] auth_scheme, out, static_dir, theme, base_path, no_intranet, open, color_scheme, title, description, build_version } => {
             // 环境变量
             let env_addr = env_opt_string("DOVE_PREVIEW_ADDR");
             let env_input = env_opt_path("DOVE_INPUT");
@@ -442,6 +449,7 @@ fn main() -> Result<()> {
                     effective_color_scheme,
                     effective_title.clone(),
                     effective_desc.clone(),
+                    build_version.clone(),
                 )?;
             }
 
@@ -485,6 +493,7 @@ fn main() -> Result<()> {
                 effective_title,
                 effective_desc,
                 open,
+                build_version,
             )
         }
     }
@@ -649,6 +658,7 @@ fn build(
     color_scheme_override: Option<ColorScheme>,
     title_override: Option<String>,
     desc_override: Option<String>,
+    build_version_opt: Option<String>,
 ) -> Result<()> {
     // 准备输出目录
     if !out_dir.exists() { fs::create_dir_all(out_dir).with_context(|| format!("创建输出目录失败: {}", out_dir.display()))?; }
@@ -689,6 +699,11 @@ fn build(
         }
     }
 
+    // 版本：CLI > ENV > crate
+    let effective_build_version = build_version_opt
+        .or_else(|| env_opt_string("DOVE_BUILD_VERSION"))
+        .unwrap_or_else(|| env!("CARGO_PKG_VERSION").to_string());
+
     // 渲染 HTML via Tera 到 site_dir
     let externals = render_with_theme(
         &config,
@@ -698,6 +713,7 @@ fn build(
         color_scheme_override,
         title_override,
         desc_override,
+        &effective_build_version,
     )?;
 
     // 生成 robots.txt 与 sitemap.xml（若提供 base_url 则写绝对 URL）
@@ -819,6 +835,7 @@ fn render_with_theme(
     color_scheme_override: Option<ColorScheme>,
     title_override: Option<String>,
     desc_override: Option<String>,
+    build_version: &str,
 ) -> Result<Vec<LinkDetail>> {
     // 匹配主题模板目录
     let pattern = theme_dir.join("templates").join("**/*");
@@ -829,12 +846,12 @@ fn render_with_theme(
     // 渲染外网(index.html)，按需渲染内网(intranet.html)
     let title_ref = title_override.as_deref();
     let desc_ref = desc_override.as_deref();
-    let externals = render_one(&tera, cfg, out_dir, NetMode::External, generate_intranet, color_scheme_override, title_ref, desc_ref)?;
+    let externals = render_one(&tera, cfg, out_dir, NetMode::External, generate_intranet, color_scheme_override, title_ref, desc_ref, build_version)?;
     if !externals.is_empty() {
-        render_link_details(&tera, cfg, out_dir, &externals, color_scheme_override, title_ref, desc_ref)?;
+        render_link_details(&tera, cfg, out_dir, &externals, color_scheme_override, title_ref, desc_ref, build_version)?;
     }
     if generate_intranet {
-        let _internals = render_one(&tera, cfg, out_dir, NetMode::Intranet, generate_intranet, color_scheme_override, title_ref, desc_ref)?;
+        let _internals = render_one(&tera, cfg, out_dir, NetMode::Intranet, generate_intranet, color_scheme_override, title_ref, desc_ref, build_version)?;
     }
     Ok(externals)
 }
@@ -854,8 +871,11 @@ fn render_one(
     color_scheme_override: Option<ColorScheme>,
     title_override: Option<&str>,
     desc_override: Option<&str>,
+    build_version: &str,
 ) -> Result<Vec<LinkDetail>> {
     let mut ctx = TContext::new();
+    // Build/version info from caller (CI/CLI), already resolved
+    ctx.insert("build_version", &build_version);
     let site_title = title_override.unwrap_or(&cfg.site.title);
     let site_desc = desc_override.unwrap_or(&cfg.site.description);
     ctx.insert("site_title", &site_title);
@@ -989,6 +1009,7 @@ fn render_link_details(
     color_scheme_override: Option<ColorScheme>,
     title_override: Option<&str>,
     desc_override: Option<&str>,
+    build_version: &str,
 ) -> Result<()> {
     let site_title = title_override.unwrap_or(&cfg.site.title);
     let site_desc = desc_override.unwrap_or(&cfg.site.description);
@@ -996,6 +1017,7 @@ fn render_link_details(
 
     for d in links {
         let mut ctx = TContext::new();
+        ctx.insert("build_version", &build_version);
         ctx.insert("site_title", &site_title);
         ctx.insert("site_desc", &site_desc);
         ctx.insert("color_scheme", &scheme);
@@ -1230,6 +1252,7 @@ fn preview_watch_and_serve(
     title: Option<String>,
     desc: Option<String>,
     open: bool,
+    build_version: Option<String>,
 ) -> Result<()> {
     if !root.exists() { bail!("预览目录不存在: {}", root.display()); }
     println!("🔎 预览目录: {}", root.display());
@@ -1257,6 +1280,7 @@ fn preview_watch_and_serve(
     {
         let version = version.clone();
         let dirty = dirty.clone();
+        let build_version = build_version.clone();
         thread::spawn(move || {
             loop {
                 thread::sleep(Duration::from_millis(400));
@@ -1267,7 +1291,7 @@ fn preview_watch_and_serve(
                     ) {
                         if let Ok(cfg) = serde_yaml::from_str::<Config>(&loaded.text) {
                             let _ = build(
-                                cfg, &out, static_dir.as_deref(), theme_dir.as_deref(), base_path.clone(), no_intranet, color_scheme, title.clone(), desc.clone(),
+                                cfg, &out, static_dir.as_deref(), theme_dir.as_deref(), base_path.clone(), no_intranet, color_scheme, title.clone(), desc.clone(), build_version.clone(),
                             );
                             version.fetch_add(1, Ordering::SeqCst);
                             println!("🔁 已重建，version = {} · 配置来源: {}", version.load(Ordering::SeqCst), describe_source(&loaded.source));
