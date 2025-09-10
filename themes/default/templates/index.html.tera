@@ -93,9 +93,7 @@
             {% if l.desc and l.desc != "" %}
             <div class="desc">{{ l.desc | escape }}</div>
             {% endif %}
-            {% if l.host and l.host != "" %}
-            <div class="meta"><span class="chip">{{ l.host | escape }}</span></div>
-            {% endif %}
+            {# host 显示不需要，列表卡片中移除 #}
           </a>
           {% endfor %}
         </div>
