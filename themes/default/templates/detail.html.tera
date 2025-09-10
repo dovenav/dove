@@ -145,7 +145,6 @@
           if (cancelBtn) cancelBtn.style.display = 'none';
         }
         if (cancelBtn) { cancelBtn.addEventListener('click', cancelCountdown); }
-        if (cancelTop) { cancelTop.addEventListener('click', cancelCountdown); }
 
         // 复制
         function showToast(msg){
