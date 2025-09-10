@@ -104,7 +104,7 @@
       </div>
     </main>
 
-    <footer class="site-footer">Made with ❤ by dove · <a href="sitemap.xml">Sitemap</a> · <a href="robots.txt">Robots</a> · v{{ build_version | escape }}</footer>
+    <footer class="site-footer">Made with ❤ by <a href="https://github.com/dovenav/dove" target="_blank" rel="noopener">dove</a> · <a href="sitemap.xml">Sitemap</a> · <a href="robots.txt">Robots</a> · v{{ build_version | escape }}</footer>
     <script src="assets/app.js"></script>
   </body>
 </html>
