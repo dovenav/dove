@@ -25,52 +25,88 @@
     </header>
 
     <main class="container">
-      <section class="group">
-        <h2 class="group-title">即将前往第三方网站</h2>
-        <div class="card">
-          <div class="card-head">
-            {% if link_icon %}
-            <img class="icon" src="{{ link_icon | escape }}" alt="">
+      <div class="detail-layout">
+        <article class="detail-main">
+          <div class="card detail-header">
+            <div class="card-head head-split">
+              <div class="head-left">
+                {% if link_icon %}
+                <img class="icon" src="{{ link_icon | escape }}" alt="">
+                {% endif %}
+                <div class="title">{{ link_name | escape }}</div>
+              </div>
+              <div class="head-right header-actions">
+                <a class="btn small" id="proceed" target="_self" rel="noopener noreferrer" href="{{ link_url | escape }}">继续前往</a>
+                <a class="btn ghost small" href="../../index.html">返回</a>
+                <button class="btn ghost small" id="copyLink" data-url="{{ link_url | escape }}">复制链接</button>
+                <button class="btn ghost small" id="copyQuote" data-quote="{{ link_name | escape }} - {{ link_url | escape }}">复制引用</button>
+                <button class="btn ghost small" id="showQR">二维码</button>
+                {% if has_delay %}<button class="btn ghost small" id="cancelAuto" style="display:none;">取消</button>{% endif %}
+              </div>
+            </div>
+            <div class="meta-row">
+              <span class="badge risk-{{ risk_class }}">风险等级：{{ risk_label }}</span>
+              {% if link_host and link_host != "" %}
+              <span class="chip">{{ link_host | escape }}</span>
+              {% endif %}
+            </div>
+            {% if link_intro and link_intro != "" %}
+            <div class="tldr">
+              <strong>TL;DR</strong>
+              <span class="tldr-text">{{ link_intro | escape }}</span>
+            </div>
             {% endif %}
-            <div class="title">{{ link_name | escape }}</div>
+            <div class="meta" id="cdWrap" style="display:none;">将于 <strong id="cd">{{ delay_seconds }}</strong> 秒后跳转……</div>
+            
+            <!-- 目标信息与风险提示（合并原侧栏内容，平铺在头部卡片中） -->
+            <div class="side-block">
+              <div class="side-title">目标信息</div>
+              {% if link_host and link_host != "" %}
+              <div class="meta">域名：<code>{{ link_host | escape }}</code></div>
+              {% endif %}
+              <div class="meta">地址：<code id="targetUrl">{{ link_url | escape }}</code></div>
+            </div>
+            <div class="side-block">
+              <div class="side-title">风险提示</div>
+              <div class="desc">
+                <ul>
+                  <li>确认目标域名是否正确：<code>{{ link_host | escape }}</code></li>
+                  <li>优先访问 HTTPS（地址栏应显示锁形标识）。</li>
+                  <li>谨慎输入账号、密码、验证码等敏感信息。</li>
+                  <li>如来自不明来源，请勿下载或运行可执行文件。</li>
+                </ul>
+              </div>
+            </div>
           </div>
-          <div class="meta">
-            <span class="badge risk-{{ risk_class }}">风险等级：{{ risk_label }}</span>
-          </div>
-          {% if link_details_html %}
-          <div class="desc">{{ link_details_html | safe }}</div>
-          {% elif link_intro and link_intro != "" %}
-          <div class="desc">{{ link_intro | escape }}</div>
-          {% endif %}
-          {% if link_host and link_host != "" %}
-          <div class="meta">目标域名：{{ link_host | escape }}</div>
-          {% endif %}
-          <div class="meta">目标地址：<code>{{ link_url | escape }}</code></div>
-          <div class="meta" id="cdWrap" style="display:none;">将于 <strong id="cd">{{ delay_seconds }}</strong> 秒后跳转……</div>
-          <div style="margin-top:12px; display:flex; gap:8px;">
-            <a class="btn" id="proceed" target="_self" rel="noopener noreferrer" href="{{ link_url | escape }}">继续前往</a>
-            <a class="btn" href="../../index.html">返回</a>
-            {% if has_delay %}<button class="btn" id="cancelAuto" style="display:none;">取消</button>{% endif %}
-          </div>
-        </div>
-      </section>
 
-      <section class="group">
-        <h2 class="group-title">风险提示</h2>
-        <div class="card">
-          <div class="desc">
-            <ul>
-              <li>确认目标域名是否正确：<code>{{ link_host | escape }}</code></li>
-              <li>优先访问 HTTPS（地址栏应显示锁形标识）。</li>
-              <li>谨慎输入账号、密码、验证码等敏感信息。</li>
-              <li>如来自不明来源，请勿下载或运行可执行文件。</li>
-            </ul>
-          </div>
-        </div>
-      </section>
+          {% if link_details_html or (link_intro and link_intro != "") %}
+          <section class="card detail-body-wrap">
+            <div id="detailBody" class="prose">
+              {% if link_details_html %}
+                {{ link_details_html | safe }}
+              {% else %}
+                <p>{{ link_intro | escape }}</p>
+              {% endif %}
+            </div>
+          </section>
+          {% endif %}
+        </article>
+        
+      </div>
     </main>
 
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+    <div id="qrModal" class="modal" hidden>
+      <div class="modal-card">
+        <div class="side-title">扫码打开</div>
+        <div class="qr-box"><div id="qrImg" aria-label="二维码" role="img"></div></div>
+        <div class="meta" style="margin-top:8px; word-break: break-all;"><code>{{ link_url | escape }}</code></div>
+        <div class="modal-actions"><button id="closeQR" class="btn small">关闭</button></div>
+      </div>
+    </div>
+
     <script src="../../assets/app.js"></script>
+    <script src="../../assets/qrcode.min.js"></script>
     <script>
       (function(){
         var hasDelay = {{ has_delay | json_encode | safe }};
@@ -81,37 +117,87 @@
         var cd = document.getElementById('cd');
         var cancelBtn = document.getElementById('cancelAuto');
         var timer = null, remain = delay;
-
-        if (proceed) {
-          proceed.addEventListener('click', function(ev){
-            if (!hasDelay || delay <= 0) { return; } // 直接让浏览器按默认跳转
-            ev.preventDefault();
-            // 显示倒计时并启动
-            cdWrap && (cdWrap.style.display = 'block');
-            cancelBtn && (cancelBtn.style.display = 'inline-block');
-            proceed.setAttribute('disabled', 'true');
-            proceed.textContent = '准备跳转…';
-            remain = delay;
+        function setProceedState(disabled, text){
+          if(proceed){ if(disabled) proceed.setAttribute('disabled','true'); else proceed.removeAttribute('disabled'); if(text) proceed.textContent = text; }
+        }
+        function startCountdown(ev){
+          if (!hasDelay || delay <= 0) { return; }
+          ev.preventDefault();
+          cdWrap && (cdWrap.style.display = 'block');
+          if (cancelBtn) cancelBtn.style.display = 'inline-block';
+          setProceedState(true, '准备跳转…');
+          remain = delay;
+          if (cd) cd.textContent = String(remain);
+          timer = setInterval(function(){
+            remain -= 1;
             if (cd) cd.textContent = String(remain);
-            timer = setInterval(function(){
-              remain -= 1;
-              if (cd) cd.textContent = String(remain);
-              if (remain <= 0) {
-                clearInterval(timer); timer=null;
-                window.location.href = url;
-              }
-            }, 1000);
-          });
+            if (remain <= 0) {
+              clearInterval(timer); timer=null;
+              window.location.href = url;
+            }
+          }, 1000);
         }
-        if (cancelBtn) {
-          cancelBtn.addEventListener('click', function(){
-            if (timer) { clearInterval(timer); timer=null; }
-            proceed.removeAttribute('disabled');
-            proceed.textContent = '继续前往';
-            cdWrap && (cdWrap.style.display = 'none');
-            cancelBtn.style.display = 'none';
-          });
+        if (proceed) { proceed.addEventListener('click', startCountdown); }
+        function cancelCountdown(){
+          if (timer) { clearInterval(timer); timer=null; }
+          setProceedState(false, '继续前往');
+          cdWrap && (cdWrap.style.display = 'none');
+          if (cancelBtn) cancelBtn.style.display = 'none';
         }
+        if (cancelBtn) { cancelBtn.addEventListener('click', cancelCountdown); }
+        if (cancelTop) { cancelTop.addEventListener('click', cancelCountdown); }
+
+        // 复制
+        function showToast(msg){
+          var t = document.getElementById('toast');
+          if(!t) return;
+          t.textContent = msg;
+          t.hidden = false;
+          t.classList.add('show');
+          setTimeout(function(){ t.classList.remove('show'); t.hidden = true; }, 1600);
+        }
+        var copyLink = document.getElementById('copyLink');
+        var copyQuote = document.getElementById('copyQuote');
+        copyLink && copyLink.addEventListener('click', function(){
+          var u = this.getAttribute('data-url');
+          if(!u) return;
+          navigator.clipboard && navigator.clipboard.writeText(u).then(function(){ showToast('已复制链接'); });
+        });
+        copyQuote && copyQuote.addEventListener('click', function(){
+          var q = this.getAttribute('data-quote');
+          if(!q) return;
+          navigator.clipboard && navigator.clipboard.writeText(q).then(function(){ showToast('已复制引用'); });
+        });
+        
+
+        // QR code modal (offline generation)
+        var showQR = document.getElementById('showQR');
+        var qrModal = document.getElementById('qrModal');
+        var closeQR = document.getElementById('closeQR');
+        var qrContainer = document.getElementById('qrImg');
+        var qrcodeInstance = null;
+        function openQR(){
+          if(!qrModal) return;
+          if(qrContainer){
+            // 清空容器以避免重复渲染
+            qrContainer.innerHTML = '';
+            try {
+              qrcodeInstance = new QRCode(qrContainer, {
+                text: url,
+                width: 220,
+                height: 220,
+                correctLevel: (window.QRCode && QRCode.CorrectLevel && QRCode.CorrectLevel.M) ? QRCode.CorrectLevel.M : 1
+              });
+            } catch (e) {
+              // 回退：若库不可用，则保持原链接文本
+            }
+          }
+          qrModal.hidden = false; qrModal.classList.add('open');
+        }
+        function closeQRModal(){ if(!qrModal) return; qrModal.classList.remove('open'); qrModal.hidden = true; }
+        showQR && showQR.addEventListener('click', openQR);
+        closeQR && closeQR.addEventListener('click', closeQRModal);
+        qrModal && qrModal.addEventListener('click', function(ev){ if(ev.target === qrModal){ closeQRModal(); } });
       })();
     </script>
   </body>

@@ -44,6 +44,9 @@ site:
       term: ""
       content: ""
 
+
+
+ 
 groups:
   # 常用分类下的多个二级分组
   - category: 常用
@@ -55,8 +58,7 @@ groups:
         details: |
           <p>Google 是一个<strong>搜索引擎</strong>。</p>
         slug: google
-        icon: assets/favicon.svg
-        intranet: http://google.corp
+        icon: https://cdn.simpleicons.org/google?size=64
         risk: medium
         utm:
           source: nav
@@ -65,53 +67,187 @@ groups:
         lastmod: 2025-09-09
         changefreq: monthly
         priority: 0.6
-      - { name: Bing, url: https://www.bing.com, intro: 微软搜索 }
-      - { name: DuckDuckGo, url: https://duckduckgo.com, intro: 注重隐私的搜索 }
-      - { name: 百度, url: https://www.baidu.com, intro: 国内搜索 }
+      # ----------------
+      - name: Bing
+        url: https://www.bing.com
+        intro: 微软搜索
+        details: |
+          <p>微软旗下搜索引擎，适合日常检索、图片与视频搜索。</p>
+        icon: https://cdn.simpleicons.org/bing?size=64
+      # ----------------
+      - name: DuckDuckGo
+        url: https://duckduckgo.com
+        intro: 注重隐私的搜索
+        details: |
+          <p>注重隐私保护的搜索引擎，不跟踪用户，支持 <code>!bang</code> 语法直达站内搜索。</p>
+        icon: https://cdn.simpleicons.org/duckduckgo?size=64
+      # ----------------
+      - name: 百度
+        url: https://www.baidu.com
+        intro: 国内搜索
+        details: |
+          <p>中文搜索引擎，覆盖网页、资讯、视频与地图等内容与服务。</p>
+        icon: https://cdn.simpleicons.org/baidu?size=64
 
   - category: 常用
     name: 媒体/社交
     links:
-      - { name: YouTube, url: https://www.youtube.com, intro: 视频平台 }
-      - { name: Twitter (X), url: https://twitter.com, intro: 社交网络 }
-      - { name: Reddit, url: https://www.reddit.com, intro: 社区讨论 }
+      - name: YouTube
+        url: https://www.youtube.com
+        intro: 视频平台
+        details: |
+          <p>全球最大的视频平台，支持频道订阅、播放列表与直播功能。</p>
+        icon: https://cdn.simpleicons.org/youtube?size=64
+      # ----------------
+      - name: Twitter (X)
+        url: https://twitter.com
+        intro: 社交网络
+        details: |
+          <p>社交与资讯平台，关注话题、创建列表，并参与实时讨论。</p>
+        icon: https://cdn.simpleicons.org/x?size=64
+      # ----------------
+      - name: Reddit
+        url: https://www.reddit.com
+        intro: 社区讨论
+        details: |
+          <p>基于主题分版块（Subreddit）的社区讨论平台，涵盖技术、兴趣与新闻。</p>
+        icon: https://cdn.simpleicons.org/reddit?size=64
 
   - category: 常用
     name: 百科
     links:
-      - { name: Wikipedia, url: https://www.wikipedia.org, intro: 自由百科 }
+      - name: Wikipedia
+        url: https://www.wikipedia.org
+        intro: 自由百科
+        details: |
+          <p>自由协作的百科全书，多语言内容由社区共同维护与校对。</p>
+        icon: https://cdn.simpleicons.org/wikipedia?size=64
 
   # 开发分类下的多个二级分组
   - category: 开发
     name: 文档/学习
     links:
-      - { name: Rust Docs, url: https://doc.rust-lang.org, intro: Rust 官方文档 }
-      - { name: MDN Web Docs, url: https://developer.mozilla.org, intro: Web 开发文档 }
-      - { name: Stack Overflow, url: https://stackoverflow.com, intro: 开发问答 }
-      - { name: GeeksforGeeks, url: https://www.geeksforgeeks.org, intro: 计算机知识 }
+      - name: Rust Docs
+        url: https://doc.rust-lang.org
+        intro: Rust 官方文档
+        details: |
+          <p>官方书籍《The Rust Programming Language》与标准库参考，含示例与最佳实践。</p>
+        icon: https://cdn.simpleicons.org/rust?size=64
+      # ----------------
+      - name: MDN Web Docs
+        url: https://developer.mozilla.org
+        intro: Web 开发文档
+        details: |
+          <p>权威 Web 文档，覆盖 HTML/CSS/JS、浏览器 API 与兼容性数据（BCD）。</p>
+        icon: https://cdn.simpleicons.org/mdnwebdocs?size=64
+      # ----------------
+      - name: Stack Overflow
+        url: https://stackoverflow.com
+        intro: 开发问答
+        details: |
+          <p>开发者问答社区，可搜索常见报错与解决方案，参考高票答案与讨论。</p>
+        icon: https://cdn.simpleicons.org/stackoverflow?size=64
+      # ----------------
+      - name: GeeksforGeeks
+        url: https://www.geeksforgeeks.org
+        intro: 计算机知识
+        details: |
+          <p>计算机基础与数据结构/算法教程，附题解与面试经验分享。</p>
+        icon: https://cdn.simpleicons.org/geeksforgeeks?size=64
 
   - category: 开发
     name: 平台/仓库
     links:
-      - { name: GitHub, url: https://github.com, intro: 代码托管, icon: https://github.githubassets.com/favicons/favicon.svg, intranet: http://git.corp }
-      - { name: GitLab, url: https://gitlab.com, intro: 代码托管与 CI }
-      - { name: crates.io, url: https://crates.io, intro: Rust 包仓库, intranet: http://crates.corp }
+      - name: GitHub
+        url: https://github.com
+        intro: 代码托管
+        icon: https://cdn.simpleicons.org/github?size=64
+        details: |
+          <p>主流代码托管平台，提供 Issues、Pull Requests、Actions 与 Packages 等生态。</p>
+      # ----------------
+      - name: GitLab
+        url: https://gitlab.com
+        intro: 代码托管与 CI
+        details: |
+          <p>集成代码托管与 CI/CD，支持 Pipeline、Issue Board 与容器注册表。</p>
+        icon: https://cdn.simpleicons.org/gitlab?size=64
+      # ----------------
+      - name: crates.io
+        url: https://crates.io
+        intro: Rust 包仓库
+        details: |
+          <p>Rust 生态的官方包仓库，用于发布、检索与依赖管理。</p>
+        icon: https://cdn.simpleicons.org/cratesdotio?size=64
 
   - category: 开发
     name: 工具
     links:
-      - { name: Regex101, url: https://regex101.com, intro: 正则测试 }
-      - { name: JSON Formatter, url: https://jsonformatter.org, intro: JSON 工具 }
-      - { name: TinyPNG, url: https://tinypng.com, intro: 图片压缩 }
-      - { name: CodeSandbox, url: https://codesandbox.io, intro: 在线 IDE }
-      - { name: JSDelivr, url: https://www.jsdelivr.com, intro: 前端 CDN }
+      - name: Regex101
+        url: https://regex101.com
+        intro: 正则测试
+        details: |
+          <p>在线正则表达式测试与解释器，支持 PCRE、ECMAScript、Python 等多种方言。</p>
+        icon: https://cdn.simpleicons.org/regex101?size=64
+      # ----------------
+      - name: JSON Formatter
+        url: https://jsonformatter.org
+        intro: JSON 工具
+        details: |
+          <p>JSON 在线格式化与校验，支持压缩、树形浏览与拷贝分享。</p>
+        icon: https://cdn.simpleicons.org/json?size=64
+      # ----------------
+      - name: TinyPNG
+        url: https://tinypng.com
+        intro: 图片压缩
+        details: |
+          <p>智能压缩 PNG/JPG/WebP，显著降低体积同时尽量保持画质。</p>
+        icon: https://cdn.simpleicons.org/tinypng?size=64
+      # ----------------
+      - name: CodeSandbox
+        url: https://codesandbox.io
+        intro: 在线 IDE
+        details: |
+          <p>云端在线 IDE，快速创建前端/全栈样例，便于协作与分享。</p>
+        icon: https://cdn.simpleicons.org/codesandbox?size=64
+      # ----------------
+      - name: JSDelivr
+        url: https://www.jsdelivr.com
+        intro: 前端 CDN
+        details: |
+          <p>免费公共 CDN，加速分发 npm/GitHub 资源，支持自定义版本与文件路径。</p>
+        icon: https://cdn.simpleicons.org/jsdelivr?size=64
 
   - category: 学习
     name: 刷题/练习
     links:
-      - { name: LeetCode, url: https://leetcode.com, intro: 算法练习 }
+      - name: LeetCode
+        url: https://leetcode.com
+        intro: 算法练习
+        details: |
+          <p>在线刷题平台，覆盖数据结构与算法，提供竞赛、讨论与题解。</p>
+        icon: https://cdn.simpleicons.org/leetcode?size=64
 
-  - category: 内部
-    name: 内部系统
+  
+  - category: 学习
+    name: 课程/书籍
     links:
-      - { name: 内部系统, intranet: http://intranet.corp, intro: 公司内部系统 }
+      - name: Coursera
+        url: https://www.coursera.org
+        intro: 在线课程
+        details: |
+          <p>全球高校与机构提供的在线课程与专精证书，涵盖计算机、商业与人文等。</p>
+        icon: https://cdn.simpleicons.org/coursera?size=64
+      # ----------------
+      - name: Udemy
+        url: https://www.udemy.com
+        intro: 付费课程
+        details: |
+          <p>面向实用技能的在线课程平台，内容多样，常有折扣促销。</p>
+        icon: https://cdn.simpleicons.org/udemy?size=64
+      # ----------------
+      - name: 可汗学院
+        url: https://www.khanacademy.org
+        intro: 免费课程
+        details: |
+          <p>非营利教育平台，提供数学、科学与计算机等免费课程与练习。</p>
+        icon: https://cdn.simpleicons.org/khanacademy?size=64
