@@ -8,6 +8,7 @@
   const clockDateEl = document.getElementById('clock-date');
   // Categories
   const catList = document.getElementById('cats');
+  const sidebar = document.getElementById('sidebar');
   const sections = Array.from(document.querySelectorAll('section.group'));
 
   function filter() {
@@ -19,12 +20,35 @@
       const t = `${name} ${host} ${desc}`;
       c.style.display = v ? (t.includes(v) ? '' : 'none') : '';
     });
-    // 搜索时显示所有分类；清空时恢复当前分类筛选
+    // 搜索时：仅显示含有匹配结果的分组与分类；清空时恢复当前分类筛选
     if(v){
-      sections.forEach(sec => { sec.style.display = ''; });
+      // 逐分组统计是否有可见卡片
+      const hasVisibleByCat = {};
+      sections.forEach(sec => {
+        const visible = Array.from(sec.querySelectorAll('.card')).some(x => x.style.display !== 'none');
+        sec.style.display = visible ? '' : 'none';
+        const cat = sec.getAttribute('data-cat') || '';
+        if(visible){ hasVisibleByCat[cat] = true; }
+      });
+      // 侧边栏分类：仅显示仍有结果的分类；若全无结果则隐藏侧边栏
+      if(catList){
+        const items = Array.from(catList.querySelectorAll('.cat-item'));
+        items.forEach(it => {
+          const cat = it.getAttribute('data-cat') || '';
+          it.style.display = hasVisibleByCat[cat] ? '' : 'none';
+        });
+        const anyVisibleCat = items.some(it => it.style.display !== 'none');
+        if(sidebar){ sidebar.style.display = anyVisibleCat ? '' : 'none'; }
+      }
     }else{
       // 恢复当前分类视图
       setActiveCat(currentCat || (catList && catList.querySelector('.cat-item') && catList.querySelector('.cat-item').getAttribute('data-cat')) || '');
+      // 恢复侧边栏分类可见性
+      if(catList){
+        Array.from(catList.querySelectorAll('.cat-item')).forEach(it => { it.style.display = ''; });
+      }
+      // 如果存在侧边栏（即有分类数据），则恢复显示
+      if(sidebar){ sidebar.style.display = (catList && catList.children.length>0) ? '' : 'none'; }
     }
   }
   q && q.addEventListener('input', filter);

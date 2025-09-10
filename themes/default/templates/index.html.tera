@@ -68,6 +68,7 @@
     </header>
 
     <main class="container appwrap">
+      {% if categories | length > 0 %}
       <aside class="sidebar" id="sidebar">
         <ul class="cats" id="cats">
           {% for c in categories %}
@@ -75,6 +76,7 @@
           {% endfor %}
         </ul>
       </aside>
+      {% endif %}
       <div class="content" id="content">
       {% for g in groups %}
       <section class="group" data-cat="{{ g.category }}">

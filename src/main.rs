@@ -35,6 +35,22 @@ enum Command {
         /// 配置文件 URL，支持 http/https（可用于 Gist raw 链接）
         #[arg(long, value_name = "URL")]
         input_url: Option<String>,
+        /// 从 Gist 加载配置：Gist ID（与 --input-url 二选一，存在时忽略本地 input）
+        #[cfg(feature = "remote")]
+        #[arg(long, value_name = "ID")]
+        gist_id: Option<String>,
+        /// 从 Gist 加载配置：文件名（可选，不填则取第一个文件）
+        #[cfg(feature = "remote")]
+        #[arg(long, value_name = "NAME")]
+        gist_file: Option<String>,
+        /// 访问私有 Gist 或需要授权的 URL 的 token
+        #[cfg(feature = "remote")]
+        #[arg(long, value_name = "TOKEN")]
+        github_token: Option<String>,
+        /// 授权方案（默认 token，可设为 Bearer 等）
+        #[cfg(feature = "remote")]
+        #[arg(long, value_name = "SCHEME")]
+        auth_scheme: Option<String>,
         /// 输出目录，默认：dist
         #[arg(short, long)]
         out: Option<PathBuf>,
@@ -50,6 +66,15 @@ enum Command {
         /// 仅生成外网页面（不生成 intranet.html）
         #[arg(long)]
         no_intranet: bool,
+        /// 覆盖页面配色方案（auto|light|dark）
+        #[arg(long, value_name = "SCHEME")]
+        color_scheme: Option<String>,
+        /// 覆盖站点标题（不修改配置文件）
+        #[arg(long, value_name = "TITLE")]
+        title: Option<String>,
+        /// 覆盖站点描述（不修改配置文件）
+        #[arg(long, value_name = "DESC")]
+        description: Option<String>,
     },
     /// 初始化示例配置与静态资源
     Init {
@@ -76,6 +101,22 @@ enum Command {
         input: Option<PathBuf>,
         #[arg(long, value_name = "URL")]
         input_url: Option<String>,
+        /// 从 Gist 加载配置：Gist ID（与 --input-url 二选一，存在时忽略本地 input）
+        #[cfg(feature = "remote")]
+        #[arg(long, value_name = "ID")]
+        gist_id: Option<String>,
+        /// 从 Gist 加载配置：文件名（可选，不填则取第一个文件）
+        #[cfg(feature = "remote")]
+        #[arg(long, value_name = "NAME")]
+        gist_file: Option<String>,
+        /// 访问私有 Gist 或需要授权的 URL 的 token
+        #[cfg(feature = "remote")]
+        #[arg(long, value_name = "TOKEN")]
+        github_token: Option<String>,
+        /// 授权方案（默认 token，可设为 Bearer 等）
+        #[cfg(feature = "remote")]
+        #[arg(long, value_name = "SCHEME")]
+        auth_scheme: Option<String>,
         #[arg(short, long)]
         out: Option<PathBuf>,
         #[arg(long, value_name = "DIR")]
@@ -89,6 +130,15 @@ enum Command {
         /// 启动后自动在浏览器打开
         #[arg(long)]
         open: bool,
+        /// 覆盖页面配色方案（auto|light|dark）
+        #[arg(long, value_name = "SCHEME")]
+        color_scheme: Option<String>,
+        /// 覆盖站点标题（不修改配置文件）
+        #[arg(long, value_name = "TITLE")]
+        title: Option<String>,
+        /// 覆盖站点描述（不修改配置文件）
+        #[arg(long, value_name = "DESC")]
+        description: Option<String>,
     },
 }
 
@@ -252,7 +302,7 @@ struct SitemapSettings {
 fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.command {
-        Command::Build { input, input_url, out, static_dir, theme, base_path, no_intranet } => {
+        Command::Build { input, input_url, #[cfg(feature = "remote")] gist_id, #[cfg(feature = "remote")] gist_file, #[cfg(feature = "remote")] github_token, #[cfg(feature = "remote")] auth_scheme, out, static_dir, theme, base_path, no_intranet, color_scheme, title, description } => {
             // 环境变量覆盖（若 CLI 未指定）
             let env_input = env_opt_path("DOVE_INPUT");
             let env_input_url = env_opt_string("DOVE_INPUT_URL").or(env_opt_string("DOVE_GIST_URL"));
@@ -270,27 +320,42 @@ fn main() -> Result<()> {
             let env_github_token = env_opt_string("DOVE_GITHUB_TOKEN");
             let env_auth_scheme = env_opt_string("DOVE_AUTH_SCHEME");
 
-            let effective_input = input.or(env_input);
+            let mut effective_input = input.or(env_input);
             let effective_input_url = input_url.or(env_input_url);
+            #[cfg(feature = "remote")] let effective_gist_id = gist_id.or(env_gist_id);
+            #[cfg(not(feature = "remote"))] let effective_gist_id: Option<String> = None;
+            #[cfg(feature = "remote")] let effective_gist_file = gist_file.or(env_gist_file);
+            #[cfg(not(feature = "remote"))] let effective_gist_file: Option<String> = None;
             let effective_out = out.or(env_out).unwrap_or_else(|| PathBuf::from("dist"));
             let effective_static = static_dir.or(env_static);
             let effective_theme = theme.or(env_theme).or(env_theme_dir);
             let effective_base_path = base_path.or(env_base_path);
             let effective_no_intranet = if no_intranet { true } else { env_no_intranet };
-            let effective_color_scheme = env_color_scheme;
-            let effective_title = env_title;
-            let effective_desc = env_description;
+            let cli_color = color_scheme.and_then(parse_color_scheme);
+            let effective_color_scheme = cli_color.or(env_color_scheme);
+            let effective_title = title.or(env_title);
+            let effective_desc = description.or(env_description);
+            #[cfg(feature = "remote")] let effective_github_token = github_token.or(env_github_token);
+            #[cfg(not(feature = "remote"))] let effective_github_token: Option<String> = None;
+            #[cfg(feature = "remote")] let effective_auth_scheme = auth_scheme.or(env_auth_scheme);
+            #[cfg(not(feature = "remote"))] let effective_auth_scheme: Option<String> = None;
+
+            // 当提供了 URL/Gist 时，忽略显式/环境的本地 input 路径，使 URL/Gist 优先生效
+            if effective_input_url.is_some() || effective_gist_id.is_some() {
+                effective_input = None;
+            }
 
             // 加载配置（本地/URL/Gist）
-            let raw_cfg = load_config_text(
+            let loaded_cfg = load_config(
                 effective_input.as_deref(),
                 effective_input_url.as_deref(),
-                env_gist_id.as_deref(),
-                env_gist_file.as_deref(),
-                env_github_token.as_deref(),
-                env_auth_scheme.as_deref(),
+                effective_gist_id.as_deref(),
+                effective_gist_file.as_deref(),
+                effective_github_token.as_deref(),
+                effective_auth_scheme.as_deref(),
             )?;
-            let config: Config = serde_yaml::from_str(&raw_cfg)
+            println!("ℹ️ 本次使用的配置来源: {}", describe_source(&loaded_cfg.source));
+            let config: Config = serde_yaml::from_str(&loaded_cfg.text)
                 .with_context(|| "解析 YAML 失败（来自本地/URL/Gist）")?;
 
             let out_dir = effective_out;
@@ -310,7 +375,7 @@ fn main() -> Result<()> {
             let dir = dir.unwrap_or_else(|| PathBuf::from("."));
             init_scaffold(&dir, force)
         }
-        Command::Preview { dir, addr, build_first, input, input_url, out, static_dir, theme, base_path, no_intranet, open } => {
+        Command::Preview { dir, addr, build_first, input, input_url, #[cfg(feature = "remote")] gist_id, #[cfg(feature = "remote")] gist_file, #[cfg(feature = "remote")] github_token, #[cfg(feature = "remote")] auth_scheme, out, static_dir, theme, base_path, no_intranet, open, color_scheme, title, description } => {
             // 环境变量
             let env_addr = env_opt_string("DOVE_PREVIEW_ADDR");
             let env_input = env_opt_path("DOVE_INPUT");
@@ -330,28 +395,43 @@ fn main() -> Result<()> {
             let env_auth_scheme = env_opt_string("DOVE_AUTH_SCHEME");
 
             let effective_addr = addr.or(env_addr).unwrap_or_else(|| "127.0.0.1:8787".to_string());
-            let effective_input = input.or(env_input);
+            let mut effective_input = input.or(env_input);
             let effective_input_url = input_url.or(env_input_url);
+            #[cfg(feature = "remote")] let effective_gist_id = gist_id.or(env_gist_id);
+            #[cfg(not(feature = "remote"))] let effective_gist_id: Option<String> = None;
+            #[cfg(feature = "remote")] let effective_gist_file = gist_file.or(env_gist_file);
+            #[cfg(not(feature = "remote"))] let effective_gist_file: Option<String> = None;
             let effective_out = out.or(env_out).unwrap_or_else(|| PathBuf::from("dist"));
             let effective_static = static_dir.or(env_static);
             let effective_theme = theme.or(env_theme).or(env_theme_dir);
             let effective_base_path = base_path.or(env_base_path);
             let effective_no_intranet = if no_intranet { true } else { env_no_intranet };
-            let effective_color_scheme = env_color_scheme;
-            let effective_title = env_title;
-            let effective_desc = env_description;
+            let cli_color = color_scheme.and_then(parse_color_scheme);
+            let effective_color_scheme = cli_color.or(env_color_scheme);
+            let effective_title = title.or(env_title);
+            let effective_desc = description.or(env_description);
+            #[cfg(feature = "remote")] let effective_github_token = github_token.or(env_github_token);
+            #[cfg(not(feature = "remote"))] let effective_github_token: Option<String> = None;
+            #[cfg(feature = "remote")] let effective_auth_scheme = auth_scheme.or(env_auth_scheme);
+            #[cfg(not(feature = "remote"))] let effective_auth_scheme: Option<String> = None;
+
+            // 当提供了 URL/Gist 时，忽略显式/环境的本地 input 路径，使 URL/Gist 优先生效
+            if effective_input_url.is_some() || effective_gist_id.is_some() {
+                effective_input = None;
+            }
 
             // 可选构建
             if build_first {
-                let raw_cfg = load_config_text(
+                let loaded_cfg = load_config(
                     effective_input.as_deref(),
                     effective_input_url.as_deref(),
-                    env_opt_string("DOVE_GIST_ID").as_deref(),
-                    env_opt_string("DOVE_GIST_FILE").as_deref(),
-                    env_opt_string("DOVE_GITHUB_TOKEN").as_deref(),
-                    env_opt_string("DOVE_AUTH_SCHEME").as_deref(),
+                    effective_gist_id.as_deref(),
+                    effective_gist_file.as_deref(),
+                    effective_github_token.as_deref(),
+                    effective_auth_scheme.as_deref(),
                 )?;
-                let config: Config = serde_yaml::from_str(&raw_cfg).with_context(|| "解析 YAML 失败（预览构建）")?;
+                println!("ℹ️ 本次使用的配置来源: {}", describe_source(&loaded_cfg.source));
+                let config: Config = serde_yaml::from_str(&loaded_cfg.text).with_context(|| "解析 YAML 失败（预览构建）")?;
                 build(
                     config,
                     &effective_out,
@@ -368,16 +448,16 @@ fn main() -> Result<()> {
             // 计算服务目录
             let serve_dir = if let Some(d) = dir { d } else {
                 // 尝试从配置推导 base_path
-                let raw_opt = load_config_text(
+                let loaded_opt = load_config(
                     effective_input.as_deref(),
                     effective_input_url.as_deref(),
-                    env_gist_id.as_deref(),
-                    env_gist_file.as_deref(),
-                    env_github_token.as_deref(),
-                    env_auth_scheme.as_deref(),
+                    effective_gist_id.as_deref(),
+                    effective_gist_file.as_deref(),
+                    effective_github_token.as_deref(),
+                    effective_auth_scheme.as_deref(),
                 ).ok();
-                if let Some(raw) = raw_opt { 
-                    if let Ok(cfg) = serde_yaml::from_str::<Config>(&raw) {
+                if let Some(loaded) = loaded_opt { 
+                    if let Ok(cfg) = serde_yaml::from_str::<Config>(&loaded.text) {
                         let base_path_effective = effective_base_path.clone().or(cfg.site.base_path.clone());
                         match base_path_effective {
                             Some(bp) => match safe_subpath(&bp) { Some(sub) => effective_out.join(sub), None => effective_out.clone() },
@@ -392,10 +472,10 @@ fn main() -> Result<()> {
                 effective_addr,
                 effective_input,
                 effective_input_url,
-                env_gist_id,
-                env_gist_file,
-                env_github_token,
-                env_auth_scheme,
+                effective_gist_id,
+                effective_gist_file,
+                effective_github_token,
+                effective_auth_scheme,
                 effective_out,
                 effective_static,
                 effective_theme,
@@ -419,50 +499,91 @@ fn _resolve_local_config_path(explicit: Option<&Path>) -> Option<PathBuf> {
     None
 }
 
+// 仅解析显式提供的本地路径；不做自动发现
+fn _resolve_explicit_config_path(explicit: Option<&Path>) -> Option<PathBuf> {
+    match explicit {
+        Some(p) if p.exists() => Some(p.to_path_buf()),
+        _ => None,
+    }
+}
+
+#[derive(Debug, Clone)]
+enum ConfigSource {
+    LocalExplicit(String),
+    LocalAuto(String),
+    Url(String),
+    #[cfg(feature = "remote")]
+    Gist { id: String, file: Option<String>, raw_url: String },
+}
+
+#[derive(Debug, Clone)]
+struct LoadedConfig { text: String, source: ConfigSource }
+
+fn describe_source(src: &ConfigSource) -> String {
+    match src {
+        ConfigSource::LocalExplicit(p) => format!("本地文件: {}", p),
+        ConfigSource::LocalAuto(p) => format!("本地文件(自动发现): {}", p),
+        ConfigSource::Url(u) => format!("远程 URL: {}", u),
+        #[cfg(feature = "remote")]
+        ConfigSource::Gist { id, file, raw_url } => {
+            match file {
+                Some(f) => format!("Gist {} / {} (raw: {})", id, f, raw_url),
+                None => format!("Gist {} (raw: {})", id, raw_url),
+            }
+        }
+    }
+}
+
 #[cfg(feature = "remote")]
-fn load_config_text(
+fn load_config(
     input_path: Option<&Path>,
     input_url: Option<&str>,
     gist_id: Option<&str>,
     gist_file: Option<&str>,
     token: Option<&str>,
     auth_scheme: Option<&str>,
-) -> Result<String> {
-    // 1) 本地优先
-    if let Some(path) = _resolve_local_config_path(input_path) {
-        return fs::read_to_string(&path).with_context(|| format!("读取配置失败: {}", path.display()));
+) -> Result<LoadedConfig> {
+    // 1) 显式本地路径（仅当明确提供）
+    if let Some(path) = _resolve_explicit_config_path(input_path) {
+        let text = fs::read_to_string(&path).with_context(|| format!("读取配置失败: {}", path.display()))?;
+        return Ok(LoadedConfig { text, source: ConfigSource::LocalExplicit(path.display().to_string()) });
     }
     // 2) URL
     if let Some(url) = input_url {
-        return http_get_text(url, token, auth_scheme).with_context(|| format!("下载配置失败: {}", url));
+        let text = http_get_text(url, token, auth_scheme).with_context(|| format!("下载配置失败: {}", url))?;
+        return Ok(LoadedConfig { text, source: ConfigSource::Url(url.to_string()) });
     }
-    // 3) 本地自动查找
-    if let Some(path) = _resolve_local_config_path(None) {
-        return fs::read_to_string(&path).with_context(|| format!("读取配置失败: {}", path.display()));
-    }
-    // 4) Gist by ID
+    // 3) Gist by ID（若提供则优先于本地自动发现）
     if let Some(id) = gist_id {
         let (raw_url, chosen) = gist_resolve_raw_url(id, gist_file, token, auth_scheme)?;
-        return http_get_text(&raw_url, token, auth_scheme)
-            .with_context(|| format!("下载配置失败: Gist {} 文件 {}", id, chosen.unwrap_or("<auto>")));
+        let text = http_get_text(&raw_url, token, auth_scheme)
+            .with_context(|| format!("下载配置失败: Gist {} 文件 {}", id, chosen.as_deref().unwrap_or("<auto>")))?;
+        return Ok(LoadedConfig { text, source: ConfigSource::Gist { id: id.to_string(), file: chosen, raw_url } });
+    }
+    // 4) 本地自动查找
+    if let Some(path) = _resolve_local_config_path(None) {
+        let text = fs::read_to_string(&path).with_context(|| format!("读取配置失败: {}", path.display()))?;
+        return Ok(LoadedConfig { text, source: ConfigSource::LocalAuto(path.display().to_string()) });
     }
     bail!("未找到配置：请提供 --input 或 --input-url，或设置 DOVE_INPUT/DOVE_INPUT_URL/DOVE_GIST_ID，或在当前目录放置 dove.yaml");
 }
 
 #[cfg(not(feature = "remote"))]
-fn load_config_text(
+fn load_config(
     input_path: Option<&Path>,
     _input_url: Option<&str>,
     _gist_id: Option<&str>,
     _gist_file: Option<&str>,
     _token: Option<&str>,
     _auth_scheme: Option<&str>,
-) -> Result<String> {
-    if let Some(path) = _resolve_local_config_path(input_path) {
-        return fs::read_to_string(&path).with_context(|| format!("读取配置失败: {}", path.display()));
+) -> Result<LoadedConfig> {
+    if let Some(path) = _resolve_explicit_config_path(input_path) {
+        let text = fs::read_to_string(&path).with_context(|| format!("读取配置失败: {}", path.display()))?;
+        return Ok(LoadedConfig { text, source: ConfigSource::LocalExplicit(path.display().to_string()) });
     }
     if let Some(path) = _resolve_local_config_path(None) {
-        return fs::read_to_string(&path).with_context(|| format!("读取配置失败: {}", path.display()));
+        let text = fs::read_to_string(&path).with_context(|| format!("读取配置失败: {}", path.display()))?;
+        return Ok(LoadedConfig { text, source: ConfigSource::LocalAuto(path.display().to_string()) });
     }
     bail!("未找到本地配置：在禁用 remote 功能时，无法使用 URL/Gist。请启用 feature `remote` 或在当前目录提供 dove.yaml");
 }
@@ -474,22 +595,21 @@ fn http_get_text(url: &str, token: Option<&str>, auth_scheme: Option<&str>) -> R
         let scheme = auth_scheme.map(|s| s.trim()).filter(|s| !s.is_empty()).unwrap_or("token");
         req = req.set("Authorization", &format!("{} {}", scheme, t));
     }
-    let resp = req.call();
-    ensure_success(resp, url)?
-        .into_string()
+    let resp = ensure_success(req.call(), url)?;
+    resp.into_string()
         .with_context(|| format!("读取响应文本失败: {}", url))
 }
 
 #[cfg(feature = "remote")]
-fn ensure_success(resp: Response, url: &str) -> Result<Response> {
-    if resp.error() {
-        bail!("HTTP 请求失败 {}: {}", url, resp.status());
+fn ensure_success(resp: Result<Response, ureq::Error>, url: &str) -> Result<Response> {
+    match resp {
+        Ok(r) => Ok(r),
+        Err(e) => bail!("HTTP 请求失败 {}: {}", url, e),
     }
-    Ok(resp)
 }
 
 #[cfg(feature = "remote")]
-fn gist_resolve_raw_url(id: &str, file_name: Option<&str>, token: Option<&str>, auth_scheme: Option<&str>) -> Result<(String, Option<&str>)> {
+fn gist_resolve_raw_url(id: &str, file_name: Option<&str>, token: Option<&str>, auth_scheme: Option<&str>) -> Result<(String, Option<String>)> {
     let api = format!("https://api.github.com/gists/{}", id);
     let mut req = ureq::get(&api)
         .set("User-Agent", "dove/0.1")
@@ -498,14 +618,13 @@ fn gist_resolve_raw_url(id: &str, file_name: Option<&str>, token: Option<&str>, 
         let scheme = auth_scheme.map(|s| s.trim()).filter(|s| !s.is_empty()).unwrap_or("token");
         req = req.set("Authorization", &format!("{} {}", scheme, t));
     }
-    let resp = req.call();
-    let resp = ensure_success(resp, &api)?;
+    let resp = ensure_success(req.call(), &api)?;
     let v: serde_json::Value = resp.into_json().context("解析 Gist API 响应失败")?;
     let files = v.get("files").and_then(|x| x.as_object()).ok_or_else(|| anyhow::anyhow!("Gist 无文件"))?;
     if let Some(target) = file_name {
         if let Some(file_obj) = files.get(target) { 
             if let Some(raw) = file_obj.get("raw_url").and_then(|r| r.as_str()) {
-                return Ok((raw.to_string(), Some(target)));
+                return Ok((raw.to_string(), Some(target.to_string())));
             }
         }
         bail!("Gist {} 中未找到文件: {}", id, target);
@@ -845,9 +964,12 @@ struct RLink { name: String, href: String, desc: String, icon: Option<String>, h
                 }
             }
         }
-        let cat = g.category.clone().unwrap_or_else(|| "全部".to_string());
-        if !categories.contains(&cat) { categories.push(cat.clone()); }
-        rgroups.push(RGroup { name: g.name.clone(), category: cat, links: rlinks });
+        // 仅当该分组有可展示链接时，才加入分组与分类列表
+        if !rlinks.is_empty() {
+            let cat = g.category.clone().unwrap_or_else(|| "全部".to_string());
+            if !categories.contains(&cat) { categories.push(cat.clone()); }
+            rgroups.push(RGroup { name: g.name.clone(), category: cat, links: rlinks });
+        }
     }
     ctx.insert("groups", &rgroups);
     ctx.insert("categories", &categories);
@@ -1140,15 +1262,15 @@ fn preview_watch_and_serve(
                 thread::sleep(Duration::from_millis(400));
                 if dirty.swap(false, Ordering::SeqCst) {
                     // 重新加载配置并构建
-                    if let Ok(raw) = load_config_text(
+                    if let Ok(loaded) = load_config(
                         input.as_deref(), input_url.as_deref(), gist_id.as_deref(), gist_file.as_deref(), token.as_deref(), auth_scheme.as_deref(),
                     ) {
-                        if let Ok(cfg) = serde_yaml::from_str::<Config>(&raw) {
+                        if let Ok(cfg) = serde_yaml::from_str::<Config>(&loaded.text) {
                             let _ = build(
                                 cfg, &out, static_dir.as_deref(), theme_dir.as_deref(), base_path.clone(), no_intranet, color_scheme, title.clone(), desc.clone(),
                             );
                             version.fetch_add(1, Ordering::SeqCst);
-                            println!("🔁 已重建，version = {}", version.load(Ordering::SeqCst));
+                            println!("🔁 已重建，version = {} · 配置来源: {}", version.load(Ordering::SeqCst), describe_source(&loaded.source));
                         }
                     }
                 }
