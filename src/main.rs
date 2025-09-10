@@ -312,8 +312,8 @@ fn main() -> Result<()> {
             // 环境变量覆盖（若 CLI 未指定）
             let env_input = env_opt_path("DOVE_INPUT");
             let env_input_url = env_opt_string("DOVE_INPUT_URL").or(env_opt_string("DOVE_GIST_URL"));
-            let env_gist_id = env_opt_string("DOVE_GIST_ID");
-            let env_gist_file = env_opt_string("DOVE_GIST_FILE");
+            #[cfg(feature = "remote")] let env_gist_id = env_opt_string("DOVE_GIST_ID");
+            #[cfg(feature = "remote")] let env_gist_file = env_opt_string("DOVE_GIST_FILE");
             let env_out = env_opt_path("DOVE_OUT");
             let env_static = env_opt_path("DOVE_STATIC");
             let env_theme = env_opt_path("DOVE_THEME");
@@ -323,8 +323,8 @@ fn main() -> Result<()> {
             let env_color_scheme = env_opt_string("DOVE_COLOR_SCHEME").and_then(parse_color_scheme);
             let env_title = env_opt_string("DOVE_TITLE");
             let env_description = env_opt_string("DOVE_DESCRIPTION");
-            let env_github_token = env_opt_string("DOVE_GITHUB_TOKEN");
-            let env_auth_scheme = env_opt_string("DOVE_AUTH_SCHEME");
+            #[cfg(feature = "remote")] let env_github_token = env_opt_string("DOVE_GITHUB_TOKEN");
+            #[cfg(feature = "remote")] let env_auth_scheme = env_opt_string("DOVE_AUTH_SCHEME");
 
             let mut effective_input = input.or(env_input);
             let effective_input_url = input_url.or(env_input_url);
@@ -387,8 +387,8 @@ fn main() -> Result<()> {
             let env_addr = env_opt_string("DOVE_PREVIEW_ADDR");
             let env_input = env_opt_path("DOVE_INPUT");
             let env_input_url = env_opt_string("DOVE_INPUT_URL").or(env_opt_string("DOVE_GIST_URL"));
-            let env_gist_id = env_opt_string("DOVE_GIST_ID");
-            let env_gist_file = env_opt_string("DOVE_GIST_FILE");
+            #[cfg(feature = "remote")] let env_gist_id = env_opt_string("DOVE_GIST_ID");
+            #[cfg(feature = "remote")] let env_gist_file = env_opt_string("DOVE_GIST_FILE");
             let env_out = env_opt_path("DOVE_OUT");
             let env_static = env_opt_path("DOVE_STATIC");
             let env_theme = env_opt_path("DOVE_THEME");
@@ -398,8 +398,8 @@ fn main() -> Result<()> {
             let env_color_scheme = env_opt_string("DOVE_COLOR_SCHEME").and_then(parse_color_scheme);
             let env_title = env_opt_string("DOVE_TITLE");
             let env_description = env_opt_string("DOVE_DESCRIPTION");
-            let env_github_token = env_opt_string("DOVE_GITHUB_TOKEN");
-            let env_auth_scheme = env_opt_string("DOVE_AUTH_SCHEME");
+            #[cfg(feature = "remote")] let env_github_token = env_opt_string("DOVE_GITHUB_TOKEN");
+            #[cfg(feature = "remote")] let env_auth_scheme = env_opt_string("DOVE_AUTH_SCHEME");
 
             let effective_addr = addr.or(env_addr).unwrap_or_else(|| "127.0.0.1:8787".to_string());
             let mut effective_input = input.or(env_input);
@@ -520,6 +520,7 @@ fn _resolve_explicit_config_path(explicit: Option<&Path>) -> Option<PathBuf> {
 enum ConfigSource {
     LocalExplicit(String),
     LocalAuto(String),
+    #[cfg(feature = "remote")]
     Url(String),
     #[cfg(feature = "remote")]
     Gist { id: String, file: Option<String>, raw_url: String },
@@ -532,6 +533,7 @@ fn describe_source(src: &ConfigSource) -> String {
     match src {
         ConfigSource::LocalExplicit(p) => format!("本地文件: {}", p),
         ConfigSource::LocalAuto(p) => format!("本地文件(自动发现): {}", p),
+        #[cfg(feature = "remote")]
         ConfigSource::Url(u) => format!("远程 URL: {}", u),
         #[cfg(feature = "remote")]
         ConfigSource::Gist { id, file, raw_url } => {
@@ -1015,12 +1017,28 @@ fn render_link_details(
     let site_desc = desc_override.unwrap_or(&cfg.site.description);
     let scheme = match color_scheme_override.unwrap_or(cfg.site.color_scheme) { ColorScheme::Auto => "auto", ColorScheme::Light => "light", ColorScheme::Dark => "dark" };
 
+    // 预先计算分类（仅包含至少一个可展示外网链接的分组）
+    let mut categories: Vec<String> = Vec::new();
+    for g in &cfg.groups {
+        let mut has_any = false;
+        for l in &g.links {
+            if let Some(u) = l.url.as_ref() {
+                if !u.trim().is_empty() { has_any = true; break; }
+            }
+        }
+        if has_any {
+            let cat = g.category.clone().unwrap_or_else(|| "全部".to_string());
+            if !categories.contains(&cat) { categories.push(cat); }
+        }
+    }
+
     for d in links {
         let mut ctx = TContext::new();
         ctx.insert("build_version", &build_version);
         ctx.insert("site_title", &site_title);
         ctx.insert("site_desc", &site_desc);
         ctx.insert("color_scheme", &scheme);
+        ctx.insert("categories", &categories);
         ctx.insert("link_name", &d.name);
         ctx.insert("link_intro", &d.intro);
         // 详情 HTML：若配置了 details，用原样 HTML；否则使用简介文本（将在模板中 escape）

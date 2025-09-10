@@ -79,7 +79,7 @@
       {% endif %}
       <div class="content" id="content">
       {% for g in groups %}
-      <section class="group" data-cat="{{ g.category }}">
+      <section class="group" data-cat="{{ g.category }}" id="cat-{{ g.category | replace(from=" ", to="-") }}">
         <h2 class="group-title">{{ g.name | escape }}</h2>
         <div class="grid">
           {% for l in g.links %}

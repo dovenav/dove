@@ -48,6 +48,45 @@ site:
 
  
 groups:
+# 置顶：项目与说明
+  - category: 置顶
+    name: 项目
+    links:
+      - name: dove-private
+        url: https://github.com/dovenav/dove-private
+        intro: 基于 dove 的私有配置与 Pages/Workers 部署模板
+        details: |
+          <p><strong>dove-private</strong> 是一个仅包含站点配置与 CI 的示例/模板仓库，配合
+          <a href="https://github.com/dovenav/dove" target="_blank" rel="noopener">dove</a>
+          生成静态页面，并通过以下两种方式自动发布：</p>
+          <ul>
+            <li><strong>GitHub Pages</strong>：使用 Actions 自动构建并发布到 Pages。</li>
+            <li><strong>Cloudflare Workers</strong>：使用 Wrangler 将 <code>dove/dist</code> 作为静态资产发布。</li>
+          </ul>
+          <p>仓库内包含完整的工作流、缓存加速、版本固定建议、<code>base_path</code> 与自定义域名配置说明，便于你 fork 后快速搭建自己的导航站。</p>
+          <p>详细说明见仓库 README；也可前往 <a href="https://github.com/dovenav/dove" target="_blank" rel="noopener">dove</a> 主仓库了解配置字段与主题机制。</p>
+        icon: https://cdn.simpleicons.org/github?size=64
+        slug: dove-private
+        risk: low
+      - name: dove
+        url: https://github.com/dovenav/dove
+        intro: 用 Rust 构建的静态导航站点生成器
+        details: |
+          <p><strong>dove</strong> 是一个以 Rust 开发的静态网页导航站点生成器，内置
+          <a href="https://tera.netlify.app/" target="_blank" rel="noopener">Tera</a> 模板引擎与主题目录，支持自定义 HTML/CSS/JS。</p>
+          <ul>
+            <li>支持内/外网两套页面与跳转中间页（可配置倒计时、风险等级、UTM）。</li>
+            <li>内置搜索引擎切换与两种首页布局（default / ntp）。</li>
+            <li>生成 <code>sitemap.xml</code>、<code>robots.txt</code>，可配置 <code>base_url</code> / OG 图等 SEO 信息。</li>
+            <li>支持本地 <code>dove.yaml</code> 或从 URL / 私有 Gist 读取（需启用 <code>remote</code> 特性）。</li>
+            <li>CLI：<code>init</code> 初始化、<code>build</code> 构建、<code>preview</code> 本地预览。</li>
+            <li>产物可直接部署到 GitHub Pages、Cloudflare Pages 或 Cloudflare Workers。</li>
+          </ul>
+          <p>更多用法与配置项请查看主仓库 <a href="https://github.com/dovenav/dove?tab=readme-ov-file#dove" target="_blank" rel="noopener">README</a>。</p>
+        icon: assets/favicon-f.svg
+        slug: dove
+        risk: low
+ 
   # 常用分类下的多个二级分组
   - category: 常用
     name: 搜索
@@ -73,7 +112,7 @@ groups:
         intro: 微软搜索
         details: |
           <p>微软旗下搜索引擎，适合日常检索、图片与视频搜索。</p>
-        icon: https://cdn.simpleicons.org/bing?size=64
+        icon: https://www.google.com/s2/favicons?domain=www.bing.com&sz=64
       # ----------------
       - name: DuckDuckGo
         url: https://duckduckgo.com
@@ -177,7 +216,7 @@ groups:
         intro: Rust 包仓库
         details: |
           <p>Rust 生态的官方包仓库，用于发布、检索与依赖管理。</p>
-        icon: https://cdn.simpleicons.org/cratesdotio?size=64
+        icon: https://www.google.com/s2/favicons?domain=crates.io&sz=64
 
   - category: 开发
     name: 工具
@@ -187,7 +226,7 @@ groups:
         intro: 正则测试
         details: |
           <p>在线正则表达式测试与解释器，支持 PCRE、ECMAScript、Python 等多种方言。</p>
-        icon: https://cdn.simpleicons.org/regex101?size=64
+        icon: https://www.google.com/s2/favicons?domain=regex101.com&sz=64
       # ----------------
       - name: JSON Formatter
         url: https://jsonformatter.org
@@ -201,7 +240,7 @@ groups:
         intro: 图片压缩
         details: |
           <p>智能压缩 PNG/JPG/WebP，显著降低体积同时尽量保持画质。</p>
-        icon: https://cdn.simpleicons.org/tinypng?size=64
+        icon: https://www.google.com/s2/favicons?domain=tinypng.com&sz=64
       # ----------------
       - name: CodeSandbox
         url: https://codesandbox.io

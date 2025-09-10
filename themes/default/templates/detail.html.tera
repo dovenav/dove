@@ -10,24 +10,27 @@
     <link rel="icon" href="../../assets/favicon-f.svg" type="image/svg+xml">
     <link rel="stylesheet" href="../../assets/styles.css">
   </head>
-  <body class="theme-{{ color_scheme }}">
+  <body class="theme-{{ color_scheme }} page-detail">
     <div class="top-actions">
       <button id="toggleTheme" class="btn ghost" title="切换主题">🌓</button>
     </div>
-    <header class="hero">
-      <div class="hero-inner">
-        <div class="hero-center">
-          <div id="clock" class="clock">--:--</div>
-          <a id="clock-date" class="clock-date" href="https://www.51wnl.com/webcalandar/index.html" target="_blank" rel="noopener"></a>
-        </div>
-        <div class="searchbar" style="height:1px"></div>
+    <header class="navbar">
+      <div class="nav-inner">
+        <a class="btn ghost small" href="../../index.html">首页</a>
+        {% if categories and categories | length > 0 %}
+        <nav class="nav-cats" aria-label="链接分类">
+          {% for c in categories %}
+          <a class="nav-cat" href="../../index.html#cat-{{ c | replace(from=" ", to="-") | escape }}">{{ c }}</a>
+          {% endfor %}
+        </nav>
+        {% endif %}
       </div>
     </header>
 
     <main class="container">
       <div class="detail-layout">
         <article class="detail-main">
-          <div class="card detail-header">
+          <div class="detail-header">
             <div class="card-head head-split">
               <div class="head-left">
                 {% if link_icon %}
@@ -80,7 +83,7 @@
           </div>
 
           {% if link_details_html or (link_intro and link_intro != "") %}
-          <section class="card detail-body-wrap">
+          <section class="detail-body-wrap">
             <div id="detailBody" class="prose">
               {% if link_details_html %}
                 {{ link_details_html | safe }}
