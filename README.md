@@ -255,6 +255,23 @@ groups:
 
 说明：如果某个分组没有可展示的链接（例如外网模式下全部缺少 `url`），该分组与其所属分类不会出现在页面中。
 
+## 部署到 GitHub Pages
+
+你可以使用 GitHub Actions 将 dove 站点自动发布到 GitHub Pages。可直接参考示例仓库：[dove-private](https://github.com/dovenav/dove-private)（仅包含 `dove.yaml` 与工作流），按同样方式搭建你自己的“配置仓库”。
+
+步骤摘要：
+
+- 在你的配置仓库中添加工作流（`.github/workflows/deploy.yml`）：
+  - Checkout 配置仓库；
+  - Checkout 本项目 [dovenav/dove](https://github.com/dovenav/dove) 到子目录（例如 `dove/`）；
+  - 安装 Rust 工具链（如 `dtolnay/rust-toolchain@stable`）；
+  - 将 `dove.yaml` 拷贝到 `dove/` 并执行 `cargo run -- build`；
+  - 使用 `actions/configure-pages`、`actions/upload-pages-artifact`、`actions/deploy-pages` 发布 `dove/dist`；
+- 在仓库 Settings → Pages 中将 Source 设置为 “GitHub Actions”。
+- 若为 Project Pages（`https://<user>.github.io/<repo>/`），建议在 `dove.yaml` 设置 `site.base_path: <repo>`；User/Org Pages 通常无需设置。
+
+完整可用的工作流与详细说明见 [dove-private/README.md](https://github.com/dovenav/dove-private/blob/main/README.md)。
+
 ## 部署到 Cloudflare Pages
 
 推荐两种方式：
