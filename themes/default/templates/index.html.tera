@@ -16,7 +16,7 @@
     {% if canonical_url %}<meta property="og:url" content="{{ canonical_url }}">{% endif %}
     <meta property="og:site_name" content="{{ site_title | escape }}">
     {% if og_image %}<meta property="og:image" content="{{ og_image }}">{% endif %}
-    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="assets/favicon-f.svg" type="image/svg+xml">
     <link rel="stylesheet" href="assets/styles.css">
     <meta name="theme-color" content="#f45d22">
     <script type="application/ld+json">

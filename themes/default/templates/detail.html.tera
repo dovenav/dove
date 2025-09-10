@@ -7,7 +7,7 @@
     {% if site_desc and site_desc != "" %}
     <meta name="description" content="{{ site_desc | escape }}">
     {% endif %}
-    <link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="../../assets/favicon-f.svg" type="image/svg+xml">
     <link rel="stylesheet" href="../../assets/styles.css">
   </head>
   <body class="theme-{{ color_scheme }}">
