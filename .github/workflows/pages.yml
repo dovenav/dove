@@ -30,25 +30,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Compute version
-      id: ver
-      run: echo "version=$(git describe --tags --always --dirty --long)" >> $GITHUB_OUTPUT
-    - name: Build
-      run: cargo run --features remote -- build --build-version "${{ steps.ver.outputs.version }}"
-      env:
-        DOVE_BUILD_VERSION: ${{ steps.ver.outputs.version }}
+    # - uses: actions/checkout@v4
+    # - name: Compute version
+    #   id: ver
+    #   run: echo "version=$(git describe --tags --always --dirty --long)" >> $GITHUB_OUTPUT
+    # - name: Build
+    #   run: cargo run --features remote -- build --build-version "${{ steps.ver.outputs.version }}"
+    #   env:
+    #     DOVE_BUILD_VERSION: ${{ steps.ver.outputs.version }}
     
-    - name: Setup Pages
-      uses: actions/configure-pages@v5
-    - name: Upload artifact
-      uses: actions/upload-pages-artifact@v3
-      with:
-        # Upload entire repository
-        path: './dist'
-    - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v4
+    # - name: Setup Pages
+    #   uses: actions/configure-pages@v5
+    # - name: Upload artifact
+    #   uses: actions/upload-pages-artifact@v3
+    #   with:
+    #     # Upload entire repository
+    #     path: './dist'
+    # - name: Deploy to GitHub Pages
+    #   id: deployment
+    #   uses: actions/deploy-pages@v4
     
     # Trigger dove-private build when this build completes successfully
     - name: Trigger dove-private build
