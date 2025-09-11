@@ -54,6 +54,6 @@ jobs:
     - name: Trigger dove-private build
       uses: peter-evans/repository-dispatch@v3
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.PAT_TOKEN }}
         repository: dovenav/dove-private
         event-type: dove-updated
