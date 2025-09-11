@@ -32,7 +32,4 @@ optional = true
 version = "1"
 optional = true
 
-[profile.release]
-codegen-units = 1
-lto = true
-opt-level = "z"
+ 

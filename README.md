@@ -21,6 +21,15 @@
 如需“本地仅保留模板、配置放在 Gist”：不放置 `dove.yaml`，用 `--input-url` 或环境变量 `DOVE_INPUT_URL`/`DOVE_GIST_ID` 指定远程配置。
 注意：远程加载功能位于可选特性 `remote` 中，默认未启用；请使用 `--features remote`。
 
+### 构建时下载远程图标（并发）
+
+当以 `--features remote` 构建并执行 `build/preview` 时，程序会尝试在构建阶段并发下载配置中的远程图标（`http/https` 或 `//` 开头），保存为本地文件并在最终页面中优先引用本地文件；若下载失败，则继续使用原远程链接。
+
+- 存放目录（相对站点根）：`DOVE_ICON_DIR`，默认 `assets/icons`
+- 下载并发数：`DOVE_ICON_THREADS`，默认 `8`
+
+说明：`data:` 内联图标与本地相对路径图标不会被下载。
+
 ## 配置说明（dove.yaml）
 
 示例：

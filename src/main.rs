@@ -13,6 +13,10 @@ use include_dir::{include_dir, Dir};
 use ureq::Response;
 use std::collections::{HashSet, HashMap};
 use url::Url;
+#[cfg(feature = "remote")]
+use std::io::Read;
+#[cfg(feature = "remote")]
+use std::sync::mpsc;
 
 // 内置示例（用于 init）
 const SAMPLE_CONFIG: &str = include_str!("assets/sample.dove.yaml");
@@ -78,6 +82,12 @@ enum Command {
         /// 构建版本号（优先于环境变量 DOVE_BUILD_VERSION）
         #[arg(long, value_name = "VER")]
         build_version: Option<String>,
+        /// 下载的图标保存目录（相对站点根）。默认 assets/icons
+        #[arg(long, value_name = "DIR")]
+        icon_dir: Option<String>,
+        /// 图标下载并发数。默认 8
+        #[arg(long, value_name = "N")]
+        icon_threads: Option<usize>,
     },
     /// 初始化示例配置与静态资源
     Init {
@@ -145,6 +155,12 @@ enum Command {
         /// 构建版本号（优先于环境变量 DOVE_BUILD_VERSION）
         #[arg(long, value_name = "VER")]
         build_version: Option<String>,
+        /// 下载的图标保存目录（相对站点根）。默认 assets/icons
+        #[arg(long, value_name = "DIR")]
+        icon_dir: Option<String>,
+        /// 图标下载并发数。默认 8
+        #[arg(long, value_name = "N")]
+        icon_threads: Option<usize>,
     },
 }
 
@@ -308,7 +324,7 @@ struct SitemapSettings {
 fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.command {
-        Command::Build { input, input_url, #[cfg(feature = "remote")] gist_id, #[cfg(feature = "remote")] gist_file, #[cfg(feature = "remote")] github_token, #[cfg(feature = "remote")] auth_scheme, out, static_dir, theme, base_path, no_intranet, color_scheme, title, description, build_version } => {
+        Command::Build { input, input_url, #[cfg(feature = "remote")] gist_id, #[cfg(feature = "remote")] gist_file, #[cfg(feature = "remote")] github_token, #[cfg(feature = "remote")] auth_scheme, out, static_dir, theme, base_path, no_intranet, color_scheme, title, description, build_version, icon_dir, icon_threads } => {
             // 环境变量覆盖（若 CLI 未指定）
             let env_input = env_opt_path("DOVE_INPUT");
             let env_input_url = env_opt_string("DOVE_INPUT_URL").or(env_opt_string("DOVE_GIST_URL"));
@@ -325,6 +341,8 @@ fn main() -> Result<()> {
             let env_description = env_opt_string("DOVE_DESCRIPTION");
             #[cfg(feature = "remote")] let env_github_token = env_opt_string("DOVE_GITHUB_TOKEN");
             #[cfg(feature = "remote")] let env_auth_scheme = env_opt_string("DOVE_AUTH_SCHEME");
+            let env_icon_dir = env_opt_string("DOVE_ICON_DIR");
+            let env_icon_threads = env_opt_usize("DOVE_ICON_THREADS");
 
             let mut effective_input = input.or(env_input);
             let effective_input_url = input_url.or(env_input_url);
@@ -345,6 +363,8 @@ fn main() -> Result<()> {
             #[cfg(not(feature = "remote"))] let effective_github_token: Option<String> = None;
             #[cfg(feature = "remote")] let effective_auth_scheme = auth_scheme.or(env_auth_scheme);
             #[cfg(not(feature = "remote"))] let effective_auth_scheme: Option<String> = None;
+            let effective_icon_dir = icon_dir.or(env_icon_dir);
+            let effective_icon_threads = icon_threads.or(env_icon_threads);
 
             // 当提供了 URL/Gist 时，忽略显式/环境的本地 input 路径，使 URL/Gist 优先生效
             if effective_input_url.is_some() || effective_gist_id.is_some() {
@@ -376,13 +396,15 @@ fn main() -> Result<()> {
                 effective_title,
                 effective_desc,
                 build_version,
+                effective_icon_dir,
+                effective_icon_threads,
             )
         }
         Command::Init { force, dir } => {
             let dir = dir.unwrap_or_else(|| PathBuf::from("."));
             init_scaffold(&dir, force)
         }
-        Command::Preview { dir, addr, build_first, input, input_url, #[cfg(feature = "remote")] gist_id, #[cfg(feature = "remote")] gist_file, #[cfg(feature = "remote")] github_token, #[cfg(feature = "remote")] auth_scheme, out, static_dir, theme, base_path, no_intranet, open, color_scheme, title, description, build_version } => {
+        Command::Preview { dir, addr, build_first, input, input_url, #[cfg(feature = "remote")] gist_id, #[cfg(feature = "remote")] gist_file, #[cfg(feature = "remote")] github_token, #[cfg(feature = "remote")] auth_scheme, out, static_dir, theme, base_path, no_intranet, open, color_scheme, title, description, build_version, icon_dir, icon_threads } => {
             // 环境变量
             let env_addr = env_opt_string("DOVE_PREVIEW_ADDR");
             let env_input = env_opt_path("DOVE_INPUT");
@@ -400,6 +422,8 @@ fn main() -> Result<()> {
             let env_description = env_opt_string("DOVE_DESCRIPTION");
             #[cfg(feature = "remote")] let env_github_token = env_opt_string("DOVE_GITHUB_TOKEN");
             #[cfg(feature = "remote")] let env_auth_scheme = env_opt_string("DOVE_AUTH_SCHEME");
+            let env_icon_dir = env_opt_string("DOVE_ICON_DIR");
+            let env_icon_threads = env_opt_usize("DOVE_ICON_THREADS");
 
             let effective_addr = addr.or(env_addr).unwrap_or_else(|| "127.0.0.1:8787".to_string());
             let mut effective_input = input.or(env_input);
@@ -421,6 +445,8 @@ fn main() -> Result<()> {
             #[cfg(not(feature = "remote"))] let effective_github_token: Option<String> = None;
             #[cfg(feature = "remote")] let effective_auth_scheme = auth_scheme.or(env_auth_scheme);
             #[cfg(not(feature = "remote"))] let effective_auth_scheme: Option<String> = None;
+            let effective_icon_dir = icon_dir.or(env_icon_dir);
+            let effective_icon_threads = icon_threads.or(env_icon_threads);
 
             // 当提供了 URL/Gist 时，忽略显式/环境的本地 input 路径，使 URL/Gist 优先生效
             if effective_input_url.is_some() || effective_gist_id.is_some() {
@@ -450,6 +476,8 @@ fn main() -> Result<()> {
                     effective_title.clone(),
                     effective_desc.clone(),
                     build_version.clone(),
+                    effective_icon_dir.clone(),
+                    effective_icon_threads,
                 )?;
             }
 
@@ -494,6 +522,8 @@ fn main() -> Result<()> {
                 effective_desc,
                 open,
                 build_version,
+                effective_icon_dir,
+                effective_icon_threads,
             )
         }
     }
@@ -504,6 +534,14 @@ fn _resolve_local_config_path(explicit: Option<&Path>) -> Option<PathBuf> {
     for cand in ["dove.yaml", "dove.yml", "config.yaml", "config.yml"] {
         let p = Path::new(cand);
         if p.exists() { return Some(p.to_path_buf()); }
+    }
+    // 兼容在工作区根目录运行：尝试在 dove/ 子目录中寻找
+    let dove_dir = Path::new("dove");
+    if dove_dir.is_dir() {
+        for cand in ["dove.yaml", "dove.yml", "config.yaml", "config.yml"] {
+            let p = dove_dir.join(cand);
+            if p.exists() { return Some(p); }
+        }
     }
     None
 }
@@ -651,7 +689,7 @@ fn gist_resolve_raw_url(id: &str, file_name: Option<&str>, token: Option<&str>, 
 }
 
 fn build(
-    config: Config,
+    mut config: Config,
     out_dir: &Path,
     static_dir: Option<&Path>,
     theme_cli: Option<&Path>,
@@ -661,6 +699,8 @@ fn build(
     title_override: Option<String>,
     desc_override: Option<String>,
     build_version_opt: Option<String>,
+    icon_dir_cli: Option<String>,
+    icon_threads_cli: Option<usize>,
 ) -> Result<()> {
     // 准备输出目录
     if !out_dir.exists() { fs::create_dir_all(out_dir).with_context(|| format!("创建输出目录失败: {}", out_dir.display()))?; }
@@ -676,10 +716,15 @@ fn build(
     if !site_dir.exists() { fs::create_dir_all(&site_dir).with_context(|| format!("创建站点目录失败: {}", site_dir.display()))?; }
 
     // 解析主题目录：CLI --theme > 配置 site.theme_dir > 默认 themes/default
-    let theme_dir = theme_cli
+    let mut theme_dir = theme_cli
         .map(|p| p.to_path_buf())
         .or_else(|| config.site.theme_dir.as_ref().map(|s| PathBuf::from(s)))
         .unwrap_or_else(|| PathBuf::from("themes/default"));
+    if !theme_dir.exists() {
+        // 兼容在工作区根目录运行：尝试 dove/<theme_dir>
+        let alt = Path::new("dove").join(&theme_dir);
+        if alt.exists() { theme_dir = alt; }
+    }
     if !theme_dir.exists() {
         bail!("主题目录不存在: {}。可用 --theme 指定或在 dove.yaml 的 site.theme_dir 配置。", theme_dir.display());
     }
@@ -698,6 +743,66 @@ fn build(
             copy_dir_all(sd, &site_dir)?;
         } else {
             eprintln!("警告: 指定的静态目录不存在: {}", sd.display());
+        }
+    }
+
+    // 并发预取远程图标，并回写为本地相对路径（失败则保持远程 URL）
+    // 目标目录优先级：CLI > ENV > 默认；相对于站点根
+    let icon_dir_rel: String = icon_dir_cli
+        .or_else(|| env_opt_string("DOVE_ICON_DIR"))
+        .unwrap_or_else(|| "assets/icons".to_string());
+    let icon_threads: usize = icon_threads_cli
+        .or_else(|| env_opt_usize("DOVE_ICON_THREADS"))
+        .unwrap_or(8)
+        .max(1);
+    let icon_dir_abs = site_dir.join(icon_dir_rel.trim_start_matches('/'));
+    if !icon_dir_abs.exists() { fs::create_dir_all(&icon_dir_abs)?; }
+
+    // 收集需要下载的远程图标（去重）
+    let mut targets: Vec<(String, String)> = Vec::new(); // (orig, fetch_url)
+    let mut seen: HashSet<String> = HashSet::new();
+    // 搜索引擎 icons
+    if let Some(ref list) = config.site.search_engines {
+        for e in list {
+            if let Some(ref ic) = e.icon {
+                if let Some((orig, fetch)) = normalize_remote_icon(ic) {
+                    if seen.insert(orig.clone()) { targets.push((orig, fetch)); }
+                }
+            }
+        }
+    }
+    // 链接 icons
+    for g in &config.groups {
+        for l in &g.links {
+            if let Some(ref ic) = l.icon {
+                if let Some((orig, fetch)) = normalize_remote_icon(ic) {
+                    if seen.insert(orig.clone()) { targets.push((orig, fetch)); }
+                }
+            }
+        }
+    }
+
+    // 执行下载（remote 功能启用时有效）并得到映射 orig -> 相对路径
+    if targets.is_empty() {
+        println!("ℹ️ 未发现需要下载的图标。");
+    } else {
+        println!("⬇️ 下载图标: {} 个 -> {}（并发 {}）", targets.len(), icon_dir_rel, icon_threads);
+    }
+    let icon_map: HashMap<String, String> = download_icons_concurrent(&targets, &icon_dir_abs, &icon_dir_rel, icon_threads);
+
+    // 回写配置中的 icon 字段（仅当下载成功时替换成本地相对路径）
+    if let Some(ref mut engines) = config.site.search_engines {
+        for e in engines.iter_mut() {
+            if let Some(ref mut ic) = e.icon {
+                if let Some(v) = icon_map.get(ic) { *ic = v.clone(); }
+            }
+        }
+    }
+    for g in config.groups.iter_mut() {
+        for l in g.links.iter_mut() {
+            if let Some(ref mut ic) = l.icon {
+                if let Some(v) = icon_map.get(ic) { *ic = v.clone(); }
+            }
         }
     }
 
@@ -797,6 +902,13 @@ fn env_opt_string(key: &str) -> Option<String> {
             let t = val.trim();
             if t.is_empty() { None } else { Some(t.to_string()) }
         }
+        Err(_) => None,
+    }
+}
+
+fn env_opt_usize(key: &str) -> Option<usize> {
+    match env::var(key) {
+        Ok(val) => val.trim().parse::<usize>().ok(),
         Err(_) => None,
     }
 }
@@ -1245,6 +1357,151 @@ fn resolve_icon_for_page(icon: &str) -> String {
     }
 }
 
+// 将可能的远程 icon 文本标准化为 (原始值, 可下载 URL)
+fn normalize_remote_icon(s: &str) -> Option<(String, String)> {
+    let t = s.trim();
+    if t.is_empty() { return None; }
+    let lower = t.to_ascii_lowercase();
+    if lower.starts_with("http://") || lower.starts_with("https://") {
+        Some((t.to_string(), t.to_string()))
+    } else if lower.starts_with("//") {
+        Some((t.to_string(), format!("https:{}", t)))
+    } else if lower.starts_with("data:") {
+        None
+    } else {
+        None
+    }
+}
+
+#[cfg(feature = "remote")]
+fn download_icons_concurrent(
+    targets: &[(String, String)],
+    dest_dir: &Path,
+    rel_dir: &str,
+    threads: usize,
+) -> HashMap<String, String> {
+    let mut map: HashMap<String, String> = HashMap::new();
+    if targets.is_empty() { return map; }
+
+    // 结果通道
+    let (txr, rxr) = mpsc::channel::<(String, Option<String>)>();
+    let total = targets.len();
+    let workers = threads.min(total.max(1));
+    let chunk_size = (total + workers - 1) / workers; // 向上取整
+    for chunk_idx in 0..workers {
+        let start = chunk_idx * chunk_size;
+        let end = (start + chunk_size).min(total);
+        if start >= end { break; }
+        let slice: Vec<(String, String)> = targets[start..end].to_vec();
+        let txr = txr.clone();
+        let dest = dest_dir.to_path_buf();
+        let rel = rel_dir.trim_matches('/').to_string();
+        std::thread::spawn(move || {
+            for (orig, fetch) in slice {
+                let res = download_one_icon(&fetch, &dest).map(|fname| {
+                    if rel.is_empty() { fname } else { format!("{}/{}", rel, fname) }
+                });
+                let _ = txr.send((orig, res));
+            }
+        });
+    }
+    drop(txr);
+
+    // 收集结果并输出日志
+    for _ in 0..total {
+        if let Ok((orig, res)) = rxr.recv() {
+            match res {
+                Some(path_rel) => {
+                    println!("✅ 图标已缓存: {} -> {}", orig, path_rel);
+                    map.insert(orig, path_rel);
+                }
+                None => {
+                    println!("⚠️ 图标下载失败: {}", orig);
+                }
+            }
+        }
+    }
+    map
+}
+
+#[cfg(not(feature = "remote"))]
+fn download_icons_concurrent(
+    _targets: &[(String, String)],
+    _dest_dir: &Path,
+    _rel_dir: &str,
+    _threads: usize,
+) -> HashMap<String, String> { HashMap::new() }
+
+#[cfg(feature = "remote")]
+fn download_one_icon(url: &str, dest_dir: &Path) -> Option<String> {
+    // 发送请求
+    let call = ureq::get(url).set("User-Agent", "dove/0.1").call();
+    let resp = match ensure_success(call, url) {
+        Ok(r) => r,
+        Err(e) => { eprintln!("⚠️ 请求失败: {} -> {}", url, e); return None; }
+    };
+    // 内容类型 -> 扩展名
+    let ct = resp.header("Content-Type").unwrap_or("");
+    let ext = ext_from_headers_or_url(ct, url);
+    // 读入字节
+    let mut reader = resp.into_reader();
+    let mut buf: Vec<u8> = Vec::new();
+    if let Err(e) = reader.read_to_end(&mut buf) { eprintln!("⚠️ 读取响应失败: {} -> {}", url, e); return None; }
+    // 文件名：对 URL 做 FNV-1a 64 哈希
+    let hash = fnv1a64(url.as_bytes());
+    let fname = format!("i_{:016x}.{}", hash, ext);
+    let fpath = dest_dir.join(&fname);
+    if !fpath.exists() {
+        if let Some(parent) = fpath.parent() { let _ = fs::create_dir_all(parent); }
+        if let Err(e) = fs::write(&fpath, &buf) { eprintln!("⚠️ 写入失败: {} -> {}", fpath.display(), e); return None; }
+    }
+    Some(fname)
+}
+
+#[cfg(feature = "remote")]
+fn ext_from_headers_or_url(content_type: &str, url: &str) -> &'static str {
+    let ct = content_type.split(';').next().unwrap_or("").trim().to_ascii_lowercase();
+    match ct.as_str() {
+        "image/svg+xml" => "svg",
+        "image/png" => "png",
+        "image/x-icon" | "image/vnd.microsoft.icon" => "ico",
+        "image/jpeg" | "image/jpg" => "jpg",
+        "image/gif" => "gif",
+        "image/webp" => "webp",
+        "image/avif" => "avif",
+        _ => {
+            // 尝试从 URL path 提取
+            if let Ok(u) = Url::parse(url) {
+                if let Some(seg) = u.path_segments().and_then(|it| it.last()) {
+                    if let Some(idx) = seg.rfind('.') { return match &seg[idx+1..].to_ascii_lowercase()[..] {
+                        "svg" => "svg",
+                        "png" => "png",
+                        "ico" => "ico",
+                        "jpg" | "jpeg" => "jpg",
+                        "gif" => "gif",
+                        "webp" => "webp",
+                        "avif" => "avif",
+                        _ => "bin",
+                    } }
+                }
+            }
+            "bin"
+        }
+    }
+}
+
+#[cfg(feature = "remote")]
+fn fnv1a64(data: &[u8]) -> u64 {
+    const FNV_OFFSET: u64 = 0xcbf29ce484222325;
+    const FNV_PRIME: u64 = 0x00000100000001b3;
+    let mut hash = FNV_OFFSET;
+    for b in data {
+        hash ^= *b as u64;
+        hash = hash.wrapping_mul(FNV_PRIME);
+    }
+    hash
+}
+
 use std::sync::{Arc, atomic::{AtomicBool, AtomicU64, Ordering}};
 use std::{thread, time::Duration};
 use notify::{RecommendedWatcher, Watcher, RecursiveMode};
@@ -1268,6 +1525,8 @@ fn preview_watch_and_serve(
     desc: Option<String>,
     open: bool,
     build_version: Option<String>,
+    icon_dir: Option<String>,
+    icon_threads: Option<usize>,
 ) -> Result<()> {
     if !root.exists() { bail!("预览目录不存在: {}", root.display()); }
     println!("🔎 预览目录: {}", root.display());
@@ -1296,6 +1555,8 @@ fn preview_watch_and_serve(
         let version = version.clone();
         let dirty = dirty.clone();
         let build_version = build_version.clone();
+        let icon_dir = icon_dir.clone();
+        let icon_threads = icon_threads.clone();
         thread::spawn(move || {
             loop {
                 thread::sleep(Duration::from_millis(400));
@@ -1305,9 +1566,7 @@ fn preview_watch_and_serve(
                         input.as_deref(), input_url.as_deref(), gist_id.as_deref(), gist_file.as_deref(), token.as_deref(), auth_scheme.as_deref(),
                     ) {
                         if let Ok(cfg) = serde_yaml::from_str::<Config>(&loaded.text) {
-                            let _ = build(
-                                cfg, &out, static_dir.as_deref(), theme_dir.as_deref(), base_path.clone(), no_intranet, color_scheme, title.clone(), desc.clone(), build_version.clone(),
-                            );
+                            let _ = build(cfg, &out, static_dir.as_deref(), theme_dir.as_deref(), base_path.clone(), no_intranet, color_scheme, title.clone(), desc.clone(), build_version.clone(), icon_dir.clone(), icon_threads);
                             version.fetch_add(1, Ordering::SeqCst);
                             println!("🔁 已重建，version = {} · 配置来源: {}", version.load(Ordering::SeqCst), describe_source(&loaded.source));
                         }
