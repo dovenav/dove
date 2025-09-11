@@ -19,8 +19,8 @@
   --bg-overlay-light: 0.22;  /* light overlay alpha for bg-layer under theme-light */
 }
 
-body.theme-light { --bg:#0b0c0f; --panel:#ffffff; --text:#0b0c0f; --muted:#a8b3c1; --border:#e6e8eb; --brand:#f45d22; --brand-2:#ff8a4d; --ring:rgba(244,93,34,0.25); --note-bg: rgba(255,193,7,0.10); --note-border: rgba(255,193,7,0.28); --note-accent:#ffb84d; }
-@media (prefers-color-scheme: light) { body.theme-auto { --bg:#0b0c0f; --panel:#ffffff; --text:#0b0c0f; --muted:#a8b3c1; --border:#e6e8eb; --brand:#f45d22; --brand-2:#ff8a4d; --ring:rgba(244,93,34,0.25); --note-bg: rgba(255,193,7,0.10); --note-border: rgba(255,193,7,0.28); --note-accent:#ffb84d; } }
+body.theme-light { --bg:#ffffff; --panel:#ffffff; --text:#0b0c0f; --muted:#a8b3c1; --border:#e6e8eb; --brand:#f45d22; --brand-2:#ff8a4d; --ring:rgba(244,93,34,0.25); --note-bg: rgba(255,193,7,0.10); --note-border: rgba(255,193,7,0.28); --note-accent:#ffb84d; }
+@media (prefers-color-scheme: light) { body.theme-auto { --bg:#ffffff; --panel:#ffffff; --text:#0b0c0f; --muted:#a8b3c1; --border:#e6e8eb; --brand:#f45d22; --brand-2:#ff8a4d; --ring:rgba(244,93,34,0.25); --note-bg: rgba(255,193,7,0.10); --note-border: rgba(255,193,7,0.28); --note-accent:#ffb84d; } }
 
 * { box-sizing: border-box; }
 html, body { height: 100%; }
