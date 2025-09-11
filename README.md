@@ -272,6 +272,23 @@ cargo run --features remote -- preview --build-first \
 - 远程功能：`cargo run --features remote -- build --input-url <URL>`
 - 格式/静态检查（可选）：`cargo fmt`、`cargo clippy -D warnings`
 
+#### Makefile 快捷命令
+
+常用便捷命令（可配合 `FEATURES="--features remote"` 与 `ARGS` 使用）：
+
+```
+make build                 # cargo build $(FEATURES)
+make build-remote          # cargo build --features remote
+make build-site            # 运行生成：cargo run $(FEATURES) -- build $(ARGS)
+make preview               # 预览：cargo run $(FEATURES) -- preview --build-first $(ARGS)
+make preview-remote        # 启用 remote 特性预览
+make init                  # 初始化示例与默认主题
+make fmt                   # cargo fmt --all
+make check-fmt             # cargo fmt --all -- --check
+make clippy                # cargo clippy $(FEATURES) -- -D warnings
+make lint                  # = check-fmt + clippy
+```
+
 ### PR 建议
 
 - 尽量保持每个 PR 聚焦单一问题（如“新增模板变量 X”或“优化图标下载重试”）。

@@ -1,42 +1,26 @@
-# 这是一个完整注释的示例配置文件。
-#
-# 用法：
-#   cargo run -- init          # 生成示例与默认主题
-#   cargo run -- build         # 生成 dist/ 静态站点
-#
-# 你也可以将配置放到 Gist（启用 --features remote），只在本地保留主题模板。
-
 site:
   # 站点标题（显示在页面标题与页头处）
-  title: 我的导航站
+  title: Dove私有导航站 - 常用站点与工具集合
 
   # 站点描述（可选，显示在页头副标题与 meta description）
-  description: 常用站点与工具集合
+  description: 基于Rust开发的Dove静态导航站点，汇集个人常用网站、工具与资源，提供便捷的网络访问入口
 
-  # 页面配色方案（auto|light|dark）。
-  # - auto：跟随系统/浏览器偏好，在网页中可继续切换并本地记忆
-  # - light：始终使用明亮模式
-  # - dark：始终使用深色模式
+  # 页面配色方案（auto|light|dark）
   color_scheme: auto
 
-  # 主题目录（相对或绝对路径），需要包含 templates/ 与 assets/ 子目录。
-  # - templates/ 下的 index.html.tera、detail.html.tera 用于渲染页面
-  # - assets/ 下的样式/脚本/图标会复制到输出的 assets/ 下
+  # 主题目录（相对或绝对路径），包含 templates/ 与 assets/
   theme_dir: themes/default
-  layout: ntp
-  
-  # 站点根路径（相对子路径），将把站点输出到 dist/<base_path>/ 下。
-  # - 默认留空或删除此项：输出到 dist/ 根目录
-  # - 示例："secretPath" 或 "a/b"（注意仅支持相对子路径，. 与 .. 会被忽略）
+
+  # 站点根路径（相对子路径）。默认留空，输出到 dist/ 根目录
   base_path: ""
 
-  # 站点地图默认设置（可选）
+  # 站点地图默认设置
   sitemap:
     default_changefreq: weekly   # 默认变更频率：always/hourly/daily/weekly/monthly/yearly/never
     default_priority: 0.5        # 默认优先级（0.0 - 1.0）
     # lastmod: 2025-09-09        # 可选：站点级最后修改时间（不设置则用构建时间）
 
-  # 搜索引擎（名称 + 模板，{q} 为查询占位）
+  # 搜索引擎配置
   search_engines:
     - name: Google
       template: https://www.google.com/search?q={q}
@@ -47,25 +31,64 @@ site:
     - name: 百度
       template: https://www.baidu.com/s?wd={q}
   default_engine: Google
+  layout: ntp
 
   # 跳转页设置（仅外网链接生效）
   redirect:
-    # 跳转延迟秒数（为 0 或缺省则不自动跳转）
-    delay_seconds: 3
-    # 默认风险等级（low|medium|high），当链接未单独设置时沿用此值
-    default_risk: low
-    # 站点级 UTM 参数（链接未单独设置 utm 时使用），以下字段任意留空都不会追加
-    utm:
-      source: nav
+    delay_seconds: 3            # 自动跳转倒计时（秒）；0 表示不自动跳转
+    default_risk: low           # 默认风险等级（low|medium|high）
+    utm:                        # 站点级 UTM 参数（可选）
+      source: dove
       medium: referral
       campaign: homepage
       term: ""
       content: ""
-    # 注意：可通过命令行参数 --generate-intermediate-page=false 或环境变量
-    # DOVE_GENERATE_INTERMEDIATE_PAGE=false 禁用中间页生成，
-    # 禁用后链接将直接跳转目标地址，不生成 go/<slug>/index.html 中间页。
 
 groups:
+  # 置顶：项目与说明
+  - category: 置顶
+    name: 项目
+    links:
+      - name: dove
+        url: https://github.com/dovenav/dove
+        intro: 用 Rust 构建的静态导航站点生成器
+        details: |
+          <p><strong>dove</strong> 是一个以 Rust 开发的静态网页导航站点生成器，内置
+          <a href="https://tera.netlify.app/" target="_blank" rel="noopener">Tera</a> 模板引擎与主题目录，支持自定义 HTML/CSS/JS。</p>
+          <ul>
+            <li>支持内/外网两套页面与跳转中间页（可配置倒计时、风险等级、UTM）。</li>
+            <li>内置搜索引擎切换与两种首页布局（default / ntp）。</li>
+            <li>生成 <code>sitemap.xml</code>、<code>robots.txt</code>，可配置 <code>base_url</code> / OG 图等 SEO 信息。</li>
+            <li>支持本地 <code>dove.yaml</code> 或从 URL / 私有 Gist 读取（需启用 <code>remote</code> 特性）。</li>
+            <li>CLI：<code>init</code> 初始化、<code>build</code> 构建、<code>preview</code> 本地预览。</li>
+            <li>产物可直接部署到 GitHub Pages、Cloudflare Pages 或 Cloudflare Workers。</li>
+          </ul>
+          <p>更多用法与配置项请查看主仓库 <a href="https://github.com/dovenav/dove?tab=readme-ov-file#dove" target="_blank" rel="noopener">README</a>。</p>
+        icon: assets/favicon-f.svg
+        slug: dove
+        risk: low
+      - name: dove-private
+        url: https://github.com/dovenav/dove-private
+        intro: 基于 dove 的私有配置与 Pages/Workers 部署模板
+        details: |
+          <p><strong>dove-private</strong> 是一个仅包含站点配置与 CI 的示例/模板仓库，配合
+          <a href="https://github.com/dovenav/dove" target="_blank" rel="noopener">dove</a>
+          生成静态页面，并通过以下两种方式自动发布：</p>
+          <ul>
+            <li><strong>GitHub Pages</strong>：使用 Actions 自动构建并发布到 Pages。</li>
+            <li><strong>Cloudflare Workers</strong>：使用 Wrangler 将 <code>dove/dist</code> 作为静态资产发布。</li>
+          </ul>
+          <p>仓库内包含完整的工作流、缓存加速、版本固定建议、<code>base_path</code> 与自定义域名配置说明，便于你 fork 后快速搭建自己的导航站。</p>
+          <p>详细说明见仓库 README；也可前往 <a href="https://github.com/dovenav/dove" target="_blank" rel="noopener">dove</a> 主仓库了解配置字段与主题机制。</p>
+        icon: assets/favicon-f.svg
+        slug: dove-private
+        risk: low
+      - name: 友链申请
+        url: https://github.com/dovenav/dove-private/blob/main/dove.yaml
+        intro: 用 Rust 构建的静态导航站点生成器
+        icon: assets/favicon-f.svg
+      
+  # 常用分类下的多个二级分组
   - category: 常用
     name: 搜索
     links:
@@ -74,13 +97,8 @@ groups:
         intro: 搜索引擎
         details: |
           <p>Google 是一个<strong>搜索引擎</strong>。</p>
-          <ul>
-            <li>面向公众</li>
-            <li>覆盖广泛</li>
-          </ul>
         slug: google
-        icon: assets/favicon.svg
-        intranet: http://google.corp
+        icon: https://cdn.simpleicons.org/google?size=64
         risk: medium
         utm:
           source: nav
@@ -89,52 +107,311 @@ groups:
         lastmod: 2025-09-09
         changefreq: monthly
         priority: 0.6
-      - { name: Bing, url: https://www.bing.com, intro: 微软搜索 }
-      - { name: DuckDuckGo, url: https://duckduckgo.com, intro: 注重隐私的搜索 }
-      - { name: 百度, url: https://www.baidu.com, intro: 国内搜索 }
+      # ----------------
+      - name: Bing
+        url: https://www.bing.com
+        intro: 微软搜索
+        details: |
+          <p>微软旗下搜索引擎，适合日常检索、图片与视频搜索。</p>
+        icon: https://www.google.com/s2/favicons?domain=www.bing.com&sz=64
+      # ----------------
+      - name: DuckDuckGo
+        url: https://duckduckgo.com
+        intro: 注重隐私的搜索
+        details: |
+          <p>注重隐私保护的搜索引擎，不跟踪用户，支持 <code>!bang</code> 语法直达站内搜索。</p>
+        icon: https://cdn.simpleicons.org/duckduckgo?size=64
+      # ----------------
+      - name: 百度
+        url: https://www.baidu.com
+        intro: 国内搜索
+        details: |
+          <p>中文搜索引擎，覆盖网页、资讯、视频与地图等内容与服务。</p>
+        icon: https://cdn.simpleicons.org/baidu?size=64
 
   - category: 常用
     name: 媒体/社交
     links:
-      - { name: YouTube, url: https://www.youtube.com, intro: 视频平台 }
-      - { name: Twitter (X), url: https://twitter.com, intro: 社交网络 }
-      - { name: Reddit, url: https://www.reddit.com, intro: 社区讨论 }
+      - name: YouTube
+        url: https://www.youtube.com
+        intro: 视频平台
+        details: |
+          <p>全球最大的视频平台，支持频道订阅、播放列表与直播功能。</p>
+        icon: https://cdn.simpleicons.org/youtube?size=64
+      # ----------------
+      - name: Twitter (X)
+        url: https://twitter.com
+        intro: 社交网络
+        details: |
+          <p>社交与资讯平台，关注话题、创建列表，并参与实时讨论。</p>
+        icon: https://cdn.simpleicons.org/x?size=64
+      # ----------------
+      - name: Reddit
+        url: https://www.reddit.com
+        intro: 社区讨论
+        details: |
+          <p>基于主题分版块（Subreddit）的社区讨论平台，涵盖技术、兴趣与新闻。</p>
+        icon: https://cdn.simpleicons.org/reddit?size=64
 
   - category: 常用
     name: 百科
     links:
-      - { name: Wikipedia, url: https://www.wikipedia.org, intro: 自由百科 }
+      - name: Wikipedia
+        url: https://www.wikipedia.org
+        intro: 自由百科
+        details: |
+          <p>自由协作的百科全书，多语言内容由社区共同维护与校对。</p>
+        icon: https://cdn.simpleicons.org/wikipedia?size=64
 
+  # 常用：按场景细分
+  - category: 常用
+    name: 视频/音乐
+    links:
+      - name: 腾讯视频
+        url: https://v.qq.com
+        intro: 长视频平台，影视综艺与体育直播。
+        icon: https://www.google.com/s2/favicons?domain=v.qq.com&sz=64
+      - name: 优酷
+        url: https://www.youku.com/
+        intro: 阿里巴巴旗下长视频平台，剧综动漫等。
+        icon: https://www.google.com/s2/favicons?domain=www.youku.com&sz=64
+      - name: 爱奇艺
+        url: https://www.iqiyi.com/
+        intro: 长视频平台，自制剧综与电影资源。
+        icon: https://www.google.com/s2/favicons?domain=www.iqiyi.com&sz=64
+      - name: 哔哩哔哩
+        url: https://www.bilibili.com/
+        intro: 年轻人视频社区，番剧、直播与 UP 主创作。
+        icon: https://cdn.simpleicons.org/bilibili?size=64
+      - name: 网易云音乐
+        url: https://music.163.com/
+        intro: 音乐流媒体，歌单与评论氛围。
+        icon: https://cdn.simpleicons.org/neteasecloudmusic?size=64
+      - name: QQ音乐
+        url: https://y.qq.com/
+        intro: 腾讯旗下音乐平台，曲库丰富。
+        icon: https://www.google.com/s2/favicons?domain=y.qq.com&sz=64
+      - name: 酷狗音乐
+        url: https://www.kugou.com/
+        intro: 音乐播放与下载平台。
+        icon: https://www.google.com/s2/favicons?domain=www.kugou.com&sz=64
+
+  - category: 常用
+    name: 短视频
+    links:
+      - name: 抖音网页版
+        url: https://www.douyin.com/
+        intro: 短视频与直播平台，推荐信息流。
+        icon: https://www.google.com/s2/favicons?domain=www.douyin.com&sz=64
+      - name: 快手网页版
+        url: https://www.kuaishou.com/
+        intro: 短视频社区与直播平台。
+        icon: https://www.google.com/s2/favicons?domain=www.kuaishou.com&sz=64
+
+  - category: 常用
+    name: 社交/社区
+    links:
+      - name: 微博
+        url: https://www.weibo.com/
+        intro: 中文社交媒体与话题平台。
+        icon: https://cdn.simpleicons.org/sinaweibo?size=64
+      - name: 知乎
+        url: https://www.zhihu.com/explore
+        intro: 问答社区，分享知识、经验与见解。
+        icon: https://cdn.simpleicons.org/zhihu?size=64
+      - name: 豆瓣
+        url: https://www.douban.com/
+        intro: 书影音评分与评论社区。
+        icon: https://cdn.simpleicons.org/douban?size=64
+      - name: 百度贴吧
+        url: https://tieba.baidu.com/
+        intro: 基于兴趣主题的社区论坛。
+        icon: https://cdn.simpleicons.org/baidu?size=64
+      - name: 简书
+        url: https://www.jianshu.com/
+        intro: 写作与阅读社区，发布文章与专题。
+        icon: https://www.google.com/s2/favicons?domain=www.jianshu.com&sz=64
+
+  - category: 常用
+    name: 媒体/电视
+    links:
+      - name: CCTV直播
+        url: https://tv.cctv.com/live/index.shtml
+        intro: 央视多频道在线直播与节目回看。
+        icon: https://www.google.com/s2/favicons?domain=tv.cctv.com&sz=64
+
+  - category: 常用
+    name: 购物/生活
+    links:
+      - name: 淘宝
+        url: https://www.taobao.com/
+        intro: 综合电商平台，海量商品与店铺。
+        icon: https://cdn.simpleicons.org/taobao?size=64
+
+  - category: 常用
+    name: 办公/效率
+    links:
+      - name: 文件传输助手
+        url: https://filehelper.weixin.qq.com/
+        intro: 微信生态内文本与文件跨设备传输。
+        icon: https://cdn.simpleicons.org/wechat?size=64
+      - name: 微信公众平台
+        url: https://mp.weixin.qq.com/
+        intro: 公众号内容发布与运营管理。
+        icon: https://cdn.simpleicons.org/wechat?size=64
+      - name: 企业微信
+        url: https://work.weixin.qq.com/
+        intro: 企业沟通协作与办公。
+        icon: https://cdn.simpleicons.org/wechat?size=64
+      - name: 看云
+        url: https://www.kancloud.cn/invite?code=629a2ef59f83a
+        intro: 在线文档托管与团队协作平台。
+        icon: https://www.google.com/s2/favicons?domain=www.kancloud.cn&sz=64
+
+  # 开发分类下的多个二级分组
   - category: 开发
     name: 文档/学习
     links:
-      - { name: Rust Docs, url: https://doc.rust-lang.org, intro: Rust 官方文档 }
-      - { name: MDN Web Docs, url: https://developer.mozilla.org, intro: Web 开发文档 }
-      - { name: Stack Overflow, url: https://stackoverflow.com, intro: 开发问答 }
-      - { name: GeeksforGeeks, url: https://www.geeksforgeeks.org, intro: 计算机知识 }
+      - name: Rust Docs
+        url: https://doc.rust-lang.org
+        intro: Rust 官方文档
+        details: |
+          <p>官方书籍《The Rust Programming Language》与标准库参考，含示例与最佳实践。</p>
+        icon: https://cdn.simpleicons.org/rust?size=64
+      # ----------------
+      - name: MDN Web Docs
+        url: https://developer.mozilla.org
+        intro: Web 开发文档
+        details: |
+          <p>权威 Web 文档，覆盖 HTML/CSS/JS、浏览器 API 与兼容性数据（BCD）。</p>
+        icon: https://cdn.simpleicons.org/mdnwebdocs?size=64
+      # ----------------
+      - name: Stack Overflow
+        url: https://stackoverflow.com
+        intro: 开发问答
+        details: |
+          <p>开发者问答社区，可搜索常见报错与解决方案，参考高票答案与讨论。</p>
+        icon: https://cdn.simpleicons.org/stackoverflow?size=64
+      # ----------------
+      - name: GeeksforGeeks
+        url: https://www.geeksforgeeks.org
+        intro: 计算机知识
+        details: |
+          <p>计算机基础与数据结构/算法教程，附题解与面试经验分享。</p>
+        icon: https://cdn.simpleicons.org/geeksforgeeks?size=64
+      # ----------------
+      - name: Notion
+        url: https://www.notion.so/
+        intro: AI工作空间
+        details: |
+          <p>一个AI工作空间，团队可以在这里找到每个答案，自动化繁忙工作，并完成项目。</p>
+        icon: https://cdn.simpleicons.org/notion?size=64
 
   - category: 开发
     name: 平台/仓库
     links:
-      - { name: GitHub, url: https://github.com, intro: 代码托管, icon: https://github.githubassets.com/favicons/favicon.svg }
-      - { name: GitLab, url: https://gitlab.com, intro: 代码托管与 CI }
-      - { name: crates.io, url: https://crates.io, intro: Rust 包仓库, intranet: http://crates.corp }
+      - name: GitHub
+        url: https://github.com
+        intro: 代码托管
+        icon: https://cdn.simpleicons.org/github?size=64
+        details: |
+          <p>主流代码托管平台，提供 Issues、Pull Requests、Actions 与 Packages 等生态。</p>
+      # ----------------
+      - name: GitLab
+        url: https://gitlab.com
+        intro: 代码托管与 CI
+        details: |
+          <p>集成代码托管与 CI/CD，支持 Pipeline、Issue Board 与容器注册表。</p>
+        icon: https://cdn.simpleicons.org/gitlab?size=64
+      # ----------------
+      - name: crates.io
+        url: https://crates.io
+        intro: Rust 包仓库
+        details: |
+          <p>Rust 生态的官方包仓库，用于发布、检索与依赖管理。</p>
+        icon: https://www.google.com/s2/favicons?domain=crates.io&sz=64
 
   - category: 开发
     name: 工具
     links:
-      - { name: Regex101, url: https://regex101.com, intro: 正则测试 }
-      - { name: JSON Formatter, url: https://jsonformatter.org, intro: JSON 工具 }
-      - { name: TinyPNG, url: https://tinypng.com, intro: 图片压缩 }
-      - { name: CodeSandbox, url: https://codesandbox.io, intro: 在线 IDE }
-      - { name: JSDelivr, url: https://www.jsdelivr.com, intro: 前端 CDN }
+      - name: Regex101
+        url: https://regex101.com
+        intro: 正则测试
+        details: |
+          <p>在线正则表达式测试与解释器，支持 PCRE、ECMAScript、Python 等多种方言。</p>
+        icon: https://www.google.com/s2/favicons?domain=regex101.com&sz=64
+      # ----------------
+      - name: JSON Formatter
+        url: https://jsonformatter.org
+        intro: JSON 工具
+        details: |
+          <p>JSON 在线格式化与校验，支持压缩、树形浏览与拷贝分享。</p>
+        icon: https://cdn.simpleicons.org/json?size=64
+      # ----------------
+      - name: TinyPNG
+        url: https://tinypng.com
+        intro: 图片压缩
+        details: |
+          <p>智能压缩 PNG/JPG/WebP，显著降低体积同时尽量保持画质。</p>
+        icon: https://www.google.com/s2/favicons?domain=tinypng.com&sz=64
+      # ----------------
+      - name: CodeSandbox
+        url: https://codesandbox.io
+        intro: 在线 IDE
+        details: |
+          <p>云端在线 IDE，快速创建前端/全栈样例，便于协作与分享。</p>
+        icon: https://cdn.simpleicons.org/codesandbox?size=64
+      # ----------------
+      - name: JSDelivr
+        url: https://www.jsdelivr.com
+        intro: 前端 CDN
+        details: |
+          <p>免费公共 CDN，加速分发 npm/GitHub 资源，支持自定义版本与文件路径。</p>
+        icon: https://cdn.simpleicons.org/jsdelivr?size=64
+
+  - category: 开发
+    name: 镜像/下载
+    links:
+      - name: 阿里巴巴开源镜像站
+        url: https://developer.aliyun.com/mirror/
+        intro: 常用开源软件镜像与加速下载。
+        icon: https://cdn.simpleicons.org/alibabacloud?size=64
+      - name: 腾讯软件中心
+        url: https://pc.qq.com/category/c0.html 
+        intro: 腾讯官方软件下载与更新。
+        icon: https://www.google.com/s2/favicons?domain=pc.qq.com&sz=64
 
   - category: 学习
     name: 刷题/练习
     links:
-      - { name: LeetCode, url: https://leetcode.com, intro: 算法练习 }
+      - name: LeetCode
+        url: https://leetcode.com
+        intro: 算法练习
+        details: |
+          <p>在线刷题平台，覆盖数据结构与算法，提供竞赛、讨论与题解。</p>
+        icon: https://cdn.simpleicons.org/leetcode?size=64
 
-  - category: 内部
-    name: 内部系统
+  
+  - category: 学习
+    name: 课程/书籍
     links:
-      - { name: 内部系统, intranet: http://intranet.corp, intro: 公司内部系统 }
+      - name: Coursera
+        url: https://www.coursera.org
+        intro: 在线课程
+        details: |
+          <p>全球高校与机构提供的在线课程与专精证书，涵盖计算机、商业与人文等。</p>
+        icon: https://cdn.simpleicons.org/coursera?size=64
+      # ----------------
+      - name: Udemy
+        url: https://www.udemy.com
+        intro: 付费课程
+        details: |
+          <p>面向实用技能的在线课程平台，内容多样，常有折扣促销。</p>
+        icon: https://cdn.simpleicons.org/udemy?size=64
+      # ----------------
+      - name: 可汗学院
+        url: https://www.khanacademy.org
+        intro: 免费课程
+        details: |
+          <p>非营利教育平台，提供数学、科学与计算机等免费课程与练习。</p>
+        icon: https://cdn.simpleicons.org/khanacademy?size=64
