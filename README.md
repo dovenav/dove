@@ -208,6 +208,76 @@ cargo run --features remote -- preview --build-first \
   - `--dir` 指定服务目录（若未指定，将根据配置推导 `dist/<base_path>`）。
   - `--open` 启动后自动在浏览器打开。
 
+## 开发者指南
+
+### 工程结构
+
+本项目已将原本过长的 `main.rs` 按职责拆分为模块，便于维护与测试：
+
+- `src/main.rs`：程序入口，仅负责 `clap` 解析与命令分发。
+- `src/cli.rs`：CLI/子命令定义（clap 派生）。
+- `src/commands.rs`：命令调度与“有效参数”计算（CLI + 环境变量合并）。
+- `src/config.rs`：配置模型与加载（本地/URL/Gist），以及来源描述。
+- `src/utils.rs`：通用小工具（环境变量解析、安全子路径、URL 主机名等）。
+- `src/build.rs`：构建核心（拷贝资源、图标回写、Tera 渲染、robots/sitemap）。
+- `src/icons.rs`：远程图标规范化/并发下载与缓存（`--features remote` 时有效）。
+- `src/init.rs`：初始化脚手架（示例配置与内置默认主题写出）。
+- `src/preview.rs`：本地预览（文件监视 + 增量重建 + 热刷新 HTTP 服务）。
+
+相关依赖：
+
+- 模板引擎：`tera`
+- 错误处理：`anyhow`
+- 文件监视：`notify`
+- 预览服务：`tiny_http`
+- 远程/并发下载（可选特性）：`ureq` + `std::thread` + `mpsc`
+
+### 特性开关
+
+- `remote`（默认关闭）：
+  - 允许 `--input-url` 与 Gist 加载（`--gist-id/--gist-file`）；
+  - 构建阶段并发下载远程图标并本地缓存。
+  - 开启方式：`cargo run --features remote -- build ...`
+
+### 模板上下文约定
+
+首页模板 `templates/index.html.tera` 可访问（部分）：
+
+- 站点信息：`site_title`、`site_desc`、`color_scheme`、`layout`
+- 搜索引擎：`search_engines`、`engine_default`
+- 列表数据：`groups`（含 `name/category/links`）、`categories`
+- 其它：`build_version`、`generate_intermediate_page`、`has_intranet`
+- 内/外网切换：`network_switch_href`、`mode_other_label`
+
+详情页模板 `templates/detail.html.tera` 可访问：
+
+- `link_name`、`link_intro`、`link_details_html`、`link_icon`、`link_host`、`link_url`
+- 风险与跳转：`risk_class`、`risk_label`、`has_delay`、`delay_seconds`
+
+若新增模板变量，请在 `src/build.rs` 的渲染上下文中补充对应字段。
+
+### 代码风格与约定
+
+- 错误处理统一使用 `anyhow::Result` 与 `Context` 补充语境；避免 `unwrap`/`expect`。
+- 遵循“模块内聚、函数精简”的拆分原则；公共 API 仅在需要时 `pub(crate)` 暴露。
+- 环境变量解析集中在 `src/utils.rs`（`env_opt_*` 系列），避免分散解析逻辑。
+- 路径组合使用 `safe_subpath` 过滤 `.`/`..` 段，避免越界写入。
+- 远程功能与并发下载需考虑在未启用 `remote` 特性时的降级路径（返回空映射、不报错）。
+- 保持 CLI 兼容：模块重构不改变参数/帮助/默认行为。
+
+### 本地开发与调试
+
+- 编译：`cargo build`
+- 运行：`cargo run -- build` / `cargo run -- preview --build-first`
+- 远程功能：`cargo run --features remote -- build --input-url <URL>`
+- 格式/静态检查（可选）：`cargo fmt`、`cargo clippy -D warnings`
+
+### PR 建议
+
+- 尽量保持每个 PR 聚焦单一问题（如“新增模板变量 X”或“优化图标下载重试”）。
+- 如涉及模板变量，请同步更新本 README 的“模板上下文约定”表述。
+- 若修改 CLI 或环境变量行为，请在“CLI 参数与环境变量”章节对照更新说明。
+
 ### 禁用中间页示例
 
 ```
