@@ -49,3 +49,11 @@ jobs:
     - name: Deploy to GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v4
+    
+    # Trigger dove-private build when this build completes successfully
+    - name: Trigger dove-private build
+      uses: peter-evans/repository-dispatch@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        repository: dovenav/dove-private
+        event-type: dove-updated
