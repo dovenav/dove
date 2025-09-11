@@ -36,11 +36,26 @@
     </script>
   </head>
   <body class="theme-{{ color_scheme }} layout-{{ layout }}">
+    <div id="bgLayer" class="bg-layer" aria-hidden="true"></div>
     <div class="top-actions">
       {% if has_intranet %}
       <a class="top-link" id="toggleNet" href="{{ network_switch_href }}" title="切换内/外网">{{ mode_other_label }}</a>
       {% endif %}
       <button id="toggleTheme" class="btn ghost" title="切换主题">🌓</button>
+      <button id="bgNext" class="btn ghost" title="切换背景">🖼️</button>
+      <select id="bgInterval" class="bg-select" title="自动切换">
+        <option value="0">不自动</option>
+        <option value="30">30秒</option>
+        <option value="60">1分钟</option>
+        <option value="300">5分钟</option>
+      </select>
+      <select id="bgBlur" class="bg-select" title="模糊强度">
+        <option value="0">无模糊</option>
+        <option value="6">轻度</option>
+        <option value="12" selected>中等</option>
+        <option value="18">较强</option>
+        <option value="24">很强</option>
+      </select>
     </div>
     <header class="hero">
       <div class="hero-inner">

@@ -177,4 +177,54 @@
     setActiveCat(target);
   }
   initCats();
+
+  // Background image: free providers + controls
+  const bgLayer = document.getElementById('bgLayer');
+  const bgNextBtn = document.getElementById('bgNext');
+  const bgIntervalSel = document.getElementById('bgInterval');
+  const bgBlurSel = document.getElementById('bgBlur');
+
+  // Providers without API keys. Rotate through to improve success rate.
+  const BG_PROVIDERS = [
+    (w,h)=>`https://picsum.photos/${Math.max(1280,w)}/${Math.max(720,h)}?random=${Date.now()}`,
+    (w,h)=>`https://source.unsplash.com/random/${Math.max(1280,w)}x${Math.max(720,h)}?wallpapers,landscape&sig=${Math.floor(Math.random()*100000)}`
+  ];
+  let providerIdx = 0;
+  let bgTimer = null;
+
+  function vp(){ return { w: Math.max(800, window.innerWidth||800), h: Math.max(600, window.innerHeight||600) }; }
+  function nextUrl(){ const {w,h}=vp(); providerIdx = (providerIdx+1)%BG_PROVIDERS.length; return BG_PROVIDERS[providerIdx](w,h); }
+  function analyzeTone(img){
+    try {
+      const size = 32; const c = document.createElement('canvas'); c.width = size; c.height = size; const ctx = c.getContext('2d', { willReadFrequently: true });
+      if(!ctx) return null;
+      ctx.drawImage(img, 0, 0, size, size);
+      const data = ctx.getImageData(0, 0, size, size).data;
+      let sum = 0; const n = size*size; const toLin = (v)=>{ v/=255; return v<=0.04045 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4); };
+      for(let i=0;i<data.length;i+=4){ const r=toLin(data[i]), g=toLin(data[i+1]), b=toLin(data[i+2]); const L = 0.2126*r + 0.7152*g + 0.0722*b; sum += L; }
+      const avg = sum / n; return avg > 0.6 ? 'light' : 'dark';
+    } catch(e){ return null; }
+  }
+  function applyTone(tone){ if(!tone) return; document.body.setAttribute('data-img-tone', tone);
+    const root = document.documentElement;
+    if(tone === 'light') { root.style.setProperty('--bg-overlay', '0.28'); root.style.setProperty('--bg-overlay-light', '0.16'); }
+    else { root.style.setProperty('--bg-overlay', '0.50'); root.style.setProperty('--bg-overlay-light', '0.22'); }
+  }
+  function setBg(url){ if(!bgLayer) return; bgLayer.classList.add('fade'); const img = new Image(); img.referrerPolicy = 'no-referrer'; img.crossOrigin = 'anonymous'; img.onload = ()=>{ bgLayer.style.backgroundImage = `url('${url}')`; const tone = analyzeTone(img); applyTone(tone||'dark'); requestAnimationFrame(()=> bgLayer.classList.remove('fade')); }; img.onerror = ()=>{ /* try another provider on error */ tryNext(true); }; img.src = url; }
+  function tryNext(force){ const url = nextUrl(); setBg(url); if(force){ /* nothing else */ } }
+  function updateBg(){ tryNext(false); }
+
+  function applyBgInterval(seconds){ if(bgTimer){ clearInterval(bgTimer); bgTimer = null; } localStorage.setItem('dove-bg-interval', String(seconds||0)); if(seconds>0){ bgTimer = setInterval(updateBg, seconds*1000); } }
+
+  function applyBgBlur(px){ const n = Math.max(0, Number(px)||0); document.documentElement.style.setProperty('--bg-blur', `${n}px`); localStorage.setItem('dove-bg-blur', String(n)); }
+
+  // Init interval UI
+  (function initBg(){ if(!bgLayer) return; // initial background
+    // Default to dark tone before any image loads
+    applyTone('dark');
+    updateBg();
+    if(bgNextBtn){ bgNextBtn.addEventListener('click', ()=> updateBg()); }
+    if(bgIntervalSel){ const saved = parseInt(localStorage.getItem('dove-bg-interval')||'0',10); if(!isNaN(saved)){ bgIntervalSel.value = String(saved); applyBgInterval(saved); } bgIntervalSel.addEventListener('change', ()=>{ const val = parseInt(bgIntervalSel.value||'0',10); applyBgInterval(isNaN(val)?0:val); }); }
+    if(bgBlurSel){ const savedBlur = parseInt(localStorage.getItem('dove-bg-blur')||'12',10); const v = isNaN(savedBlur) ? 12 : savedBlur; applyBgBlur(v); bgBlurSel.value = String(v); bgBlurSel.addEventListener('change', ()=>{ const val = parseInt(bgBlurSel.value||'12',10); applyBgBlur(isNaN(val)?12:val); }); }
+  })();
 })();
