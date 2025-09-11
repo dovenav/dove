@@ -35,7 +35,7 @@ jobs:
       id: ver
       run: echo "version=$(git describe --tags --always --dirty --long)" >> $GITHUB_OUTPUT
     - name: Build
-      run: cargo run -- build --build-version "${{ steps.ver.outputs.version }}"
+      run: cargo run --features remote -- build --build-version "${{ steps.ver.outputs.version }}"
       env:
         DOVE_BUILD_VERSION: ${{ steps.ver.outputs.version }}
     
