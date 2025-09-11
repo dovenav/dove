@@ -140,6 +140,21 @@ groups:
 - `go/<slug>/index.html` 每个链接的详情/跳转提示页（仅外网版生成；导航页会将链接指向这些中间页；若 `--generate-intermediate-page=false` 则不生成且链接直接跳转目标地址）
 - `sitemap.xml` 站点地图：包含 `index.html` 与所有外网详情页（带 `lastmod`、`changefreq`、`priority`）。
 - `robots.txt` 基础抓取策略（默认 Allow: /）。
+- `assets/sw.js` Service Worker 文件，用于实现离线功能
+- `assets/offline.html` 离线页面，当用户离线时显示
+
+## 离线功能
+
+Dove 生成的网页支持离线使用。当用户首次访问网站时，Service Worker 会缓存所有必要的资源，包括：
+
+- HTML 文件（index.html, go/\*/index.html）
+- CSS 样式表（assets/styles.css）
+- JavaScript 脚本（assets/app.js, assets/qrcode.min.js）
+- 图片资源（favicon 等）
+
+当用户断网再次访问网站时，Service Worker 会提供缓存的内容，确保网站仍然可用。
+
+如果需要自定义离线页面，可以修改主题目录中的 `assets/offline.html` 文件。
 
 ## 高级用法
 

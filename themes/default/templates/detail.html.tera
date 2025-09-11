@@ -112,6 +112,20 @@
     <script src="../../assets/app.js"></script>
     <script src="../../assets/qrcode.min.js"></script>
     <script>
+      // Register service worker for offline support
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('../../assets/sw.js')
+            .then(function(registration) {
+              console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            })
+            .catch(function(err) {
+              console.log('ServiceWorker registration failed: ', err);
+            });
+        });
+      }
+    </script>
+    <script>
       (function(){
         var hasDelay = {{ has_delay | json_encode | safe }};
         var delay = {{ delay_seconds | json_encode | safe }} || 0;
