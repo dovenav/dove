@@ -199,6 +199,11 @@
   let queued = false;     // queue one extra switch request during switching
   let preloaded = null;   // { img, url } next preloaded image if available
 
+  // Set default background image immediately
+  if (bgLayer) {
+    bgLayer.style.backgroundImage = `url('https://picsum.photos/1280/1264')`;
+  }
+
   function vp(){ return { w: Math.max(800, window.innerWidth||800), h: Math.max(600, window.innerHeight||600) }; }
   function nextUrl(){ const {w,h}=vp(); providerIdx = (providerIdx+1)%BG_PROVIDERS.length; return BG_PROVIDERS[providerIdx](w,h); }
   function analyzeTone(img){

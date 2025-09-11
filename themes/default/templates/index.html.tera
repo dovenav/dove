@@ -36,7 +36,7 @@
     </script>
   </head>
   <body class="theme-{{ color_scheme }} layout-{{ layout }}">
-    <div id="bgLayer" class="bg-layer" aria-hidden="true"></div>
+    <div id="bgLayer" class="bg-layer" aria-hidden="true" style="background-image: url('https://picsum.photos/1280/1264');"></div>
     <div class="top-actions">
       {% if has_intranet %}
       <a class="top-link" id="toggleNet" href="{{ network_switch_href }}" title="切换内/外网">{{ mode_other_label }}</a>
