@@ -36,8 +36,11 @@ a:hover { text-decoration: none; }
 .navbar { border-bottom: 1px solid var(--border); }
 .nav-inner { max-width: 1100px; margin: 0 auto; padding: 8px 16px; display:flex; align-items:center; gap:10px; flex-wrap: wrap; }
 .nav-cats { display:flex; align-items:center; gap:8px; flex-wrap: wrap; }
-.nav-cat { color: var(--muted); font-size: 13px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 999px; }
-.nav-cat:hover { color: var(--text); border-color: var(--brand); }
+.nav-cat { color: var(--muted); font-size: 13px; padding: 4px 8px; border: none; border-radius: 999px; background: transparent; }
+.nav-cat:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+/* Remove borders for buttons inside the detail navbar to keep it clean */
+.navbar .btn.ghost { border-color: transparent; box-shadow: none; background: transparent; }
+.navbar .btn.ghost:hover { border-color: transparent; background: rgba(255,255,255,0.06); }
 /* Spacing between navbar and content on detail page */
 .page-detail .navbar { margin-bottom: 14px; }
 /* Header actions inside card */
