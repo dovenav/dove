@@ -189,8 +189,15 @@
     (w,h)=>`https://picsum.photos/${Math.max(1280,w)}/${Math.max(720,h)}?random=${Date.now()}`,
     (w,h)=>`https://source.unsplash.com/random/${Math.max(1280,w)}x${Math.max(720,h)}?wallpapers,landscape&sig=${Math.floor(Math.random()*100000)}`
   ];
+  const FALLBACK_BG = 'https://picsum.photos/1280/1264?random=' + Date.now();
   let providerIdx = 0;
   let bgTimer = null;
+  // double-buffered bg layers for seamless crossfade
+  let bgPrimary = null;   // currently visible layer
+  let bgBuffer = null;    // hidden layer to preload next image
+  let switching = false;  // prevent concurrent switches
+  let queued = false;     // queue one extra switch request during switching
+  let preloaded = null;   // { img, url } next preloaded image if available
 
   function vp(){ return { w: Math.max(800, window.innerWidth||800), h: Math.max(600, window.innerHeight||600) }; }
   function nextUrl(){ const {w,h}=vp(); providerIdx = (providerIdx+1)%BG_PROVIDERS.length; return BG_PROVIDERS[providerIdx](w,h); }
@@ -210,9 +217,103 @@
     if(tone === 'light') { root.style.setProperty('--bg-overlay', '0.28'); root.style.setProperty('--bg-overlay-light', '0.16'); }
     else { root.style.setProperty('--bg-overlay', '0.50'); root.style.setProperty('--bg-overlay-light', '0.22'); }
   }
-  function setBg(url){ if(!bgLayer) return; bgLayer.classList.add('fade'); const img = new Image(); img.referrerPolicy = 'no-referrer'; img.crossOrigin = 'anonymous'; img.onload = ()=>{ bgLayer.style.backgroundImage = `url('${url}')`; const tone = analyzeTone(img); applyTone(tone||'dark'); requestAnimationFrame(()=> bgLayer.classList.remove('fade')); }; img.onerror = ()=>{ /* try another provider on error */ tryNext(true); }; img.src = url; }
-  function tryNext(force){ const url = nextUrl(); setBg(url); if(force){ /* nothing else */ } }
-  function updateBg(){ tryNext(false); }
+  function ensureBgBuffers(){
+    if(!bgLayer || bgPrimary) return;
+    // use existing as primary
+    bgPrimary = bgLayer;
+    // create buffer layer after primary
+    const buf = document.createElement('div');
+    buf.id = 'bgLayer2';
+    buf.className = bgLayer.className + ' fade'; // start hidden
+    buf.setAttribute('aria-hidden', 'true');
+    bgLayer.parentNode.insertBefore(buf, bgLayer.nextSibling);
+    bgBuffer = buf;
+  }
+
+  function preloadImage(url){
+    return new Promise((resolve, reject)=>{
+      const img = new Image();
+      img.referrerPolicy = 'no-referrer';
+      img.crossOrigin = 'anonymous';
+      img.onload = ()=> resolve({img, url});
+      img.onerror = reject;
+      img.src = url;
+    });
+  }
+
+  async function loadNextWithRetry(maxTries){
+    let tries = Math.max(1, maxTries||BG_PROVIDERS.length);
+    while(tries-- > 0){
+      try {
+        const url = nextUrl();
+        const res = await preloadImage(url);
+        return res; // {img, url}
+      } catch(e) {
+        // try next provider
+      }
+    }
+    // last resort: local fallback
+    try {
+      return await preloadImage(FALLBACK_BG);
+    } catch(e){
+      throw new Error('All providers failed, fallback failed');
+    }
+  }
+
+  function startProactivePreload(){
+    if(preloaded) return; // already have one
+    loadNextWithRetry().then(res=>{ preloaded = res; }).catch(()=>{/* ignore */});
+  }
+
+  function crossfadeTo(img, url){
+    if(!bgPrimary || !bgBuffer) return;
+    // set next background on buffer (hidden)
+    bgBuffer.style.backgroundImage = `url('${url}')`;
+    // analyze tone with the loaded image to adapt overlay
+    const tone = analyzeTone(img); applyTone(tone||'dark');
+    // force reflow to ensure transition applies
+    void bgBuffer.offsetWidth;
+    // swap visibility: primary -> fade out, buffer -> fade in
+    bgPrimary.classList.add('fade');
+    bgBuffer.classList.remove('fade');
+
+    const oldPrimary = bgPrimary;
+    const newPrimary = bgBuffer;
+    // after transition, swap roles
+    const onDone = ()=>{
+      newPrimary.removeEventListener('transitionend', onDone);
+      // make old primary the new buffer (hidden)
+      oldPrimary.classList.add('fade');
+      bgPrimary = newPrimary;
+      bgBuffer = oldPrimary;
+      switching = false;
+      if(queued){ queued = false; updateBg(); }
+      // proactively preload the next image
+      preloaded = null; startProactivePreload();
+    };
+    newPrimary.addEventListener('transitionend', onDone, { once: true });
+    // safety net: if transitionend doesn't fire
+    setTimeout(()=>{ if(switching){ onDone(); } }, 700);
+  }
+
+  async function updateBg(){
+    ensureBgBuffers();
+    if(switching){ queued = true; return; }
+    switching = true;
+    try {
+      const res = preloaded || await loadNextWithRetry();
+      preloaded = null; // will be replenished after switch
+      crossfadeTo(res.img, res.url);
+    } catch(e){
+      switching = false;
+      // hard fallback: show local image on primary immediately
+      if(bgPrimary){
+        bgPrimary.style.backgroundImage = `url('${FALLBACK_BG}')`;
+        bgPrimary.classList.remove('fade');
+      }
+      startProactivePreload();
+    }
+  }
 
   function applyBgInterval(seconds){ if(bgTimer){ clearInterval(bgTimer); bgTimer = null; } localStorage.setItem('dove-bg-interval', String(seconds||0)); if(seconds>0){ bgTimer = setInterval(updateBg, seconds*1000); } }
 
@@ -220,11 +321,15 @@
 
   // Init interval UI
   (function initBg(){ if(!bgLayer) return; // initial background
-    // Default to dark tone before any image loads
+    // setup double buffer and default tone
+    ensureBgBuffers();
     applyTone('dark');
+    // initial load
     updateBg();
     if(bgNextBtn){ bgNextBtn.addEventListener('click', ()=> updateBg()); }
     if(bgIntervalSel){ const saved = parseInt(localStorage.getItem('dove-bg-interval')||'0',10); if(!isNaN(saved)){ bgIntervalSel.value = String(saved); applyBgInterval(saved); } bgIntervalSel.addEventListener('change', ()=>{ const val = parseInt(bgIntervalSel.value||'0',10); applyBgInterval(isNaN(val)?0:val); }); }
     if(bgBlurSel){ const savedBlur = parseInt(localStorage.getItem('dove-bg-blur')||'12',10); const v = isNaN(savedBlur) ? 12 : savedBlur; applyBgBlur(v); bgBlurSel.value = String(v); bgBlurSel.addEventListener('change', ()=>{ const val = parseInt(bgBlurSel.value||'12',10); applyBgBlur(isNaN(val)?12:val); }); }
+    // proactively warm up next image
+    startProactivePreload();
   })();
 })();

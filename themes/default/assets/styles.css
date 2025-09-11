@@ -74,11 +74,11 @@ body.theme-light .bg-layer::after { background: linear-gradient(180deg, rgba(255
   .detail-header .card-head { margin-bottom: 10px; }
 }
 .hero-center { display:flex; flex-direction:column; align-items:center; gap:6px; }
-.clock { font-size: 56px; font-weight: 700; letter-spacing: 1px; line-height: 1; font-variant-numeric: tabular-nums lining-nums; font-feature-settings: 'tnum' 1, 'lnum' 1; }
+.clock { font-size: 56px; font-weight: 700; letter-spacing: 1px; line-height: 1; font-variant-numeric: tabular-nums lining-nums; font-feature-settings: 'tnum' 1, 'lnum' 1; color: #fff; }
 .clock, .clock-date { text-shadow: 0 2px 8px rgba(0,0,0,0.45); }
-.clock-date { color: var(--muted); font-size: 14px; }
+.clock-date { color: #fff; font-size: 14px; }
 body.theme-light .clock, body.theme-light .clock-date { text-shadow: 0 1px 6px rgba(0,0,0,0.18); }
-.clock-date:hover { color: var(--text); }
+.clock-date:hover { color: #fff; }
 
 /* Auto tone overrides (only affect hero and top actions for readability over background) */
 body[data-img-tone="light"] .hero,
@@ -86,7 +86,7 @@ body[data-img-tone="light"] .top-actions { --text:#0b0c0f; --muted:#516173; --bo
 body[data-img-tone="dark"] .hero,
 body[data-img-tone="dark"] .top-actions { --text:#f5f7fa; --muted:#a8b3c1; --border:#222634; }
 body[data-img-tone="light"] .clock, body[data-img-tone="light"] .clock-date { text-shadow: 0 1px 6px rgba(255,255,255,0.35); }
-.clock-date:hover { color: var(--text); }
+.clock-date:hover { color: #fff; }
 /* blinking colon */
 .clock-colon { display:inline-block; width:.65ch; text-align:center; transition: opacity .15s ease; position: relative; top: -0.1em; }
 .clock-colon.off { opacity: 0; }
