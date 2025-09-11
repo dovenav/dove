@@ -88,6 +88,9 @@ enum Command {
         /// 图标下载并发数。默认 8
         #[arg(long, value_name = "N")]
         icon_threads: Option<usize>,
+        /// 是否生成中间页（默认生成）。如果设置为 false，则链接直接跳转目标地址
+        #[arg(long, default_value = "true", action = clap::ArgAction::Set)]
+        generate_intermediate_page: bool,
     },
     /// 初始化示例配置与静态资源
     Init {
@@ -161,6 +164,9 @@ enum Command {
         /// 图标下载并发数。默认 8
         #[arg(long, value_name = "N")]
         icon_threads: Option<usize>,
+        /// 是否生成中间页（默认生成）。如果设置为 false，则链接直接跳转目标地址
+        #[arg(long, default_value = "true", action = clap::ArgAction::Set)]
+        generate_intermediate_page: bool,
     },
 }
 
@@ -324,7 +330,7 @@ struct SitemapSettings {
 fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.command {
-        Command::Build { input, input_url, #[cfg(feature = "remote")] gist_id, #[cfg(feature = "remote")] gist_file, #[cfg(feature = "remote")] github_token, #[cfg(feature = "remote")] auth_scheme, out, static_dir, theme, base_path, no_intranet, color_scheme, title, description, build_version, icon_dir, icon_threads } => {
+        Command::Build { input, input_url, #[cfg(feature = "remote")] gist_id, #[cfg(feature = "remote")] gist_file, #[cfg(feature = "remote")] github_token, #[cfg(feature = "remote")] auth_scheme, out, static_dir, theme, base_path, no_intranet, color_scheme, title, description, build_version, icon_dir, icon_threads, generate_intermediate_page } => {
             // 环境变量覆盖（若 CLI 未指定）
             let env_input = env_opt_path("DOVE_INPUT");
             let env_input_url = env_opt_string("DOVE_INPUT_URL").or(env_opt_string("DOVE_GIST_URL"));
@@ -343,6 +349,7 @@ fn main() -> Result<()> {
             #[cfg(feature = "remote")] let env_auth_scheme = env_opt_string("DOVE_AUTH_SCHEME");
             let env_icon_dir = env_opt_string("DOVE_ICON_DIR");
             let env_icon_threads = env_opt_usize("DOVE_ICON_THREADS");
+            let env_generate_intermediate_page = env_bool_truthy("DOVE_GENERATE_INTERMEDIATE_PAGE").unwrap_or(true);
 
             let mut effective_input = input.or(env_input);
             let effective_input_url = input_url.or(env_input_url);
@@ -365,6 +372,7 @@ fn main() -> Result<()> {
             #[cfg(not(feature = "remote"))] let effective_auth_scheme: Option<String> = None;
             let effective_icon_dir = icon_dir.or(env_icon_dir);
             let effective_icon_threads = icon_threads.or(env_icon_threads);
+            let effective_generate_intermediate_page = generate_intermediate_page && env_generate_intermediate_page;
 
             // 当提供了 URL/Gist 时，忽略显式/环境的本地 input 路径，使 URL/Gist 优先生效
             if effective_input_url.is_some() || effective_gist_id.is_some() {
@@ -392,6 +400,7 @@ fn main() -> Result<()> {
                 effective_theme.as_deref(),
                 effective_base_path,
                 effective_no_intranet,
+                effective_generate_intermediate_page,
                 effective_color_scheme,
                 effective_title,
                 effective_desc,
@@ -404,7 +413,7 @@ fn main() -> Result<()> {
             let dir = dir.unwrap_or_else(|| PathBuf::from("."));
             init_scaffold(&dir, force)
         }
-        Command::Preview { dir, addr, build_first, input, input_url, #[cfg(feature = "remote")] gist_id, #[cfg(feature = "remote")] gist_file, #[cfg(feature = "remote")] github_token, #[cfg(feature = "remote")] auth_scheme, out, static_dir, theme, base_path, no_intranet, open, color_scheme, title, description, build_version, icon_dir, icon_threads } => {
+        Command::Preview { dir, addr, build_first, input, input_url, #[cfg(feature = "remote")] gist_id, #[cfg(feature = "remote")] gist_file, #[cfg(feature = "remote")] github_token, #[cfg(feature = "remote")] auth_scheme, out, static_dir, theme, base_path, no_intranet, open, color_scheme, title, description, build_version, icon_dir, icon_threads, generate_intermediate_page } => {
             // 环境变量
             let env_addr = env_opt_string("DOVE_PREVIEW_ADDR");
             let env_input = env_opt_path("DOVE_INPUT");
@@ -424,6 +433,7 @@ fn main() -> Result<()> {
             #[cfg(feature = "remote")] let env_auth_scheme = env_opt_string("DOVE_AUTH_SCHEME");
             let env_icon_dir = env_opt_string("DOVE_ICON_DIR");
             let env_icon_threads = env_opt_usize("DOVE_ICON_THREADS");
+            let env_generate_intermediate_page = env_bool_truthy("DOVE_GENERATE_INTERMEDIATE_PAGE").unwrap_or(true);
 
             let effective_addr = addr.or(env_addr).unwrap_or_else(|| "127.0.0.1:8787".to_string());
             let mut effective_input = input.or(env_input);
@@ -447,6 +457,7 @@ fn main() -> Result<()> {
             #[cfg(not(feature = "remote"))] let effective_auth_scheme: Option<String> = None;
             let effective_icon_dir = icon_dir.or(env_icon_dir);
             let effective_icon_threads = icon_threads.or(env_icon_threads);
+            let effective_generate_intermediate_page = generate_intermediate_page && env_generate_intermediate_page;
 
             // 当提供了 URL/Gist 时，忽略显式/环境的本地 input 路径，使 URL/Gist 优先生效
             if effective_input_url.is_some() || effective_gist_id.is_some() {
@@ -472,6 +483,7 @@ fn main() -> Result<()> {
                     effective_theme.as_deref(),
                     effective_base_path.clone(),
                     effective_no_intranet,
+                    effective_generate_intermediate_page,
                     effective_color_scheme,
                     effective_title.clone(),
                     effective_desc.clone(),
@@ -517,6 +529,7 @@ fn main() -> Result<()> {
                 effective_theme,
                 effective_base_path,
                 effective_no_intranet,
+                effective_generate_intermediate_page,
                 effective_color_scheme,
                 effective_title,
                 effective_desc,
@@ -695,6 +708,7 @@ fn build(
     theme_cli: Option<&Path>,
     base_path_cli: Option<String>,
     no_intranet: bool,
+    generate_intermediate_page: bool,
     color_scheme_override: Option<ColorScheme>,
     title_override: Option<String>,
     desc_override: Option<String>,
@@ -817,6 +831,7 @@ fn build(
         &theme_dir,
         &site_dir,
         !no_intranet,
+        generate_intermediate_page,
         color_scheme_override,
         title_override,
         desc_override,
@@ -946,6 +961,7 @@ fn render_with_theme(
     theme_dir: &Path,
     out_dir: &Path,
     generate_intranet: bool,
+    generate_intermediate_page: bool,
     color_scheme_override: Option<ColorScheme>,
     title_override: Option<String>,
     desc_override: Option<String>,
@@ -960,12 +976,12 @@ fn render_with_theme(
     // 渲染外网(index.html)，按需渲染内网(intranet.html)
     let title_ref = title_override.as_deref();
     let desc_ref = desc_override.as_deref();
-    let externals = render_one(&tera, cfg, out_dir, NetMode::External, generate_intranet, color_scheme_override, title_ref, desc_ref, build_version)?;
-    if !externals.is_empty() {
+    let externals = render_one(&tera, cfg, out_dir, NetMode::External, generate_intranet, generate_intermediate_page, color_scheme_override, title_ref, desc_ref, build_version)?;
+    if !externals.is_empty() && generate_intermediate_page {
         render_link_details(&tera, cfg, out_dir, &externals, color_scheme_override, title_ref, desc_ref, build_version)?;
     }
     if generate_intranet {
-        let _internals = render_one(&tera, cfg, out_dir, NetMode::Intranet, generate_intranet, color_scheme_override, title_ref, desc_ref, build_version)?;
+        let _internals = render_one(&tera, cfg, out_dir, NetMode::Intranet, generate_intranet, generate_intermediate_page, color_scheme_override, title_ref, desc_ref, build_version)?;
     }
     Ok(externals)
 }
@@ -982,6 +998,7 @@ fn render_one(
     out_dir: &Path,
     mode: NetMode,
     has_intranet: bool,
+    generate_intermediate_page: bool,
     color_scheme_override: Option<ColorScheme>,
     title_override: Option<&str>,
     desc_override: Option<&str>,
@@ -1081,7 +1098,11 @@ struct RLink { name: String, href: String, desc: String, icon: Option<String>, h
                         }
                     };
                     let slug = unique_slug(&base_slug, &mut used_slugs);
-                    let href = format!("go/{}/", slug);
+                    let href = if generate_intermediate_page {
+                        format!("/go/{}/", slug)
+                    } else {
+                        final_url.clone()
+                    };
                     let icon_res = l.icon.as_ref().map(|s| resolve_icon_for_page(s));
                     rlinks.push(RLink { name: l.name.clone(), href: href.clone(), desc: l.intro.clone(), icon: icon_res, host: host.clone() });
                     let delay = cfg.site.redirect.as_ref().and_then(|r| r.delay_seconds).unwrap_or(0);
@@ -1520,6 +1541,7 @@ fn preview_watch_and_serve(
     theme_dir: Option<PathBuf>,
     base_path: Option<String>,
     no_intranet: bool,
+    generate_intermediate_page: bool,
     color_scheme: Option<ColorScheme>,
     title: Option<String>,
     desc: Option<String>,
@@ -1566,7 +1588,7 @@ fn preview_watch_and_serve(
                         input.as_deref(), input_url.as_deref(), gist_id.as_deref(), gist_file.as_deref(), token.as_deref(), auth_scheme.as_deref(),
                     ) {
                         if let Ok(cfg) = serde_yaml::from_str::<Config>(&loaded.text) {
-                            let _ = build(cfg, &out, static_dir.as_deref(), theme_dir.as_deref(), base_path.clone(), no_intranet, color_scheme, title.clone(), desc.clone(), build_version.clone(), icon_dir.clone(), icon_threads);
+                            let _ = build(cfg, &out, static_dir.as_deref(), theme_dir.as_deref(), base_path.clone(), no_intranet, generate_intermediate_page, color_scheme, title.clone(), desc.clone(), build_version.clone(), icon_dir.clone(), icon_threads);
                             version.fetch_add(1, Ordering::SeqCst);
                             println!("🔁 已重建，version = {} · 配置来源: {}", version.load(Ordering::SeqCst), describe_source(&loaded.source));
                         }

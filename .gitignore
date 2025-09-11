@@ -22,3 +22,7 @@ dist
 .idea/
 .vscode/
 .trae/
+test-dist/
+test.yaml
+test-dist-*
+test-*

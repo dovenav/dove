@@ -104,6 +104,8 @@ groups:
   - `delay_seconds` 自动跳转倒计时；为 0 或缺省时不自动跳转。
   - `default_risk` 默认风险等级（low|medium|high）。
   - `utm` 站点级 UTM 参数（source/medium/campaign/term/content）。
+
+注意：中间页的生成可以通过命令行参数 `--generate-intermediate-page=false` 或环境变量 `DOVE_GENERATE_INTERMEDIATE_PAGE=false` 来禁用。禁用后，链接将直接跳转到目标地址，不会生成 `go/<slug>/index.html` 中间页。
 - `site.sitemap` 站点地图默认设置：
   - `default_changefreq` 默认变更频率：`always|hourly|daily|weekly|monthly|yearly|never`
   - `default_priority` 默认优先级：`0.0 - 1.0`
@@ -135,7 +137,7 @@ groups:
 
 - `index.html` 外网版导航（若设置 `base_path`，在 `dist/<base_path>/index.html`）
 - `intranet.html` 内网版导航（同上；若 `--no-intranet` 则不生成且页面不显示切换按钮）
-- `go/<slug>/index.html` 每个链接的详情/跳转提示页（仅外网版生成；导航页会将链接指向这些中间页）
+- `go/<slug>/index.html` 每个链接的详情/跳转提示页（仅外网版生成；导航页会将链接指向这些中间页；若 `--generate-intermediate-page=false` 则不生成且链接直接跳转目标地址）
 - `sitemap.xml` 站点地图：包含 `index.html` 与所有外网详情页（带 `lastmod`、`changefreq`、`priority`）。
 - `robots.txt` 基础抓取策略（默认 Allow: /）。
 
@@ -184,11 +186,25 @@ cargo run --features remote -- preview --build-first \
 - `--theme` 指定主题目录，优先级高于 `site.theme_dir`。
 - `--base-path` 指定站点根路径（相对子路径），优先级高于 `site.base_path`。
 - `--no-intranet` 仅生成外网版本页面（不生成 `intranet.html`，且页面不显示切换按钮）。
+- `--generate-intermediate-page` 是否生成中间页（默认生成）。如果设置为 false，则链接直接跳转目标地址。
 - 预览命令（preview）：
   - `--build-first` 启动前先构建一次。
   - `--addr` 监听地址（默认 `127.0.0.1:8787`）。
   - `--dir` 指定服务目录（若未指定，将根据配置推导 `dist/<base_path>`）。
   - `--open` 启动后自动在浏览器打开。
+
+### 禁用中间页示例
+
+```
+# 构建时不生成中间页，链接直接跳转到目标地址
+cargo run -- build --generate-intermediate-page false
+
+# 或使用环境变量
+DOVE_GENERATE_INTERMEDIATE_PAGE=false cargo run -- build
+
+# 预览时也可禁用中间页
+cargo run -- preview --build-first --generate-intermediate-page false
+```
 
 - 初始化命令（init）：
   - `--force` 强制覆盖已存在文件与主题。
@@ -222,6 +238,7 @@ cargo run --features remote -- preview --build-first \
 - `DOVE_THEME_DIR`：主题目录（`DOVE_THEME` 的别名）
 - `DOVE_BASE_PATH`：站点根路径（等价于 `--base-path`）
 - `DOVE_NO_INTRANET`：是否仅生成外网（真值如 `1/true/yes/on` 有效）
+- `DOVE_GENERATE_INTERMEDIATE_PAGE`：是否生成中间页（默认生成）。如果设置为 false，则链接直接跳转目标地址。
 - `DOVE_COLOR_SCHEME`：页面配色方案覆盖（`auto|light|dark`）
 - `DOVE_TITLE`：覆盖站点标题（仅影响渲染，不修改配置文件）
 - `DOVE_DESCRIPTION`：覆盖站点描述（仅影响渲染，不修改配置文件）
