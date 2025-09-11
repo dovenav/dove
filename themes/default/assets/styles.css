@@ -9,10 +9,14 @@
   --brand-2: #ff7a45; /* gradient */
   --ring: rgba(244,93,34,0.35);
   --shadow: 0 6px 18px rgba(0,0,0,0.35);
+  /* note (warning) */
+  --note-bg: rgba(255, 193, 7, 0.06); /* amber, lighter */
+  --note-border: rgba(255, 193, 7, 0.22);
+  --note-accent: #ffcc66;
 }
 
-body.theme-light { --bg:#ffffff; --panel:#ffffff; --text:#0b0c0f; --muted:#516173; --border:#e6e8eb; --brand:#f45d22; --brand-2:#ff8a4d; --ring:rgba(244,93,34,0.25); }
-@media (prefers-color-scheme: light) { body.theme-auto { --bg:#ffffff; --panel:#ffffff; --text:#0b0c0f; --muted:#516173; --border:#e6e8eb; --brand:#f45d22; --brand-2:#ff8a4d; --ring:rgba(244,93,34,0.25); } }
+body.theme-light { --bg:#ffffff; --panel:#ffffff; --text:#0b0c0f; --muted:#516173; --border:#e6e8eb; --brand:#f45d22; --brand-2:#ff8a4d; --ring:rgba(244,93,34,0.25); --note-bg: rgba(255,193,7,0.10); --note-border: rgba(255,193,7,0.28); --note-accent:#ffb84d; }
+@media (prefers-color-scheme: light) { body.theme-auto { --bg:#ffffff; --panel:#ffffff; --text:#0b0c0f; --muted:#516173; --border:#e6e8eb; --brand:#f45d22; --brand-2:#ff8a4d; --ring:rgba(244,93,34,0.25); --note-bg: rgba(255,193,7,0.10); --note-border: rgba(255,193,7,0.28); --note-accent:#ffb84d; } }
 
 * { box-sizing: border-box; }
 html, body { height: 100%; }
@@ -105,7 +109,7 @@ a:hover { text-decoration: none; }
 .card { display: block; text-decoration: none; color: inherit; background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent), var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 14px; transition: border-color .2s ease, transform .15s ease, box-shadow .15s ease; box-shadow: 0 1px 0 rgba(255,255,255,0.03); }
 .card:hover { border-color: var(--brand); transform: translateY(-2px); box-shadow: 0 10px 24px rgba(244,93,34,0.18); }
 .card:active { transform: translateY(0); }
-.card-head { display:flex; align-items:center; gap:10px; margin-bottom: 6px; }
+.card-head { display:flex; align-items:center; gap:10px; margin: 50px 0; }
 .card .icon { width: 32px; height: 32px; opacity: .9; }
 .card .title { font-weight: 600; font-size: 15px; }
 .card .desc { color: var(--muted); font-size: 13px; margin-top: 2px; }
@@ -131,7 +135,7 @@ a:focus { outline: none; box-shadow: 0 0 0 3px var(--ring); border-radius: 10px;
 .risk-low { background: rgba(40, 167, 69, 0.12); color: #8cd9a9; border-color: rgba(40,167,69,0.35); }
 .risk-medium { background: rgba(255, 193, 7, 0.12); color: #ffd36a; border-color: rgba(255,193,7,0.35); }
 .risk-high { background: rgba(220, 53, 69, 0.12); color: #ff9aa6; border-color: rgba(220,53,69,0.35); }
-.tile .card-head { gap: 12px; }
+.tile .card-head { gap: 12px; padding: 34px 0; }
 .tile .icon { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.06); padding: 6px; }
 .tile .title { font-size: 15px; font-weight: 600; }
 .tile .desc { margin-top: 4px; }
@@ -151,8 +155,33 @@ a:focus { outline: none; box-shadow: 0 0 0 3px var(--ring); border-radius: 10px;
 .side-title { font-size: 13px; color: var(--muted); margin-bottom: 8px; font-weight: 600; }
 /* Extra spacing for inline side blocks on detail header */
 .detail-header .side-block { margin-top: 12px; }
+/* Detail header sticky-note style blocks (smaller font, warning note look) */
+.detail-header .side-block {
+  background: var(--note-bg);
+  border: 1px solid var(--note-border);
+  border-left: 4px solid var(--note-accent);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  font-size: 13px;
+}
+.detail-header .side-block .side-title:not(:first-child){ margin-top: 8px; }
+.detail-header .side-block .side-title {
+  margin: 0 0 6px;
+  color: var(--note-accent);
+  font-size: 12px;
+  letter-spacing: .2px;
+}
+.detail-header .side-block .meta,
+.detail-header .side-block .desc,
+.detail-header .side-block ul,
+.detail-header .side-block li {
+  font-size: 13px;
+}
+.detail-header .side-block .desc ul { padding-left: 1.2em; }
+.detail-header .side-block code { background: rgba(0,0,0,0.10); }
 /* Spacing between header and body on detail page */
-.detail-body-wrap { margin-top: 12px; }
+.detail-body-wrap { margin-top: 24px; }
 
 /* Long URL wrapping in meta lines */
 .card .meta code { word-break: break-all; }
@@ -187,6 +216,8 @@ a:focus { outline: none; box-shadow: 0 0 0 3px var(--ring); border-radius: 10px;
   .grid { gap: 10px; }
   .card { padding: 12px; }
   .card-head { margin-bottom: 4px; }
+  /* reduce vertical padding on small screens for compactness */
+  .tile .card-head { padding: 22px 0; }
   .header-actions { flex-wrap: wrap; gap: 6px; }
   .sb-engine-btn { max-width: 120px; }
 }

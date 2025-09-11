@@ -1247,9 +1247,6 @@ fn resolve_icon_for_page(icon: &str) -> String {
 
 use std::sync::{Arc, atomic::{AtomicBool, AtomicU64, Ordering}};
 use std::{thread, time::Duration};
-#[cfg(feature = "remote")]
-use notify::{RecommendedWatcher, Watcher, RecursiveMode};
-#[cfg(not(feature = "remote"))]
 use notify::{RecommendedWatcher, Watcher, RecursiveMode};
 
 fn preview_watch_and_serve(
@@ -1370,14 +1367,24 @@ fn content_type_for_path(p: &Path) -> String {
     match p.extension().and_then(|e| e.to_str()).unwrap_or("").to_ascii_lowercase().as_str() {
         "html" => "text/html; charset=utf-8".into(),
         "css" => "text/css; charset=utf-8".into(),
-        "js" => "text/javascript; charset=utf-8".into(),
+        "js" => "application/javascript; charset=utf-8".into(),
+        "mjs" => "application/javascript; charset=utf-8".into(),
+        "map" => "application/json; charset=utf-8".into(),
+        "json" => "application/json; charset=utf-8".into(),
+        "txt" => "text/plain; charset=utf-8".into(),
         "svg" => "image/svg+xml".into(),
         "png" => "image/png".into(),
         "jpg" | "jpeg" => "image/jpeg".into(),
         "gif" => "image/gif".into(),
+        "webp" => "image/webp".into(),
+        "avif" => "image/avif".into(),
         "ico" => "image/x-icon".into(),
-        "json" => "application/json; charset=utf-8".into(),
-        "txt" => "text/plain; charset=utf-8".into(),
+        "woff" => "font/woff".into(),
+        "woff2" => "font/woff2".into(),
+        "ttf" => "font/ttf".into(),
+        "otf" => "font/otf".into(),
+        "eot" => "application/vnd.ms-fontobject".into(),
+        "wasm" => "application/wasm".into(),
         _ => "application/octet-stream".into(),
     }
 }

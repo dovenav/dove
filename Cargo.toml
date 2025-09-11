@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 license = "MIT"
 description = "A tiny static nav site generator for Cloudflare Pages"
-repository = ""
+repository = "https://github.com/dovenav/dove"
 
 [dependencies]
 anyhow = "1"

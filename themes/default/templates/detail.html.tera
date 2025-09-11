@@ -61,15 +61,14 @@
             {% endif %}
             <div class="meta" id="cdWrap" style="display:none;">将于 <strong id="cd">{{ delay_seconds }}</strong> 秒后跳转……</div>
             
-            <!-- 目标信息与风险提示（合并原侧栏内容，平铺在头部卡片中） -->
+            <!-- 提示信息（将“目标信息”与“风险提示”合并为一个便签块） -->
             <div class="side-block">
               <div class="side-title">目标信息</div>
               {% if link_host and link_host != "" %}
               <div class="meta">域名：<code>{{ link_host | escape }}</code></div>
               {% endif %}
               <div class="meta">地址：<code id="targetUrl">{{ link_url | escape }}</code></div>
-            </div>
-            <div class="side-block">
+
               <div class="side-title">风险提示</div>
               <div class="desc">
                 <ul>
