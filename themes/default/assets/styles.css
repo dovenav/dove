@@ -48,7 +48,14 @@ a:hover { text-decoration: none; }
 .head-left { display:flex; align-items:center; gap:10px; min-width: 0; }
 .head-left .title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .header-actions { display:flex; align-items:center; gap:8px; flex-wrap: nowrap; }
-@media (max-width: 600px){ .header-actions { gap:6px; } }
+.detail-header .card-head { margin: 50px 0; }
+@media (max-width: 600px){
+  .header-actions { gap:6px; }
+  /* Stack actions below title on detail view for mobile */
+  .detail-header .head-split { flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 8px; }
+  .detail-header .header-actions { flex-wrap: wrap; margin-top: 50px; }
+  .detail-header .card-head { margin-bottom: 10px; }
+}
 .hero-center { display:flex; flex-direction:column; align-items:center; gap:6px; }
 .clock { font-size: 56px; font-weight: 700; letter-spacing: 1px; line-height: 1; font-variant-numeric: tabular-nums lining-nums; font-feature-settings: 'tnum' 1, 'lnum' 1; }
 .clock-date { color: var(--muted); font-size: 14px; }
@@ -156,7 +163,7 @@ a:focus { outline: none; box-shadow: 0 0 0 3px var(--ring); border-radius: 10px;
 .detail-side { position: sticky; top: 12px; }
 .side-block { margin-bottom: 12px; }
 .side-title { font-size: 13px; color: var(--muted); margin-bottom: 8px; font-weight: 600; }
-.detail-header .card-head { margin: 50px 0; }
+
 /* Extra spacing for inline side blocks on detail header */
 .detail-header .side-block { margin-top: 12px; }
 /* Detail header sticky-note style blocks (smaller font, warning note look) */

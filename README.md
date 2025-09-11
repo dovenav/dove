@@ -351,5 +351,4 @@ MIT
 <img src="themes/default/assets/torn.png" alt="TRON Chain" width="260"/>
 
 </div>
-
-说明：README 中的示例二维码位于 `themes/default/assets/`；你也可以将自有二维码图片放在仓库任意可引用位置（如 `docs/`），并在此处替换为实际路径。
+ 
