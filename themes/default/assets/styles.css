@@ -555,9 +555,9 @@ a:focus { outline: none; box-shadow: 0 0 0 3px var(--ring); border-radius: 10px;
 .modal-actions { display:flex; justify-content: center; margin-top: 10px; }
 
 /* --- Icon rounding adjustments (less rounded, friendlier to square icons) --- */
-.card-head .icon { width: 32px; height: 32px; border-radius: 6px; }
+.card-head .icon { width: 40px; height: 40px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); padding: 4px; }
 .engine-icon { border-radius: 6px; }
 .tile .icon { border-radius: 8px; }
 
 /* Larger icons for list tiles */
-.tile .card-head .icon { width: 40px; height: 40px; }
+.tile .card-head .icon { width: 48px; height: 48px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); padding: 4px; }
