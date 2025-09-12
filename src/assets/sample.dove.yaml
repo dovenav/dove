@@ -210,6 +210,7 @@ groups:
 
   - category: 常用
     name: 短视频
+    display: compact
     links:
       - name: 抖音网页版
         url: https://www.douyin.com/

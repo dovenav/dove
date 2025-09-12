@@ -366,12 +366,13 @@ enum IncludeBase {
     UrlBase(String),
 }
 
+#[cfg(feature = "remote")]
 fn is_url_like(s: &str) -> bool {
     let t = s.trim();
     t.starts_with("http://") || t.starts_with("https://")
 }
 
-fn yaml_merge(mut base: Value, overlay: Value) -> Value {
+fn yaml_merge(base: Value, overlay: Value) -> Value {
     match (base, overlay) {
         (Value::Mapping(mut a), Value::Mapping(b)) => {
             for (k, v_b) in b {
@@ -384,7 +385,7 @@ fn yaml_merge(mut base: Value, overlay: Value) -> Value {
             }
             Value::Mapping(a)
         }
-        (Value::Sequence(mut a), Value::Sequence(b)) => {
+        (Value::Sequence(a), Value::Sequence(b)) => {
             let mut a2 = Vec::new();
             a2.extend(a.into_iter());
             a2.extend(b.into_iter());
@@ -415,6 +416,7 @@ fn mapping_remove_includes(m: &mut Mapping) -> Option<Vec<String>> {
     if includes.is_empty() { None } else { Some(includes) }
 }
 
+#[cfg(feature = "remote")]
 fn value_dir_of_url(url: &str) -> String {
     match url.rfind('/') {
         Some(idx) => url[..idx+1].to_string(),
