@@ -531,7 +531,7 @@ a:focus { outline: none; box-shadow: 0 0 0 3px var(--ring); border-radius: 10px;
   .card .title { flex-shrink: 0; }
   .card .desc { margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* reduce vertical padding on small screens for compactness */
-  .tile .card-head { padding: 22px 0; }
+  .tile .card-head { padding: 10px 0; }
   .header-actions { flex-wrap: wrap; gap: 6px; }
   .sb-engine-btn { max-width: 120px; }
 }
