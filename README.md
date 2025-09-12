@@ -208,6 +208,127 @@ cargo run --features remote -- preview --build-first \
   - `--dir` 指定服务目录（若未指定，将根据配置推导 `dist/<base_path>`）。
   - `--open` 启动后自动在浏览器打开。
 
+## 配置拆分与 include
+
+当链接越来越多时，可以将 `dove.yaml` 拆分为多个片段文件，并在主配置中通过 `include` 引用：
+
+```
+# dove.yaml（主配置）
+site:
+  title: 我的导航站
+  theme_dir: themes/default
+
+# 引用片段（支持字符串或数组；顺序决定合并顺序）
+include:
+  - groups/common/*.yaml   # 本地通配（glob）
+  - groups/dev.yaml        # 单个文件
+
+# 也可继续在主文件里写 groups；主配置会覆盖 include 中的同名字段
+groups:
+  - { category: 顶部, name: 项目, links: [ { name: dove, url: https://github.com/dovenav/dove, intro: 站点生成器 } ] }
+```
+
+被包含的片段文件可以是：
+
+- 一个完整或部分的配置映射（例如只包含 `groups:`、或 `site:` + `search_engines:`）；
+- 或者直接是 “分组列表”的顶层序列（等价于写成 `groups: [...]`）。
+
+合并规则（自上而下顺序）：
+
+- 同名键为映射（mapping）时递归合并，后者覆盖前者；
+- 同名键为序列（sequence）时拼接（例如 `groups`、`search_engines`）；
+- 主配置文件中的字段优先级最高（覆盖 include 中同名字段）。
+
+路径与范围：
+
+- 本地 `include` 路径相对于主配置文件所在目录；支持通配符（`*`, `?`, `[]`）。
+- 远程配置（`--input-url` 或 Gist，需启用 `remote` 特性）同样支持 include：
+  - 可写绝对 `http(s)://` 地址，或相对于主配置 URL 的相对路径；
+  - 远程 URL 不支持通配符。
+
+循环引用会被检测并报错。
+
+### 合并与优先级（重要）
+
+- 同名键为“映射”（map，例如 `site.title`、`site.redirect.default_risk`）：主文件覆盖 include；递归合并。
+- 同名键为“序列”（list，例如 `groups`、`site.search_engines`）：按顺序追加（不去重、不按 name 合并）。
+- 合并顺序：先按 `include` 列表顺序合并所有被包含文件，再合并主文件内容；因此主文件优先级最高。
+- 顺序效果：`groups` 等序列中，include 的条目会排在主文件前面。
+
+### 示例
+
+1) 覆盖映射字段（主文件覆盖 include）
+
+```
+# include/a.yaml
+site:
+  title: 来自 include 的标题
+  redirect:
+    default_risk: medium
+
+# dove.yaml（主文件）
+include:
+  - include/a.yaml
+site:
+  title: 主文件标题
+  redirect:
+    default_risk: low
+
+# 结果：
+# site.title = 主文件标题
+# site.redirect.default_risk = low
+```
+
+2) 追加序列字段（list 仅拼接不去重）
+
+```
+# include/a.yaml
+site:
+  search_engines:
+    - { name: Google, template: https://www.google.com/search?q={q} }
+
+# dove.yaml（主文件）
+include:
+  - include/a.yaml
+site:
+  search_engines:
+    - { name: Bing, template: https://www.bing.com/search?q={q} }
+
+# 结果顺序：site.search_engines = [ Google, Bing ]
+```
+
+3) groups 示例（序列，顺序追加）
+
+```
+# include/groups/common.yaml
+groups:
+  - { category: 常用, name: 搜索, links: [ { name: Google, url: https://www.google.com, intro: 搜索 } ] }
+
+# dove.yaml（主文件）
+include:
+  - include/groups/common.yaml
+groups:
+  - { category: 置顶, name: 项目, links: [ { name: dove, url: https://github.com/dovenav/dove, intro: 站点生成器 } ] }
+
+# 结果顺序：groups = [ 搜索(来自 include), 项目(主文件) ]
+# 若主文件再写一个同名“搜索”分组，两者会并存，不会覆盖或按 name 合并。
+```
+
+4) include 文件顶层直接是序列（当作 groups 片段）
+
+```
+# include/dev.yaml（没有顶层键，直接是分组数组）
+- { category: 开发, name: 平台, links: [ { name: GitHub, url: https://github.com, intro: 代码托管 } ] }
+
+# dove.yaml（主文件）
+include:
+  - include/dev.yaml
+groups:
+  - { category: 置顶, name: 项目, links: [ { name: dove, url: https://github.com/dovenav/dove, intro: 站点生成器 } ] }
+
+# 结果：include/dev.yaml 会作为 groups 片段加入 -> groups = [ 平台, 项目 ]
+```
+
 ## 开发者指南
 
 ### 工程结构

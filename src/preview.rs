@@ -49,7 +49,16 @@ pub(crate) fn preview_watch_and_serve(
         })?;
         if let Some(td) = theme_dir.as_ref() { if td.exists() { watcher.watch(td, RecursiveMode::Recursive)?; } }
         if let Some(sd) = static_dir.as_ref() { if sd.exists() { watcher.watch(sd, RecursiveMode::Recursive)?; } }
-        if let Some(ip) = input.as_ref() { if ip.exists() { watcher.watch(ip, RecursiveMode::NonRecursive)?; } }
+        if let Some(ip) = input.as_ref() {
+            if ip.exists() {
+                let watch_target = if ip.is_dir() {
+                    ip.clone()
+                } else {
+                    ip.parent().unwrap_or(Path::new(".")).to_path_buf()
+                };
+                if watch_target.exists() { watcher.watch(&watch_target, RecursiveMode::Recursive)?; }
+            }
+        }
         // 保持 watcher 活到生命周期末尾
         std::mem::forget(watcher);
     }
