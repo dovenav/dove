@@ -288,14 +288,14 @@ a:focus { outline: none; box-shadow: 0 0 0 3px var(--ring); border-radius: 10px;
 .list { 
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 12px; 
+  gap: 5px; 
   margin: 0; 
   padding: 0; 
   list-style: none; 
 }
 
 .list-item { 
-  border-radius: 16px; 
+  border-radius: 12px; 
   background: var(--panel); 
   border: 1px solid rgba(255,255,255,0.08); 
   transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1); 
@@ -332,23 +332,23 @@ a:focus { outline: none; box-shadow: 0 0 0 3px var(--ring); border-radius: 10px;
   display: flex; 
   flex-direction: row;
   align-items: center; 
-  gap: 16px; 
-  padding: 16px 20px; 
+  gap: 8px; 
+  padding: 8px 12px; 
   text-decoration: none; 
-  border-radius: 16px;
+  border-radius: 12px;
   position: relative;
   z-index: 1;
 }
 
 .list-icon { 
-  width: 32px; 
-  height: 32px; 
-  border-radius: 8px; 
+  width: 24px; 
+  height: 24px; 
+  border-radius: 6px; 
   flex-shrink: 0; 
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
   border: 1px solid rgba(255,255,255,0.1);
   background: rgba(255,255,255,0.05);
-  padding: 4px;
+  padding: 2px;
   transition: all 0.3s ease;
 }
 
