@@ -260,7 +260,7 @@ groups:
 
 ## 分类显示模式（per-group/per-category）
 
-优先推荐在每个 group 下设置 `display`，也支持全局默认与按分类名映射：
+优先推荐在每个 group 下设置 `display`，也支持全局默认与按分类名映射（兼容用）：
 
 - 取值：`standard`（标准卡片）、`compact`（简洁卡片）、`list`（列表项）、`text`（文本：标题 + 链接）。
 - 优先级：`groups[].display` > `site.category_display[分类名]` > `site.default_category_display`（不填则为 `standard`）。
@@ -293,6 +293,28 @@ groups:
 - 简洁（compact）：更紧凑的卡片网格，不显示简介，只显示图标 + 标题。
 - 列表（list）：每条作为列表项显示，标题在前，可附简介。
 - 文本（text）：逐行显示“标题 · 链接文本”（点击仍会打开链接）。外网模式下如开启中间页，文本里显示的是目标站点链接。
+
+### 高级/兼容：按分类名映射（不推荐）
+
+保留 `site.category_display` 以兼容历史配置，按“分类名 -> 显示模式”映射；仅当未在分组设置 `display` 时才生效。
+
+```
+site:
+  default_category_display: standard
+  category_display:
+    a: list
+    b: text
+
+groups:
+  - category: a
+    name: A-分组
+    links: [ { name: Google, url: https://www.google.com, intro: 搜索 } ]
+  - category: b
+    name: B-分组
+    links: [ { name: GitHub, url: https://github.com, intro: 代码托管 } ]
+```
+
+注意：若 `groups[].display` 已设置，则无论 `site.category_display` 如何配置，均以分组内设置为准（推荐做法）。
 
 ### 合并与优先级（重要）
 
