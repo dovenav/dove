@@ -141,7 +141,15 @@ body[data-img-tone="light"] .clock, body[data-img-tone="light"] .clock-date { te
 /* Group title: force white over background */
 .group-title { color: #fff; }
 
+/* Compact mode group title enhancement */
+.grid.compact ~ .grid.compact .group-title {
+  margin-top: 24px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.grid.compact { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }
 @media (max-width: 900px) {
   .appwrap { flex-direction: column; align-items: stretch; }
   .content { width: 100%; }
@@ -185,23 +193,212 @@ a:focus { outline: none; box-shadow: 0 0 0 3px var(--ring); border-radius: 10px;
 .tile .desc { margin-top: 4px; }
 
 /* Compact grid: tighter spacing, no desc */
-.grid.compact { gap: 10px; }
+.grid.compact { gap: 12px; }
 .card.tile.compact { padding: 10px 12px; }
 .card.tile.compact .desc { display: none; }
 
-/* List mode */
-.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.list-item a { display: inline-flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel); }
-.list-item a:hover { border-color: rgba(255,255,255,0.16); box-shadow: 0 1px 0 rgba(255,255,255,0.06); }
-.list-icon { width: 16px; height: 16px; border-radius: 3px; opacity: .85; }
-.list-title { font-weight: 600; }
-.list-desc { color: var(--muted); font-size: 13px; }
+/* Compact mode: icon above text (app-like) */
+.card.tile.compact { 
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 6px 8px;
+  position: relative;
+}
+.card.tile.compact::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: -1;
+}
+.card.tile.compact:hover::before {
+  opacity: 1;
+}
+.card.tile.compact .card-head.compact { 
+  flex-direction: column; 
+  gap: 4px; 
+  padding: 6px 0; 
+  align-items: center; 
+  text-align: center; 
+}
+.card.tile.compact .card-head.compact .icon { 
+  width: 42px; 
+  height: 42px; 
+  border-radius: 10px; 
+  background: rgba(255, 255, 255, 0.15);
+  padding: 4px;
+}
+.card.tile.compact .card-head.compact .title { 
+  font-size: 12px; 
+  line-height: 1.3; 
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* List mode - Original version (backup) */
+.list-original { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.list-original .list-item a { 
+  display: flex; 
+  align-items: center; 
+  gap: 12px; 
+  padding: 12px 16px; 
+  border-radius: 12px; 
+  border: 1px solid var(--border); 
+  background: var(--panel); 
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+.list-original .list-item a:hover { 
+  border-color: rgba(255,255,255,0.16); 
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transform: translateY(-2px);
+}
+.list-original .list-icon { 
+  width: 20px; 
+  height: 20px; 
+  border-radius: 6px; 
+  opacity: .9; 
+  flex-shrink: 0;
+}
+.list-original .list-content { 
+  display: flex; 
+  flex-direction: column; 
+  min-width: 0; 
+  flex: 1;
+}
+.list-original .list-title { 
+  font-weight: 600; 
+  color: var(--text);
+  font-size: 15px;
+}
+.list-original .list-desc { 
+  color: var(--muted); 
+  font-size: 13px; 
+  margin-top: 4px;
+}
+
+/* List mode - Two column grid layout */
+.list { 
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 12px; 
+  margin: 0; 
+  padding: 0; 
+  list-style: none; 
+}
+
+.list-item { 
+  border-radius: 16px; 
+  background: var(--panel); 
+  border: 1px solid rgba(255,255,255,0.08); 
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1); 
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
+
+.list-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--brand), #ff8c6b);
+  transform: scaleX(0);
+  transition: transform 0.4s ease;
+  transform-origin: left;
+}
+
+.list-item:hover { 
+  border-color: rgba(255,255,255,0.15); 
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  transform: translateY(-3px);
+}
+
+.list-item:hover::before {
+  transform: scaleX(1);
+}
+
+.list-item a { 
+  display: flex; 
+  flex-direction: row;
+  align-items: center; 
+  gap: 16px; 
+  padding: 16px 20px; 
+  text-decoration: none; 
+  border-radius: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.list-icon { 
+  width: 32px; 
+  height: 32px; 
+  border-radius: 8px; 
+  flex-shrink: 0; 
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+  padding: 4px;
+  transition: all 0.3s ease;
+}
+
+.list-item:hover .list-icon {
+  transform: scale(1.05) rotate(3deg);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+}
+
+/* Ensure content is in a single line */
+.list-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  min-width: 0;
+  flex: 1;
+  gap: 12px;
+}
+
+.list-title {
+  font-weight: 700;
+  color: var(--text);
+  font-size: 17px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 1;
+  margin: 0;
+}
+
+.list-desc {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+}
+
+/* Add a subtle separator between list items */
+.list-item:not(:last-child) { 
+  margin-bottom: 6px; 
+}
 
 /* Text mode */
 .text-list { display: flex; flex-direction: column; gap: 4px; }
 .text-row { color: var(--text); font-size: 14px; }
 .text-title { font-weight: 600; }
-.text-url { color: #ffb08f; text-decoration: none; }
+.text-url { color: #ffffff; text-decoration: none; }
 .text-url:hover { text-decoration: underline; }
 .text-sep { color: var(--muted); }
 
