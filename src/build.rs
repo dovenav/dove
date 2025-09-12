@@ -265,9 +265,9 @@ fn render_one(
 
     use serde::Serialize;
     #[derive(Serialize)]
-    struct RLink { name: String, href: String, desc: String, icon: Option<String>, host: String }
+    struct RLink { name: String, href: String, display_url: String, desc: String, icon: Option<String>, host: String }
     #[derive(Serialize)]
-    struct RGroup { name: String, category: String, links: Vec<RLink> }
+    struct RGroup { name: String, category: String, display: String, links: Vec<RLink> }
 
     let mut used_slugs: HashSet<String> = HashSet::new();
     let mut name_counts: HashMap<String, u32> = HashMap::new();
@@ -307,7 +307,7 @@ fn render_one(
                         final_url.clone()
                     };
                     let icon_res = l.icon.as_ref().map(|s| resolve_icon_for_page(s));
-                    rlinks.push(RLink { name: l.name.clone(), href: href.clone(), desc: l.intro.clone(), icon: icon_res, host: host.clone() });
+                    rlinks.push(RLink { name: l.name.clone(), href: href.clone(), display_url: final_url.clone(), desc: l.intro.clone(), icon: icon_res, host: host.clone() });
                     let delay = cfg.site.redirect.as_ref().and_then(|r| r.delay_seconds).unwrap_or(0);
                     let risk = l.risk.or_else(|| cfg.site.redirect.as_ref().and_then(|r| r.default_risk));
                     let utm = l.utm.clone().or_else(|| cfg.site.redirect.as_ref().and_then(|r| r.utm.clone()));
@@ -318,7 +318,8 @@ fn render_one(
                     if href.trim().is_empty() { continue; }
                     let host = hostname_from_url(&href).unwrap_or_default();
                     let icon_res = l.icon.as_ref().map(|s| resolve_icon_for_page(s));
-                    rlinks.push(RLink { name: l.name.clone(), href, desc: l.intro.clone(), icon: icon_res, host });
+                    let display_url = href.clone();
+                    rlinks.push(RLink { name: l.name.clone(), href, display_url, desc: l.intro.clone(), icon: icon_res, host });
                 }
             }
         }
@@ -326,7 +327,8 @@ fn render_one(
         if !rlinks.is_empty() {
             let cat = g.category.clone().unwrap_or_else(|| "全部".to_string());
             if !categories.contains(&cat) { categories.push(cat.clone()); }
-            rgroups.push(RGroup { name: g.name.clone(), category: cat, links: rlinks });
+            let disp = resolve_category_display(&cfg.site, &cat);
+            rgroups.push(RGroup { name: g.name.clone(), category: cat, display: disp, links: rlinks });
         }
     }
     ctx.insert("groups", &rgroups);
@@ -551,6 +553,32 @@ fn og_image_url(cfg: &Config, _detail_page: bool) -> Option<String> {
     if let Some(s) = cfg.site.og_image.as_deref() { return Some(s.to_string()); }
     // 默认图：站点 favicon
     Some("assets/favicon.svg".to_string())
+}
+
+// Category display mode: standard | compact | list | text
+fn resolve_category_display(site: &Site, category: &str) -> String {
+    fn norm<'a>(s: &'a str) -> &'a str {
+        match s.trim().to_ascii_lowercase().as_str() {
+            // English
+            "standard" => "standard",
+            "compact" => "compact",
+            "list" => "list",
+            "text" => "text",
+            // Chinese aliases
+            "标准" => "standard",
+            "简洁" => "compact",
+            "列表" => "list",
+            "文本" => "text",
+            _ => "standard",
+        }
+    }
+    if let Some(map) = site.category_display.as_ref() {
+        if let Some(v) = map.get(category) { return norm(v).to_string(); }
+    }
+    if let Some(def) = site.default_category_display.as_deref() {
+        return norm(def).to_string();
+    }
+    "standard".to_string()
 }
 
 fn resolve_icon_for_detail(icon: &str) -> String {

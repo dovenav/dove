@@ -94,24 +94,74 @@
       {% endif %}
       <div class="content" id="content">
       {% for g in groups %}
-      <section class="group" data-cat="{{ g.category }}" id="cat-{{ g.category | replace(from=" ", to="-") }}">
+      <section class="group display-{{ g.display }}" data-cat="{{ g.category }}" id="cat-{{ g.category | replace(from=" ", to="-") }}">
         <h2 class="group-title">{{ g.name | escape }}</h2>
-        <div class="grid">
-          {% for l in g.links %}
-          <a class="card tile" href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer" data-name="{{ l.name | escape }}" data-host="{{ l.host | escape }}" data-desc="{{ l.desc | escape }}">
-            <div class="card-head">
-              {% if l.icon %}
-              <img class="icon" src="{{ l.icon | escape }}" alt="">
+        {% if g.display == "standard" %}
+          <div class="grid">
+            {% for l in g.links %}
+            <a class="card tile" href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer" data-name="{{ l.name | escape }}" data-host="{{ l.host | escape }}" data-desc="{{ l.desc | escape }}">
+              <div class="card-head">
+                {% if l.icon %}
+                <img class="icon" src="{{ l.icon | escape }}" alt="">
+                {% endif %}
+                <div class="title">{{ l.name | escape }}</div>
+              </div>
+              {% if l.desc and l.desc != "" %}
+              <div class="desc">{{ l.desc | escape }}</div>
               {% endif %}
-              <div class="title">{{ l.name | escape }}</div>
+            </a>
+            {% endfor %}
+          </div>
+        {% elif g.display == "compact" %}
+          <div class="grid compact">
+            {% for l in g.links %}
+            <a class="card tile compact" href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer" data-name="{{ l.name | escape }}" data-host="{{ l.host | escape }}">
+              <div class="card-head">
+                {% if l.icon %}
+                <img class="icon" src="{{ l.icon | escape }}" alt="">
+                {% endif %}
+                <div class="title">{{ l.name | escape }}</div>
+              </div>
+            </a>
+            {% endfor %}
+          </div>
+        {% elif g.display == "list" %}
+          <ul class="list">
+            {% for l in g.links %}
+            <li class="list-item">
+              <a href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer">
+                {% if l.icon %}<img class="list-icon" src="{{ l.icon | escape }}" alt="">{% endif %}
+                <span class="list-title">{{ l.name | escape }}</span>
+                {% if l.desc and l.desc != "" %}<span class="list-desc"> - {{ l.desc | escape }}</span>{% endif %}
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
+        {% elif g.display == "text" %}
+          <div class="text-list">
+            {% for l in g.links %}
+            <div class="text-row">
+              <span class="text-title">{{ l.name | escape }}</span>
+              <span class="text-sep"> · </span>
+              <a class="text-url" href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer">{{ l.display_url | escape }}</a>
             </div>
-            {% if l.desc and l.desc != "" %}
-            <div class="desc">{{ l.desc | escape }}</div>
-            {% endif %}
-            {# host 显示不需要，列表卡片中移除 #}
-          </a>
-          {% endfor %}
-        </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          {# fallback to standard #}
+          <div class="grid">
+            {% for l in g.links %}
+            <a class="card tile" href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer">
+              <div class="card-head">
+                {% if l.icon %}
+                <img class="icon" src="{{ l.icon | escape }}" alt="">
+                {% endif %}
+                <div class="title">{{ l.name | escape }}</div>
+              </div>
+            </a>
+            {% endfor %}
+          </div>
+        {% endif %}
       </section>
       {% endfor %}
       </div>

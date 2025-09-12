@@ -60,6 +60,12 @@ pub(crate) struct Site {
     /// 可选：Google Analytics（推荐 GA4 Measurement ID，如 G-XXXX）
     #[serde(default)]
     pub(crate) google_analytics_id: Option<String>,
+    /// 可选：分类显示模式配置（category -> display mode），例如：{"常用":"standard", "开发":"compact"}
+    #[serde(default)]
+    pub(crate) category_display: Option<std::collections::HashMap<String, String>>,
+    /// 可选：默认分类显示模式（未显式配置的分类使用），可取：standard|compact|list|text
+    #[serde(default)]
+    pub(crate) default_category_display: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone, Copy)]

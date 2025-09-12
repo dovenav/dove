@@ -93,6 +93,7 @@ groups:
 - `site.base_path` 可选：将站点输出到 `dist/<base_path>/`，部署后访问路径形如 `https://domain/<base_path>/index.html`。
 - `site.base_url`、`site.og_image` 可选：用于 SEO/canonical/OG。未设置 `base_url` 时，sitemap 使用相对地址且 `og_image` 仅在为绝对地址时输出。
 - `site.layout` 可选：`default|ntp`，控制首页布局。
+- `site.category_display` 可选：按“分类名”控制显示样式，支持 `standard|compact|list|text`；另可用 `site.default_category_display` 设默认样式。
 - `icon` 可为相对路径或外链 URL。若不设置，也可不显示图标。
 - `links[].intranet` 可选，配置后会在“内网版页面”使用该地址；未配置时会回退到外网地址。
 - `links[].intro` 简介；兼容旧字段名 `desc`。`links[].details` 为可选富文本 HTML，仅在详情页展示；未设置时回退显示简介文本。
@@ -247,6 +248,34 @@ groups:
   - 远程 URL 不支持通配符。
 
 循环引用会被检测并报错。
+
+## 分类显示模式（per-category display）
+
+可为某个“分类”（侧边栏分组）单独设置显示方式：
+
+- 取值：`standard`（标准卡片）、`compact`（简洁卡片）、`list`（列表项）、`text`（文本：标题 + 链接）。
+- 配置位置：`site.category_display`（按分类名映射）、`site.default_category_display`（默认）。
+- 中文别名也可用：标准/简洁/列表/文本。
+
+示例：
+
+```
+site:
+  title: 我的导航站
+  theme_dir: themes/default
+  # 默认“标准”，开发分类用“列表”，学习分类用“文本”
+  category_display:
+    开发: list
+    学习: 文本
+  default_category_display: standard
+```
+
+说明：
+
+- 标准（standard）：当前主题的卡片网格，显示图标、标题、简介。
+- 简洁（compact）：更紧凑的卡片网格，不显示简介，只显示图标 + 标题。
+- 列表（list）：每条作为列表项显示，标题在前，可附简介。
+- 文本（text）：逐行显示“标题 · 链接文本”（点击仍会打开链接）。外网模式下如开启中间页，文本里显示的是目标站点链接。
 
 ### 合并与优先级（重要）
 

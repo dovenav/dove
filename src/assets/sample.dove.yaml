@@ -32,6 +32,12 @@ site:
       template: https://www.baidu.com/s?wd={q}
   default_engine: Google
   layout: ntp
+  # 分类显示模式（可选）：standard | compact | list | text
+  # 也可使用中文：标准/简洁/列表/文本
+  # category_display:
+  #   常用: standard
+  #   开发: list
+  # default_category_display: standard
 
   # 可选：百度统计（Tongji）站点 ID（用于注入 hm.js）
   # baidu_tongji_id: "your_hm_site_id"
