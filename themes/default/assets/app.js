@@ -273,27 +273,41 @@
     const tone = analyzeTone(img); applyTone(tone||'dark');
     // force reflow to ensure transition applies
     void bgBuffer.offsetWidth;
-    // swap visibility: primary -> fade out, buffer -> fade in
-    bgPrimary.classList.add('fade');
-    bgBuffer.classList.remove('fade');
 
     const oldPrimary = bgPrimary;
     const newPrimary = bgBuffer;
-    // after transition, swap roles
-    const onDone = ()=>{
-      newPrimary.removeEventListener('transitionend', onDone);
-      // make old primary the new buffer (hidden)
+
+    // Phase 1: fade in the new buffer first to avoid any gap
+    newPrimary.classList.remove('fade');
+
+    // After the new one starts appearing, fade out the old one.
+    // Use rAF + short timeout to ensure the first paint happens.
+    const startFadeOut = () => {
+      // listen on oldPrimary fade-out completion to finalize swap
+      const onFadeOut = () => {
+        oldPrimary.removeEventListener('transitionend', onFadeOut);
+        // ensure old is hidden
+        oldPrimary.classList.add('fade');
+        // swap roles
+        bgPrimary = newPrimary;
+        bgBuffer = oldPrimary;
+        switching = false;
+        if(queued){ queued = false; updateBg(); }
+        // proactively preload the next image
+        preloaded = null; startProactivePreload();
+      };
+      oldPrimary.addEventListener('transitionend', onFadeOut, { once: true });
+      // begin fading out old primary
       oldPrimary.classList.add('fade');
-      bgPrimary = newPrimary;
-      bgBuffer = oldPrimary;
-      switching = false;
-      if(queued){ queued = false; updateBg(); }
-      // proactively preload the next image
-      preloaded = null; startProactivePreload();
+      // safety net: if transitionend doesn't fire
+      setTimeout(()=>{ if(switching){ onFadeOut(); } }, 700);
     };
-    newPrimary.addEventListener('transitionend', onDone, { once: true });
-    // safety net: if transitionend doesn't fire
-    setTimeout(()=>{ if(switching){ onDone(); } }, 700);
+
+    if('requestAnimationFrame' in window){
+      requestAnimationFrame(()=> setTimeout(startFadeOut, 40));
+    } else {
+      setTimeout(startFadeOut, 60);
+    }
   }
 
   async function updateBg(){

@@ -1,14 +1,20 @@
 // Service Worker for offline caching
-const CACHE_NAME = 'dove-site-v1';
+const CACHE_NAME = 'dove-site-v2';
+// Derive site root from SW location to support base_path
+const ROOT = new URL('../', self.location).pathname; // e.g. '/base_path/'
+const p = (rel) => ROOT + String(rel).replace(/^\/+/,'');
+const OFFLINE_URL = p('assets/offline.html');
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/intranet.html',
-  '/assets/styles.css',
-  '/assets/app.js',
-  '/assets/qrcode.min.js',
-  '/assets/favicon.svg',
-  '/assets/favicon.png'
+  p(''),
+  p('index.html'),
+  p('intranet.html'),
+  p('assets/styles.css'),
+  p('assets/app.js'),
+  p('assets/qrcode.min.js'),
+  p('assets/offline.html'),
+  p('assets/favicon.svg'),
+  p('assets/favicon.png'),
+  p('assets/favicon-f.svg')
 ];
 
 // Install event - cache static assets
@@ -19,6 +25,7 @@ self.addEventListener('install', event => {
         console.log('Opened cache');
         return cache.addAll(urlsToCache);
       })
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -55,8 +62,8 @@ self.addEventListener('fetch', event => {
             return response;
           })
           .catch(() => {
-            // If fetch fails (offline), return a offline fallback page
-            return caches.match('/offline.html');
+            // If fetch fails (offline), return an offline fallback page
+            return caches.match(OFFLINE_URL);
           });
       })
     );
@@ -77,5 +84,6 @@ self.addEventListener('activate', event => {
           })
         );
       })
+      .then(() => self.clients.claim())
   );
 });
