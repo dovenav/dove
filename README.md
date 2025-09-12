@@ -2,6 +2,15 @@
 
 一个用 Rust 生成静态网页的简洁导航站点生成器，输出可直接部署到 Cloudflare Pages。支持主题目录与模板引擎（Tera），可自定义 HTML/CSS/JS；支持内/外网两套页面；内置搜索引擎切换与两种布局（default/ntp）。
 
+## 功能特性
+
+- 配置拆分 include：主配置支持 `include/includes`，本地支持通配（glob），远程 URL（需 `remote` 特性）。
+- 分类显示模式：按分类设置 `standard|compact|list|text`（支持中文别名：标准/简洁/列表/文本）。
+- 主题与模板：Tera 模板、多主题目录，静态资源可覆盖。
+- 内/外网两套页面、跳转中间页（倒计时、UTM、风险等级）。
+- 站点地图与 SEO：`sitemap.xml`、`robots.txt`、OG、canonical、基于 `base_url`。
+- 离线支持：内置 Service Worker，首次访问后可离线使用。
+
 ## 快速开始
 
 - 生成示例配置与默认主题：
