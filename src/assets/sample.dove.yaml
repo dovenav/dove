@@ -177,6 +177,7 @@ groups:
   # 常用：按场景细分
   - category: 常用
     name: 视频/音乐
+    display: list
     links:
       - name: 腾讯视频
         url: https://v.qq.com
@@ -221,6 +222,7 @@ groups:
 
   - category: 常用
     name: 社交/社区
+    display: text
     links:
       - name: 微博
         url: https://www.weibo.com/
@@ -261,6 +263,7 @@ groups:
 
   - category: 常用
     name: 办公/效率
+    display: compact
     links:
       - name: 文件传输助手
         url: https://filehelper.weixin.qq.com/
