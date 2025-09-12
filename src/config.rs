@@ -52,6 +52,12 @@ pub(crate) struct Site {
     /// 布局：default | ntp（Chrome 新标签页风格）
     #[serde(default = "default_layout")]
     pub(crate) layout: Layout,
+    /// 可选：百度统计（百度站长平台 Tongji）的站点 ID（用于 hm.js）
+    #[serde(default)]
+    pub(crate) baidu_tongji_id: Option<String>,
+    /// 可选：Google Analytics（推荐 GA4 Measurement ID，如 G-XXXX）
+    #[serde(default)]
+    pub(crate) google_analytics_id: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone, Copy)]

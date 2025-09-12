@@ -240,6 +240,18 @@ fn render_one(
     // 布局
     let layout = match cfg.site.layout { Layout::Default => "default", Layout::Ntp => "ntp" };
     ctx.insert("layout", &layout);
+    // 可选：百度统计（Tongji）站点 ID，用于注入 hm.js
+    if let Some(ref id) = cfg.site.baidu_tongji_id {
+        if !id.trim().is_empty() {
+            ctx.insert("baidu_tongji_id", id);
+        }
+    }
+    // 可选：Google Analytics（GA4）Measurement ID，用于注入 gtag.js
+    if let Some(ref gid) = cfg.site.google_analytics_id {
+        if !gid.trim().is_empty() {
+            ctx.insert("google_analytics_id", gid);
+        }
+    }
 
     // Canonical 与 OG image（仅外网）
     if matches!(mode, NetMode::External) {
@@ -380,6 +392,18 @@ fn render_link_details(
         // 延迟
         ctx.insert("delay_seconds", &d.delay_seconds);
         ctx.insert("has_delay", &(d.delay_seconds > 0));
+        // 可选：百度统计（Tongji）站点 ID，用于注入 hm.js
+        if let Some(ref id) = cfg.site.baidu_tongji_id {
+            if !id.trim().is_empty() {
+                ctx.insert("baidu_tongji_id", id);
+            }
+        }
+        // 可选：Google Analytics（GA4）Measurement ID，用于注入 gtag.js
+        if let Some(ref gid) = cfg.site.google_analytics_id {
+            if !gid.trim().is_empty() {
+                ctx.insert("google_analytics_id", gid);
+            }
+        }
         let html = tera.render("detail.html.tera", &ctx)
             .context("渲染模板 detail.html.tera 失败")?;
         let dir = out_dir.join("go").join(&d.slug);

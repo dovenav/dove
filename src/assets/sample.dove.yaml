@@ -33,6 +33,12 @@ site:
   default_engine: Google
   layout: ntp
 
+  # 可选：百度统计（Tongji）站点 ID（用于注入 hm.js）
+  # baidu_tongji_id: "your_hm_site_id"
+
+  # 可选：Google Analytics（GA4）Measurement ID（例如：G-XXXXXXXXXX）
+  # google_analytics_id: "G-XXXXXXXXXX"
+
   # 跳转页设置（仅外网链接生效）
   redirect:
     delay_seconds: 3            # 自动跳转倒计时（秒）；0 表示不自动跳转
