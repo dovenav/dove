@@ -104,11 +104,13 @@
                 {% if l.icon %}
                 <img class="icon" src="{{ l.icon | escape }}" alt="">
                 {% endif %}
-                <div class="title">{{ l.name | escape }}</div>
+                <div class="card-content">
+                  <div class="title">{{ l.name | escape }}</div>
+                  {% if l.desc and l.desc != "" %}
+                  <div class="desc">{{ l.desc | escape }}</div>
+                  {% endif %}
+                </div>
               </div>
-              {% if l.desc and l.desc != "" %}
-              <div class="desc">{{ l.desc | escape }}</div>
-              {% endif %}
             </a>
             {% endfor %}
           </div>
