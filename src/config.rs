@@ -86,6 +86,9 @@ pub(crate) struct Group {
     /// 一级分类（侧边栏）。未设置时默认使用 "全部"。
     #[serde(default)]
     pub(crate) category: Option<String>,
+    /// 可选：分组显示模式（优先级高于 site.category_display），standard|compact|list|text；也接受中文别名
+    #[serde(default, alias = "display_mode")]
+    pub(crate) display: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

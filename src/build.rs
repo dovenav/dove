@@ -327,7 +327,7 @@ fn render_one(
         if !rlinks.is_empty() {
             let cat = g.category.clone().unwrap_or_else(|| "全部".to_string());
             if !categories.contains(&cat) { categories.push(cat.clone()); }
-            let disp = resolve_category_display(&cfg.site, &cat);
+            let disp = resolve_display(g.display.as_deref(), &cfg.site, &cat);
             rgroups.push(RGroup { name: g.name.clone(), category: cat, display: disp, links: rlinks });
         }
     }
@@ -555,8 +555,8 @@ fn og_image_url(cfg: &Config, _detail_page: bool) -> Option<String> {
     Some("assets/favicon.svg".to_string())
 }
 
-// Category display mode: standard | compact | list | text
-fn resolve_category_display(site: &Site, category: &str) -> String {
+// Group display mode: prefer group.display, then site.category_display, then site.default_category_display
+fn resolve_display(group_display: Option<&str>, site: &Site, category: &str) -> String {
     fn norm<'a>(s: &'a str) -> &'a str {
         match s.trim().to_ascii_lowercase().as_str() {
             // English
@@ -572,6 +572,7 @@ fn resolve_category_display(site: &Site, category: &str) -> String {
             _ => "standard",
         }
     }
+    if let Some(d) = group_display { return norm(d).to_string(); }
     if let Some(map) = site.category_display.as_ref() {
         if let Some(v) = map.get(category) { return norm(v).to_string(); }
     }

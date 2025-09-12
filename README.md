@@ -5,7 +5,7 @@
 ## 功能特性
 
 - 配置拆分 include：主配置支持 `include/includes`，本地支持通配（glob），远程 URL（需 `remote` 特性）。
-- 分类显示模式：按分类设置 `standard|compact|list|text`（支持中文别名：标准/简洁/列表/文本）。
+- 分类显示模式：每组可独立设置 `display: standard|compact|list|text`（支持中文别名）。
 - 主题与模板：Tera 模板、多主题目录，静态资源可覆盖。
 - 内/外网两套页面、跳转中间页（倒计时、UTM、风险等级）。
 - 站点地图与 SEO：`sitemap.xml`、`robots.txt`、OG、canonical、基于 `base_url`。
@@ -258,25 +258,33 @@ groups:
 
 循环引用会被检测并报错。
 
-## 分类显示模式（per-category display）
+## 分类显示模式（per-group/per-category）
 
-可为某个“分类”（侧边栏分组）单独设置显示方式：
+优先推荐在每个 group 下设置 `display`，也支持全局默认与按分类名映射：
 
 - 取值：`standard`（标准卡片）、`compact`（简洁卡片）、`list`（列表项）、`text`（文本：标题 + 链接）。
-- 配置位置：`site.category_display`（按分类名映射）、`site.default_category_display`（默认）。
-- 中文别名也可用：标准/简洁/列表/文本。
+- 优先级：`groups[].display` > `site.category_display[分类名]` > `site.default_category_display`（不填则为 `standard`）。
+- 中文别名：标准/简洁/列表/文本。
 
-示例：
+示例（推荐：每组独立设置）：
 
 ```
 site:
   title: 我的导航站
   theme_dir: themes/default
-  # 默认“标准”，开发分类用“列表”，学习分类用“文本”
-  category_display:
-    开发: list
-    学习: 文本
-  default_category_display: standard
+  default_category_display: standard  # 其他未配置的分组默认“标准”
+
+groups:
+  - category: a
+    name: A-工具
+    display: list   # 列表
+    links:
+      - { name: Google, url: https://www.google.com, intro: 搜索 }
+  - category: b
+    name: B-资源
+    display: 文本   # 文本（标题 + 链接）
+    links:
+      - { name: GitHub, url: https://github.com, intro: 代码托管 }
 ```
 
 说明：

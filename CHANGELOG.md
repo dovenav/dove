@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 合并规则：映射（map）递归合并且主文件覆盖；序列（list）按顺序追加；主文件优先级最高。
   - include 文件若为顶层序列，将被视作 `groups: [...]` 片段。
   - 检测循环 include；预览模式会递归监视配置目录，变更片段会触发重建。
+- 新增按“分组（group）”设置显示模式：
+  - 在 `groups[].display` 指定 `standard|compact|list|text`（支持中文别名）。
+  - 仍支持 `site.default_category_display` 作为默认；保留 `site.category_display` 以兼容历史，但优先使用 `groups[].display`。
 
 ### Changed
 - 优化了命令行参数处理逻辑
