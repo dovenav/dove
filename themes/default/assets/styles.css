@@ -161,10 +161,11 @@ body[data-img-tone="light"] .clock, body[data-img-tone="light"] .clock-date { te
 .card { display: block; text-decoration: none; color: inherit; background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent), var(--panel); border: none; border-radius: 14px; padding: 14px; transition: border-color .2s ease, transform .15s ease, box-shadow .15s ease; box-shadow: 0 1px 0 rgba(255,255,255,0.03); }
 .card:hover { border-color: var(--brand); transform: translateY(-2px); box-shadow: 0 10px 24px rgba(244,93,34,0.18); }
 .card:active { transform: translateY(0); }
-.card-head { display:flex; align-items:center; gap:10px; margin: 5px 0; }
-.card .icon { width: 32px; height: 32px; opacity: .9; }
-.card .title { font-weight: 600; font-size: 15px; }
-.card .desc { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.card-head { display:flex; align-items:center; gap:12px; margin: 5px 0; }
+.card .icon { width: 32px; height: 32px; opacity: .9; flex-shrink: 0; }
+.card-content { flex: 1; min-width: 0; }
+.card .title { font-weight: 600; font-size: 15px; margin: 0; flex-shrink: 0; }
+.card .desc { color: var(--muted); font-size: 13px; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .card .meta { color: var(--muted); font-size: 12px; margin-top: 8px; }
 .chip { display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; background: rgba(244,93,34,0.10); color:#ffb08f; border: 1px solid rgba(244,93,34,0.28); }
 
@@ -480,6 +481,8 @@ a:focus { outline: none; box-shadow: 0 0 0 3px var(--ring); border-radius: 10px;
   .grid { gap: 10px; }
   .card { padding: 12px; }
   .card-head { margin-bottom: 4px; }
+  .card .title { flex-shrink: 0; }
+  .card .desc { margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* reduce vertical padding on small screens for compactness */
   .tile .card-head { padding: 22px 0; }
   .header-actions { flex-wrap: wrap; gap: 6px; }
