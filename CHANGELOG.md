@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - 优化了命令行参数处理逻辑
 - 改进了文档说明
+ - 将 `site.category_display` 标注为“兼容/不推荐”，推荐使用 `groups[].display`；保留 `site.default_category_display` 作为默认回退。
 
 ## [0.1.0] - 2025-09-09
 
