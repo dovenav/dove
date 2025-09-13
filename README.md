@@ -1,6 +1,12 @@
 # dove
 
-一个用 Rust 生成静态网页的简洁导航站点生成器，输出可直接部署到 Cloudflare Pages。支持主题目录与模板引擎（Tera），可自定义 HTML/CSS/JS；支持内/外网两套页面；内置搜索引擎切换与两种布局（default/ntp）。
+一个用 Rust 生成静态网页的简洁导航站点生成器，输出可直接部署到 GitHub Pages / Cloudflare Pages / Cloudflare Workers。支持主题目录与模板引擎（Tera），可自定义 HTML/CSS/JS；支持内/外网两套页面；内置搜索引擎切换与两种布局（default/ntp）。
+
+示例/模板配置仓库（可直接参考部署方式）：
+
+- [dove-private](https://github.com/dovenav/dove-private)：仅包含配置与 CI 的模板仓库（Pages/Workers 均支持）
+
+环境要求：已安装 Rust 稳定版工具链（stable）。若在 CI 中构建，请在工作流中显式安装 Rust（推荐 `dtolnay/rust-toolchain@stable`）。
 
 ## 功能特性
 
@@ -29,6 +35,12 @@
 
 如需“本地仅保留模板、配置放在 Gist”：不放置 `dove.yaml`，用 `--input-url` 或环境变量 `DOVE_INPUT_URL`/`DOVE_GIST_ID` 指定远程配置。
 注意：远程加载功能位于可选特性 `remote` 中，默认未启用；请使用 `--features remote`。
+
+命令一览（无需 Makefile）：
+
+- `cargo run -- init` 脚手架写出默认主题与示例配置
+- `cargo run -- build` 构建静态站点到 `dist/`
+- `cargo run -- preview --build-first` 本地预览并监听变更（默认 `127.0.0.1:8787`）
 
 ### 构建时下载远程图标（并发）
 
