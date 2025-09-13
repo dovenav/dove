@@ -280,7 +280,7 @@ a:focus { outline: none; box-shadow: 0 0 0 3px var(--ring); border-radius: 10px;
   width: 42px; 
   height: 42px; 
   border-radius: 10px; 
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 1);
   padding: 4px;
 }
 .card.tile.compact .card-head.compact .title { 
