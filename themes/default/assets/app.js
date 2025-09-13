@@ -266,49 +266,64 @@
   }
 
   function crossfadeTo(img, url){
-    if(!bgPrimary || !bgBuffer) return;
-    // set next background on buffer (hidden)
-    bgBuffer.style.backgroundImage = `url('${url}')`;
-    // analyze tone with the loaded image to adapt overlay
-    const tone = analyzeTone(img); applyTone(tone||'dark');
-    // force reflow to ensure transition applies
-    void bgBuffer.offsetWidth;
-
-    const oldPrimary = bgPrimary;
-    const newPrimary = bgBuffer;
-
-    // Phase 1: fade in the new buffer first to avoid any gap
-    newPrimary.classList.remove('fade');
-
-    // After the new one starts appearing, fade out the old one.
-    // Use rAF + short timeout to ensure the first paint happens.
-    const startFadeOut = () => {
-      // listen on oldPrimary fade-out completion to finalize swap
-      const onFadeOut = () => {
-        oldPrimary.removeEventListener('transitionend', onFadeOut);
-        // ensure old is hidden
-        oldPrimary.classList.add('fade');
-        // swap roles
-        bgPrimary = newPrimary;
-        bgBuffer = oldPrimary;
-        switching = false;
-        if(queued){ queued = false; updateBg(); }
-        // proactively preload the next image
-        preloaded = null; startProactivePreload();
-      };
-      oldPrimary.addEventListener('transitionend', onFadeOut, { once: true });
-      // begin fading out old primary
-      oldPrimary.classList.add('fade');
-      // safety net: if transitionend doesn't fire
-      setTimeout(()=>{ if(switching){ onFadeOut(); } }, 700);
-    };
-
-    if('requestAnimationFrame' in window){
-      requestAnimationFrame(()=> setTimeout(startFadeOut, 40));
-    } else {
-      setTimeout(startFadeOut, 60);
+      if(!bgPrimary || !bgBuffer) return;
+      
+      // 确保新背景在隐藏状态下设置
+      bgBuffer.style.backgroundImage = `url('${url}')`;
+      
+      // 分析图片色调并应用
+      const tone = analyzeTone(img); 
+      applyTone(tone||'dark');
+      
+      // 强制重排以确保样式更新
+      void bgBuffer.offsetWidth;
+  
+      const oldPrimary = bgPrimary;
+      const newPrimary = bgBuffer;
+  
+      // Phase 1: 先显示新背景
+      newPrimary.classList.remove('fade');
+  
+      // 使用 requestAnimationFrame 确保在下一帧开始淡出旧背景
+      requestAnimationFrame(() => {
+        // 添加一个小延迟确保新背景已经渲染
+        setTimeout(() => {
+          // 开始淡出旧背景
+          oldPrimary.classList.add('fade');
+          
+          // 监听过渡结束事件
+          const onTransitionEnd = () => {
+            oldPrimary.removeEventListener('transitionend', onTransitionEnd);
+            // 确保旧背景保持隐藏状态
+            oldPrimary.classList.add('fade');
+            // 交换主次背景层
+            bgPrimary = newPrimary;
+            bgBuffer = oldPrimary;
+            switching = false;
+            
+            // 处理队列中的切换请求
+            if(queued){ 
+              queued = false; 
+              updateBg(); 
+            }
+            
+            // 预加载下一张图片
+            preloaded = null; 
+            startProactivePreload();
+          };
+          
+          // 添加过渡结束监听器
+          oldPrimary.addEventListener('transitionend', onTransitionEnd, { once: true });
+          
+          // 安全保障：如果过渡结束事件未触发，手动处理
+          setTimeout(() => {
+            if(switching){ 
+              onTransitionEnd(); 
+            }
+          }, 800); // 略长于CSS过渡时间以确保安全
+        }, 10); // 减少延迟以提高响应性
+      });
     }
-  }
 
   async function updateBg(){
     ensureBgBuffers();
