@@ -137,9 +137,9 @@ body[data-img-tone="light"] .clock, body[data-img-tone="light"] .clock-date { te
 .cat-item:hover, .cat-item:focus { color: #fff; }
 .content { flex:1; }
 .group { margin: 18px 0 8px; }
-.group-title { font-size: 14px; font-weight: 600; color: var(--muted); margin: 14px 2px; letter-spacing: 0.3px; }
+.group-title { font-size: 12px; font-weight: 500; color: var(--muted); margin: 10px 2px 6px; letter-spacing: 0.2px; text-transform: uppercase; }
 /* Group title: force white over background */
-.group-title { color: #fff; }
+.group-title { color: rgba(255, 255, 255, 0.7); }
 
 /* Compact mode group title enhancement */
 .grid.compact ~ .grid.compact .group-title {
