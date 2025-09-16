@@ -14,6 +14,7 @@ use crate::{
 };
 
 /// 执行构建：拷贝资源、并发缓存远程图标、渲染页面、写出 sitemap/robots
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn build(
     mut config: Config,
     out_dir: &Path,
@@ -45,7 +46,7 @@ pub(crate) fn build(
     // 解析主题目录：CLI --theme > 配置 site.theme_dir > 默认 themes/default
     let mut theme_dir = theme_cli
         .map(|p| p.to_path_buf())
-        .or_else(|| config.site.theme_dir.as_ref().map(|s| PathBuf::from(s)))
+        .or_else(|| config.site.theme_dir.as_ref().map(PathBuf::from))
         .unwrap_or_else(|| PathBuf::from("themes/default"));
     if !theme_dir.exists() {
         // 兼容在工作区根目录运行：尝试 dove/<theme_dir>
@@ -138,6 +139,9 @@ pub(crate) fn build(
         .or_else(|| env_opt_string("DOVE_BUILD_VERSION"))
         .unwrap_or_else(|| env!("CARGO_PKG_VERSION").to_string());
 
+    // 构建时间（UTC，ISO 8601 简化至秒）
+    let build_time = chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
+
     // 渲染 HTML via Tera 到 site_dir
     let externals = render_with_theme(
         &config,
@@ -149,17 +153,18 @@ pub(crate) fn build(
         title_override,
         desc_override,
         &effective_build_version,
+        &build_time,
     )?;
 
     // 生成 robots.txt 与 sitemap.xml（若提供 base_url 则写绝对 URL）
     write_robots(&site_dir)?;
-    let build_time = chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
     write_sitemap(&site_dir, &config.site, base_path_effective.as_deref(), &externals, &build_time)?;
 
     println!("✅ 生成完成 -> {}", site_dir.display());
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 fn render_with_theme(
     cfg: &Config,
     theme_dir: &Path,
@@ -170,6 +175,7 @@ fn render_with_theme(
     title_override: Option<String>,
     desc_override: Option<String>,
     build_version: &str,
+    build_time: &str,
 ) -> Result<Vec<LinkDetail>> {
     // 匹配主题模板目录
     let pattern = theme_dir.join("templates").join("**/*");
@@ -180,12 +186,12 @@ fn render_with_theme(
     // 渲染外网(index.html)，按需渲染内网(intranet.html)
     let title_ref = title_override.as_deref();
     let desc_ref = desc_override.as_deref();
-    let externals = render_one(&tera, cfg, out_dir, NetMode::External, generate_intranet, generate_intermediate_page, color_scheme_override, title_ref, desc_ref, build_version)?;
+    let externals = render_one(&tera, cfg, out_dir, NetMode::External, generate_intranet, generate_intermediate_page, color_scheme_override, title_ref, desc_ref, build_version, build_time)?;
     if !externals.is_empty() && generate_intermediate_page {
-        render_link_details(&tera, cfg, out_dir, &externals, color_scheme_override, title_ref, desc_ref, build_version)?;
+        render_link_details(&tera, cfg, out_dir, &externals, color_scheme_override, title_ref, desc_ref, build_version, build_time)?;
     }
     if generate_intranet {
-        let _internals = render_one(&tera, cfg, out_dir, NetMode::Intranet, generate_intranet, generate_intermediate_page, color_scheme_override, title_ref, desc_ref, build_version)?;
+        let _internals = render_one(&tera, cfg, out_dir, NetMode::Intranet, generate_intranet, generate_intermediate_page, color_scheme_override, title_ref, desc_ref, build_version, build_time)?;
     }
     Ok(externals)
 }
@@ -196,6 +202,7 @@ enum NetMode { External, Intranet }
 #[derive(Clone)]
 struct LinkDetail { slug: String, name: String, intro: String, details: Option<String>, icon: Option<String>, host: String, final_url: String, risk: Option<RiskLevel>, delay_seconds: u32, utm: Option<UtmParams>, s_lastmod: Option<String>, s_changefreq: Option<ChangeFreq>, s_priority: Option<f32> }
 
+#[allow(clippy::too_many_arguments)]
 fn render_one(
     tera: &Tera,
     cfg: &Config,
@@ -207,10 +214,12 @@ fn render_one(
     title_override: Option<&str>,
     desc_override: Option<&str>,
     build_version: &str,
+    build_time: &str,
 ) -> Result<Vec<LinkDetail>> {
     let mut ctx = TContext::new();
     // Build/version info from caller (CI/CLI), already resolved
     ctx.insert("build_version", &build_version);
+    ctx.insert("build_time", &build_time);
 
     let site_title = title_override.unwrap_or(&cfg.site.title);
     let site_desc = desc_override.unwrap_or(&cfg.site.description);
@@ -341,6 +350,7 @@ fn render_one(
     Ok(details)
 }
 
+#[allow(clippy::too_many_arguments)]
 fn render_link_details(
     tera: &Tera,
     cfg: &Config,
@@ -350,6 +360,7 @@ fn render_link_details(
     title_override: Option<&str>,
     desc_override: Option<&str>,
     build_version: &str,
+    build_time: &str,
 ) -> Result<()> {
     let site_title = title_override.unwrap_or(&cfg.site.title);
     let site_desc = desc_override.unwrap_or(&cfg.site.description);
@@ -373,6 +384,7 @@ fn render_link_details(
     for d in links {
         let mut ctx = TContext::new();
         ctx.insert("build_version", &build_version);
+        ctx.insert("build_time", &build_time);
         ctx.insert("site_title", &site_title);
         ctx.insert("site_desc", &site_desc);
         ctx.insert("color_scheme", &scheme);
@@ -420,12 +432,10 @@ fn slugify(input: &str) -> String {
     let mut prev_dash = false;
     for ch in input.chars() {
         let c = ch.to_ascii_lowercase();
-        if (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') {
+        if c.is_ascii_alphanumeric() {
             s.push(c);
             prev_dash = false;
-        } else {
-            if !prev_dash && !s.is_empty() { s.push('-'); prev_dash = true; }
-        }
+        } else if !prev_dash && !s.is_empty() { s.push('-'); prev_dash = true; }
     }
     while s.ends_with('-') { s.pop(); }
     if s.is_empty() { "link".to_string() } else { s }
@@ -493,7 +503,8 @@ fn write_sitemap(root: &Path, site: &Site, base_path: Option<&str>, details: &[L
     }
 
     // 首页与内网页
-    let mut urls: Vec<(String, Option<String>, Option<ChangeFreq>, Option<f32>)> = Vec::new();
+    type UrlEntry = (String, Option<String>, Option<ChangeFreq>, Option<f32>);
+    let mut urls: Vec<UrlEntry> = Vec::new();
     urls.push((url_join(site.base_url.as_deref(), base_path, "index.html"), None, site.sitemap.as_ref().and_then(|s| s.default_changefreq), site.sitemap.as_ref().and_then(|s| s.default_priority)));
     urls.push((url_join(site.base_url.as_deref(), base_path, "intranet.html"), None, site.sitemap.as_ref().and_then(|s| s.default_changefreq), site.sitemap.as_ref().and_then(|s| s.default_priority)));
     // 详情页
@@ -557,7 +568,7 @@ fn og_image_url(cfg: &Config, _detail_page: bool) -> Option<String> {
 
 // Group display mode: prefer group.display, then site.category_display, then site.default_category_display
 fn resolve_display(group_display: Option<&str>, site: &Site, category: &str) -> String {
-    fn norm<'a>(s: &'a str) -> &'a str {
+    fn norm(s: &str) -> &str {
         match s.trim().to_ascii_lowercase().as_str() {
             // English
             "standard" => "standard",

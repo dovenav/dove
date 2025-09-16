@@ -28,3 +28,5 @@ test-dist-*
 test-*
 dove.yaml
 AGENTS.md
+.preview.*
+preview.*

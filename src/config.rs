@@ -387,8 +387,8 @@ fn yaml_merge(base: Value, overlay: Value) -> Value {
         }
         (Value::Sequence(a), Value::Sequence(b)) => {
             let mut a2 = Vec::new();
-            a2.extend(a.into_iter());
-            a2.extend(b.into_iter());
+            a2.extend(a);
+            a2.extend(b);
             Value::Sequence(a2)
         }
         (_a, b) => b, // 标量或类型不同：覆盖
@@ -453,9 +453,7 @@ fn expand_includes_value(
                         let pattern_str = pattern_path.to_string_lossy().to_string();
                         let mut matched: BTreeSet<String> = BTreeSet::new();
                         if let Ok(paths) = glob::glob(&pattern_str) {
-                            for entry in paths {
-                                if let Ok(p) = entry { matched.insert(p.to_string_lossy().to_string()); }
-                            }
+                            for p in paths.flatten() { matched.insert(p.to_string_lossy().to_string()); }
                         }
                         // 若未匹配通配，则按普通文件处理
                         if matched.is_empty() {

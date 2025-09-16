@@ -9,6 +9,7 @@ use notify::{RecommendedWatcher, Watcher, RecursiveMode};
 use crate::{build::build, config::{Config, load_config, describe_source}, config::ColorScheme};
 
 /// 监视并服务指定目录，按需重建与热刷新
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn preview_watch_and_serve(
     root: PathBuf,
     addr: String,
@@ -69,7 +70,6 @@ pub(crate) fn preview_watch_and_serve(
         let dirty = dirty.clone();
         let build_version = build_version.clone();
         let icon_dir = icon_dir.clone();
-        let icon_threads = icon_threads.clone();
         thread::spawn(move || {
             loop {
                 thread::sleep(Duration::from_millis(400));

@@ -1,6 +1,6 @@
 //! 图标下载与规范化模块：
 //! - 识别远程 icon 链接
-//! -（启用 remote 特性时）并发下载与本地缓存
+//!   -（启用 remote 特性时）并发下载与本地缓存
 //! - 根据 Content-Type 或 URL 推断扩展名
 
 use std::{collections::HashMap, path::Path};
@@ -23,8 +23,6 @@ pub(crate) fn normalize_remote_icon(s: &str) -> Option<(String, String)> {
         Some((t.to_string(), t.to_string()))
     } else if lower.starts_with("//") {
         Some((t.to_string(), format!("https:{}", t)))
-    } else if lower.starts_with("data:") {
-        None
     } else {
         None
     }
@@ -169,4 +167,3 @@ fn fnv1a64(data: &[u8]) -> u64 {
     }
     hash
 }
-

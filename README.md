@@ -552,7 +552,8 @@ cargo run -- preview --build-first --generate-intermediate-page false
 
 ### 版本信息（页脚）
 
-本主题页脚默认显示构建版本：`… · v{{ build_version }}`。版本号在构建时注入，支持三种来源（按优先级）：
+本主题页脚默认显示构建版本与打包时间：`… · v{{ build_version }} ({{ build_time }})`。
+其中 `build_version` 在构建时注入，支持三种来源（按优先级）：
 
 - CLI 参数：`--build-version <VER>`（最高优先级）
 - 环境变量：`DOVE_BUILD_VERSION=<VER>`
@@ -581,6 +582,8 @@ GitHub Actions（示例）：工作流中先计算版本，再通过 CLI 传递�
 ```
 
 说明：Actions 示例也同时设置了环境变量 `DOVE_BUILD_VERSION`（可选），但最终以 `--build-version` 为准；两者保持一致即可。
+
+`build_time` 为构建开始时间（UTC，精确到秒，RFC3339 格式，如 `2025-09-16T12:34:56Z`），用于直观区分不同打包产物。
 
 ### 分类与分组（一级/二级）
 
