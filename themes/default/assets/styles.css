@@ -1158,10 +1158,6 @@ a:focus { outline: none; box-shadow: 0 0 0 3px var(--ring); border-radius: 10px;
   html, body {
     height: 100dvh;
   }
-  
-  .hero {
-    min-height: 100dvh;
-  }
 }
 
 /* Fix for Chrome's address bar hiding on scroll */
