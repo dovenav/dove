@@ -199,37 +199,128 @@
   let queued = false;     // queue one extra switch request during switching
   let preloaded = null;   // { img, url } next preloaded image if available
 
-  function vp(){ return { w: Math.max(800, window.innerWidth||800), h: Math.max(600, window.innerHeight||600) }; }
-  function nextUrl(){ const {w,h}=vp(); providerIdx = (providerIdx+1)%BG_PROVIDERS.length; return BG_PROVIDERS[providerIdx](w,h); }
+  // 添加设备检测和响应式处理函数
+  function isMobileDevice() {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  }
+  
+  function isTabletDevice() {
+  return /iPad|Android(?!.*Mobile)|Tablet/i.test(navigator.userAgent);
+  }
+  
+  function isTouchDevice() {
+  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  }
+  
+  function isHighDPI() {
+  return window.devicePixelRatio > 1;
+  }
+  
+  // 添加屏幕尺寸变化监听器
+  function handleScreenResize() {
+  const isMobile = isMobileDevice();
+  const isTablet = isTabletDevice();
+  const isTouch = isTouchDevice();
+  const isHighRes = isHighDPI();
+  
+  // 为body添加设备类型类名
+  document.body.classList.toggle('device-mobile', isMobile);
+  document.body.classList.toggle('device-tablet', isTablet);
+  document.body.classList.toggle('device-touch', isTouch);
+  document.body.classList.toggle('device-highdpi', isHighRes);
+  
+  // 根据屏幕尺寸调整背景图片质量
+  if (isMobile) {
+  document.documentElement.style.setProperty('--bg-quality', 'low');
+  } else if (isTablet) {
+  document.documentElement.style.setProperty('--bg-quality', 'medium');
+  } else {
+  document.documentElement.style.setProperty('--bg-quality', 'high');
+  }
+  
+  // 在移动设备上禁用某些视觉效果以提高性能
+  if (isMobile || isTablet) {
+  document.body.classList.add('performance-mode');
+  } else {
+  document.body.classList.remove('performance-mode');
+  }
+  }
+  
+  // 初始化屏幕尺寸处理
+  handleScreenResize();
+  window.addEventListener('resize', handleScreenResize);
+  
+  // 优化背景图片加载逻辑
+  function vp(){ 
+  const isMobile = isMobileDevice();
+  const isTablet = isTabletDevice();
+  
+  // 根据设备类型调整图片尺寸
+  let w = Math.max(800, window.innerWidth||800);
+  let h = Math.max(600, window.innerHeight||600);
+  
+  // 移动设备使用较低分辨率
+  if (isMobile) {
+  w = Math.max(600, w * 0.8);
+  h = Math.max(400, h * 0.8);
+  } 
+  // 平板设备使用中等分辨率
+  else if (isTablet) {
+  w = Math.max(1024, w * 0.9);
+  h = Math.max(768, h * 0.9);
+  }
+  
+  return { w, h }; 
+  }
+  
+  // 优化图片分析函数以适应不同设备
   function analyzeTone(img){
-    try {
-      const size = 32; const c = document.createElement('canvas'); c.width = size; c.height = size; const ctx = c.getContext('2d', { willReadFrequently: true });
-      if(!ctx) return null;
-      ctx.drawImage(img, 0, 0, size, size);
-      const data = ctx.getImageData(0, 0, size, size).data;
-      let sum = 0; const n = size*size; const toLin = (v)=>{ v/=255; return v<=0.04045 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4); };
-      for(let i=0;i<data.length;i+=4){ const r=toLin(data[i]), g=toLin(data[i+1]), b=toLin(data[i+2]); const L = 0.2126*r + 0.7152*g + 0.0722*b; sum += L; }
-      const avg = sum / n; return avg > 0.6 ? 'light' : 'dark';
-    } catch(e){ return null; }
+  try {
+  // 在移动设备上使用更小的画布以提高性能
+  const isMobile = isMobileDevice();
+  const size = isMobile ? 16 : 32; // 移动设备使用16x16，其他设备使用32x32
+  
+  const c = document.createElement('canvas'); 
+  c.width = size; 
+  c.height = size; 
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  if(!ctx) return null;
+  ctx.drawImage(img, 0, 0, size, size);
+  const data = ctx.getImageData(0, 0, size, size).data;
+  let sum = 0; 
+  const n = size*size; 
+  const toLin = (v)=>{
+  v/=255; 
+  return v<=0.04045 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4); 
+  };
+  for(let i=0;i<data.length;i+=4){ 
+  const r=toLin(data[i]), g=toLin(data[i+1]), b=toLin(data[i+2]); 
+  const L = 0.2126*r + 0.7152*g + 0.0722*b; 
+  sum += L; 
   }
-  function applyTone(tone){ if(!tone) return; document.body.setAttribute('data-img-tone', tone);
-    const root = document.documentElement;
-    if(tone === 'light') { root.style.setProperty('--bg-overlay', '0.28'); root.style.setProperty('--bg-overlay-light', '0.16'); }
-    else { root.style.setProperty('--bg-overlay', '0.50'); root.style.setProperty('--bg-overlay-light', '0.22'); }
+  const avg = sum / n; 
+  return avg > 0.6 ? 'light' : 'dark';
+  } catch(e){ 
+  return null; 
   }
-  function ensureBgBuffers(){
-    if(!bgLayer || bgPrimary) return;
-    // use existing as primary
-    bgPrimary = bgLayer;
-    // create buffer layer after primary
-    const buf = document.createElement('div');
-    buf.id = 'bgLayer2';
-    buf.className = bgLayer.className + ' fade'; // start hidden
-    buf.setAttribute('aria-hidden', 'true');
-    bgLayer.parentNode.insertBefore(buf, bgLayer.nextSibling);
-    bgBuffer = buf;
   }
-
+  
+  // 优化背景模糊值以适应不同设备
+  function applyBgBlur(px){ 
+  const isMobile = isMobileDevice();
+  const isTablet = isTabletDevice();
+  
+  // 移动设备使用较低的模糊值以提高性能
+  let blurValue = Math.max(0, Number(px)||0);
+  if (isMobile) {
+  blurValue = Math.min(blurValue, 6); // 移动设备最大模糊值为6px
+  } else if (isTablet) {
+  blurValue = Math.min(blurValue, 10); // 平板设备最大模糊值为10px
+  }
+  
+  document.documentElement.style.setProperty('--bg-blur', `${blurValue}px`); 
+  localStorage.setItem('dove-bg-blur', String(blurValue)); 
+  }
   function preloadImage(url){
     return new Promise((resolve, reject)=>{
       const img = new Image();

@@ -15,8 +15,66 @@
   --note-accent: #ffcc66;
   /* background controls */
   --bg-blur: 12px;
-  --bg-overlay: 0.46;        /* dark overlay alpha for bg-layer */
-  --bg-overlay-light: 0.22;  /* light overlay alpha for bg-layer under theme-light */
+  --bg-overlay: 0.3;
+  --bg-quality: high; /* 设备相关的背景质量设置 */
+  
+  /* 设备类型相关变量 */
+  --device-mobile: false;
+  --device-tablet: false;
+  --device-touch: false;
+  --device-highdpi: false;
+}
+
+/* 添加设备类型相关的CSS变量 */
+body.device-mobile {
+  --device-mobile: true;
+  --bg-quality: low;
+}
+
+body.device-tablet {
+  --device-tablet: true;
+  --bg-quality: medium;
+}
+
+body.device-touch {
+  --device-touch: true;
+}
+
+body.device-highdpi {
+  --device-highdpi: true;
+}
+
+/* 性能模式优化 */
+body.performance-mode {
+  --bg-blur: 6px; /* 降低模糊值以提高性能 */
+  --transition-speed: 0.1s; /* 加快过渡速度 */
+}
+
+/* 高DPI屏幕适配 */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  body:not(.performance-mode) {
+    --bg-quality: high;
+  }
+}
+
+/* 触摸设备样式优化 */
+body.device-touch {
+  /* 增加触摸目标大小 */
+  .btn, .cat-item {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* 禁用悬停效果 */
+  .card:hover, .list-item:hover {
+    transform: none;
+    box-shadow: none;
+  }
+  
+  /* 调整过渡时间 */
+  .card, .list-item, .cat-item {
+    transition: all 0.15s ease-out;
+  }
 }
 
 body.theme-light { --bg:#ffffff; --panel:#ffffff; --text:#0b0c0f; --muted:#a8b3c1; --border:#e6e8eb; --brand:#f45d22; --brand-2:#ff8a4d; --ring:rgba(244,93,34,0.25); --note-bg: rgba(255,193,7,0.10); --note-border: rgba(255,193,7,0.28); --note-accent:#ffb84d; }
@@ -528,42 +586,1050 @@ a:focus { outline: none; box-shadow: 0 0 0 3px var(--ring); border-radius: 10px;
 }
 
 /* Mobile tweaks */
-@media (max-width: 520px) {
+@media (max-width: 768px) {
   .hero { padding: 20px 0 12px; }
-  .searchbox { width: 92vw; }
+  .hero-inner { padding: 0 12px; }
+  .searchbox { width: 92vw; grid-template-columns: 20px 1fr auto; }
+  .sb-icon { font-size: 14px; }
+  .sb-input { font-size: 16px; /* Prevent zoom on iOS */ }
+  .sb-engine-btn { max-width: 100px; font-size: 13px; padding: 6px 8px; }
+  .sb-action { width: 24px; height: 24px; }
   .grid { gap: 10px; }
+  .grid.compact { gap: 8px; }
   .card { padding: 12px; }
-  .card-head { margin-bottom: 4px; }
-  .card .title { flex-shrink: 0; }
-  .card .desc { margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  /* reduce vertical padding on small screens for compactness */
-  .tile .card-head { padding: 10px 0; }
-  .header-actions { flex-wrap: wrap; gap: 6px; }
-  .sb-engine-btn { max-width: 120px; }
+  .card-head { margin-bottom: 4px; gap: 8px; }
+  .card .icon { width: 36px; height: 36px; }
+  .card .title { font-size: 14px; flex-shrink: 0; }
+  .card .desc { font-size: 12px; margin-top: 3px; }
+  .appwrap { gap: 12px; }
+  .sidebar { padding-top: 0; min-width: auto; }
+  .cats { gap: 6px; }
+  .cat-item { padding: 6px 8px; font-size: 13px; }
+  .group-title { font-size: 11px; margin: 8px 2px 4px; }
+  .container { padding: 0 12px 10px; }
+  .site-footer { padding: 0 12px; font-size: 11px; text-align: center; }
+  .top-actions { right: 8px; top: 6px; gap: 6px; }
+  .top-actions .btn, .top-actions .top-link, .top-actions .bg-select { padding: 4px 8px; font-size: 11px; }
+  .navbar { padding: 6px 12px; }
+  .nav-inner { padding: 6px 12px; }
+  .nav-cat { padding: 4px 6px; font-size: 12px; }
+  .detail-header .head-split { gap: 8px; }
+  .header-actions { gap: 6px; }
+  .btn.small { padding: 4px 8px; font-size: 11px; }
+  .meta-row { gap: 6px; font-size: 12px; }
+  .tldr { padding: 8px 10px; font-size: 12px; }
+  .side-block { margin-bottom: 8px; }
+  .side-title { font-size: 12px; margin-bottom: 6px; }
+  .detail-body-wrap { margin-top: 8px; }
+  .prose { font-size: 14px; }
+  .prose h2 { font-size: 16px; }
+  .prose h3 { font-size: 15px; }
+  .prose code { font-size: .85em; padding: 1px 4px; }
+  .prose pre { padding: 8px 10px; font-size: 13px; }
+  /* Detail page adjustments */
+  .detail-layout { gap: 12px; }
+  .detail-header .card-head { padding: 8px 0; }
+  .detail-header .side-block { padding: 8px 10px; }
+  .detail-header .side-block .meta, 
+  .detail-header .side-block .desc,
+  .detail-header .side-block ul,
+  .detail-header .side-block li { font-size: 12px; }
+  /* List mode adjustments */
+  .list { grid-template-columns: 1fr; gap: 6px; }
+  .list-item a { gap: 6px; padding: 6px 10px; }
+  .list-icon { width: 20px; height: 20px; }
+  .list-title { font-size: 14px; }
+  .list-desc { font-size: 12px; }
+  /* Compact mode adjustments */
+  .card.tile.compact { padding: 4px 6px; }
+  .card.tile.compact .card-head.compact { gap: 3px; padding: 4px 0; }
+  .card.tile.compact .card-head.compact .icon { width: 36px; height: 36px; }
+  .card.tile.compact .card-head.compact .title { font-size: 11px; }
+  /* Modal adjustments */
+  .modal-card { width: min(280px, 92vw); padding: 12px; }
+  .qr-box { padding: 8px; }
+  .modal-actions { margin-top: 8px; }
 }
 
-/* Expandable long text */
-.expandable { max-height: 460px; overflow: hidden; position: relative; }
-.expandable::after { content:""; position:absolute; left:0; right:0; bottom:0; height: 72px; background: linear-gradient(180deg, rgba(0,0,0,0) 0%, var(--panel) 60%); pointer-events: none; }
-.expandable.expanded { max-height: none; }
-.expandable.expanded::after { display:none; }
-.expand-wrap { display:flex; justify-content:center; margin-top: 6px; }
+@media (max-width: 480px) {
+  .hero { padding: 16px 0 10px; }
+  .clock { font-size: 36px; }
+  .clock-date { font-size: 12px; }
+  .searchbox { grid-template-columns: 18px 1fr auto; }
+  .sb-icon { font-size: 12px; }
+  .sb-input { font-size: 16px; }
+  .sb-engine-btn { max-width: 80px; font-size: 12px; padding: 4px 6px; }
+  .grid { gap: 8px; }
+  .grid.compact { gap: 6px; }
+  .card { padding: 10px; }
+  .card-head { gap: 6px; }
+  .card .icon { width: 32px; height: 32px; }
+  .card .title { font-size: 13px; }
+  .card .desc { font-size: 11px; }
+  .appwrap { gap: 10px; flex-direction: column; }
+  .sidebar { position: static; overflow-x: auto; white-space: nowrap; padding: 8px 0; }
+  .cats { flex-direction: row; gap: 6px; }
+  .cat-item { display: inline-block; padding: 4px 8px; font-size: 12px; }
+  .group-title { font-size: 10px; margin: 6px 2px 3px; }
+  .container { padding: 0 10px 8px; }
+  .site-footer { padding: 0 10px; font-size: 10px; }
+  .top-actions { right: 6px; top: 5px; gap: 4px; }
+  .top-actions .btn, .top-actions .top-link, .top-actions .bg-select { padding: 3px 6px; font-size: 10px; }
+  .navbar { padding: 5px 10px; }
+  .nav-inner { padding: 5px 10px; gap: 5px; }
+  .nav-cat { padding: 3px 5px; font-size: 11px; }
+  .detail-header .head-split { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .header-actions { flex-wrap: wrap; margin-top: 40px; }
+  .btn.small { padding: 3px 6px; font-size: 10px; }
+  .meta-row { gap: 5px; font-size: 11px; }
+  .tldr { padding: 6px 8px; font-size: 11px; }
+  .side-block { margin-bottom: 6px; }
+  .side-title { font-size: 11px; margin-bottom: 5px; }
+  .detail-body-wrap { margin-top: 6px; }
+  .prose { font-size: 13px; }
+  .prose h2 { font-size: 15px; }
+  .prose h3 { font-size: 14px; }
+  .prose code { font-size: .8em; padding: 1px 3px; }
+  .prose pre { padding: 6px 8px; font-size: 12px; }
+  /* Detail page adjustments */
+  .detail-layout { gap: 10px; }
+  .detail-header .card-head { padding: 6px 0; }
+  .detail-header .side-block { padding: 6px 8px; }
+  .detail-header .side-block .meta, 
+  .detail-header .side-block .desc,
+  .detail-header .side-block ul,
+  .detail-header .side-block li { font-size: 11px; }
+  /* List mode adjustments */
+  .list { gap: 5px; }
+  .list-item a { gap: 5px; padding: 5px 8px; }
+  .list-icon { width: 18px; height: 18px; }
+  .list-title { font-size: 13px; }
+  .list-desc { font-size: 11px; }
+  /* Compact mode adjustments */
+  .card.tile.compact { padding: 3px 5px; }
+  .card.tile.compact .card-head.compact { gap: 2px; padding: 3px 0; }
+  .card.tile.compact .card-head.compact .icon { width: 32px; height: 32px; }
+  .card.tile.compact .card-head.compact .title { font-size: 10px; }
+  /* Modal adjustments */
+  .modal-card { width: min(260px, 92vw); padding: 10px; }
+  .qr-box { padding: 6px; }
+  .modal-actions { margin-top: 6px; }
+  .engine-menu { min-width: 150px; }
+  .engine-menu li { padding: 6px 8px; gap: 6px; }
+  .engine-icon { width: 14px; height: 14px; }
+}
 
-/* Toast */
-.toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 999px; padding: 8px 12px; font-size: 13px; box-shadow: var(--shadow); opacity: 0; transition: opacity .15s ease, transform .15s ease; z-index: 2000; }
-.toast.show { opacity: 1; transform: translateX(-50%) translateY(-2px); }
+/* Fix for iOS Safari bottom toolbar overlapping content */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .site-footer {
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  }
+}
 
-/* Modal (QR code) */
-.modal { position: fixed; left:0; right:0; top:0; bottom:0; background: rgba(0,0,0,0.55); display: none; align-items: center; justify-content: center; z-index: 3000; }
-.modal.open { display: flex; }
-.modal-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 14px; width: min(320px, 92vw); text-align: center; box-shadow: var(--shadow); }
-.qr-box { background: #ffffff; padding: 10px; border-radius: 12px; display: inline-block; margin-top: 6px; }
-.modal-actions { display:flex; justify-content: center; margin-top: 10px; }
+/* Improved responsive grid for different screen sizes */
+@media (min-width: 1200px) {
+  .grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+  .grid.compact { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); }
+}
 
-/* --- Icon rounding adjustments (less rounded, friendlier to square icons) --- */
-.card-head .icon { width: 40px; height: 40px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); padding: 4px; }
-.engine-icon { border-radius: 6px; }
-.tile .icon { border-radius: 8px; }
+@media (min-width: 769px) and (max-width: 1199px) {
+  .grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+  .grid.compact { grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); }
+}
 
-/* Larger icons for list tiles */
-.tile .card-head .icon { width: 48px; height: 48px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); padding: 4px; }
+/* Better handling of text overflow on small screens */
+@media (max-width: 576px) {
+  .card .title, .list-title {
+    white-space: normal;
+    line-height: 1.4;
+    max-height: 2.8em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .card .desc, .list-desc {
+    white-space: normal;
+    line-height: 1.4;
+    max-height: 2.8em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* Fix for high DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .card {
+    border-radius: 16px;
+  }
+  .card-head .icon, .list-icon {
+    border-radius: 10px;
+  }
+}
+
+/* Improved focus states for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .card:hover {
+    transform: none;
+  }
+  
+  .list-item:hover {
+    transform: none;
+  }
+}
+
+/* Dark mode improvements for mobile */
+@media (prefers-color-scheme: dark) {
+  .bg-layer {
+    filter: blur(var(--bg-blur, 12px)) brightness(0.7) saturate(0.9);
+  }
+}
+
+/* PC/Desktop enhancements */
+@media (min-width: 1400px) {
+  .container {
+    max-width: 1200px;
+  }
+  
+  .hero-inner {
+    max-width: 1200px;
+  }
+  
+  .nav-inner {
+    max-width: 1200px;
+  }
+  
+  /* Wider grid items on large screens */
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+  
+  .grid.compact {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+  
+  /* Larger font sizes on large screens */
+  .card .title {
+    font-size: 18px;
+  }
+  
+  .card .desc {
+    font-size: 15px;
+  }
+  
+  .list-title {
+    font-size: 18px;
+  }
+  
+  .list-desc {
+    font-size: 15px;
+  }
+  
+  /* Enhanced sidebar on large screens */
+  .sidebar {
+    min-width: 200px;
+  }
+  
+  .cat-item {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+  
+  /* Larger clock on large screens */
+  .clock {
+    font-size: 64px;
+  }
+  
+  .clock-date {
+    font-size: 16px;
+  }
+}
+
+/* Ultra-wide screen support */
+@media (min-width: 1800px) {
+  .container {
+    max-width: 1400px;
+  }
+  
+  .hero-inner {
+    max-width: 1400px;
+  }
+  
+  .nav-inner {
+    max-width: 1400px;
+  }
+  
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+  
+  .grid.compact {
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  }
+  
+  /* Even larger font sizes */
+  .card .title {
+    font-size: 19px;
+  }
+  
+  .card .desc {
+    font-size: 16px;
+  }
+  
+  .list-title {
+    font-size: 19px;
+  }
+  
+  .list-desc {
+    font-size: 16px;
+  }
+  
+  .sidebar {
+    min-width: 220px;
+  }
+  
+  .clock {
+    font-size: 72px;
+  }
+  
+  .clock-date {
+    font-size: 18px;
+  }
+}
+
+/* 4K/Ultra HD support */
+@media (min-width: 2500px) {
+  body {
+    font-size: 18px;
+  }
+  
+  .container {
+    max-width: 1800px;
+  }
+  
+  .hero-inner {
+    max-width: 1800px;
+  }
+  
+  .nav-inner {
+    max-width: 1800px;
+  }
+  
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  }
+  
+  .grid.compact {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  }
+  
+  .card {
+    padding: 18px;
+  }
+  
+  .card .title {
+    font-size: 22px;
+  }
+  
+  .card .desc {
+    font-size: 18px;
+  }
+  
+  .list-title {
+    font-size: 22px;
+  }
+  
+  .list-desc {
+    font-size: 18px;
+  }
+  
+  .sidebar {
+    min-width: 260px;
+  }
+  
+  .cat-item {
+    padding: 12px 14px;
+    font-size: 16px;
+  }
+  
+  .clock {
+    font-size: 86px;
+  }
+  
+  .clock-date {
+    font-size: 22px;
+  }
+  
+  .searchbox {
+    width: min(800px, 80vw);
+  }
+  
+  .search {
+    padding: 14px 16px;
+    font-size: 18px;
+  }
+  
+  .btn {
+    padding: 12px 16px;
+    font-size: 18px;
+  }
+  
+  .group-title {
+    font-size: 14px;
+  }
+}
+
+/* High DPI display optimizations */
+@media (-webkit-min-device-pixel-ratio: 1.5), (min-resolution: 144dpi) {
+  /* Sharper icons on high DPI displays */
+  .card-head .icon, .list-icon {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+  
+  /* Smoother shadows on high DPI displays */
+  .card {
+    box-shadow: 0 2px 0 rgba(255,255,255,0.03);
+  }
+  
+  .card:hover {
+    box-shadow: 0 12px 28px rgba(244,93,34,0.22);
+  }
+  
+  .list-item {
+    box-shadow: 0 5px 14px rgba(0,0,0,0.1);
+  }
+  
+  .list-item:hover {
+    box-shadow: 0 10px 28px rgba(0,0,0,0.18);
+  }
+}
+
+/* Large touch devices (tablets) */
+@media (min-width: 768px) and (max-width: 1024px) and (pointer: coarse) {
+  /* Larger touch targets */
+  .card {
+    padding: 16px;
+  }
+  
+  .card-head {
+    gap: 14px;
+  }
+  
+  .card .icon {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .card .title {
+    font-size: 16px;
+  }
+  
+  .card .desc {
+    font-size: 14px;
+  }
+  
+  .btn {
+    padding: 12px 16px;
+  }
+  
+  .cat-item {
+    padding: 10px 12px;
+  }
+  
+  .list-item a {
+    padding: 12px 16px;
+  }
+  
+  .list-icon {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .list-title {
+    font-size: 16px;
+  }
+  
+  .list-desc {
+    font-size: 14px;
+  }
+}
+
+/* Mouse device optimizations */
+@media (pointer: fine) {
+  /* Enable hover effects only for mouse devices */
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(244,93,34,0.22);
+  }
+  
+  .list-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(0,0,0,0.18);
+  }
+  
+  .cat-item:hover {
+    background: rgba(255,255,255,0.06);
+  }
+  
+  /* More subtle transitions for mouse devices */
+  .card, .list-item, .cat-item {
+    transition: all 0.25s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+}
+
+/* Touch device optimizations */
+@media (pointer: coarse) {
+  /* Disable hover effects on touch devices */
+  .card:hover, .list-item:hover {
+    transform: none;
+  }
+  
+  /* Larger touch targets */
+  .btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .cat-item {
+    min-height: 44px;
+  }
+  
+  /* Faster transitions for touch devices */
+  .card, .list-item, .cat-item {
+    transition: all 0.15s ease-out;
+  }
+}
+
+/* Fix for Firefox flexbox issues */
+@-moz-document url-prefix() {
+  .appwrap {
+    min-height: -moz-fit-content;
+  }
+  
+  .card-content {
+    min-width: 0;
+  }
+}
+
+/* Fix for Safari flexbox issues */
+@supports (-webkit-appearance: none) and (not (contain: paint)) {
+  .appwrap {
+    min-height: -webkit-fit-content;
+  }
+  
+  .hero-center {
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    align-items: center;
+  }
+  
+  .card-head {
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    align-items: center;
+  }
+}
+
+/* Fix for Edge legacy grid issues */
+@supports (-ms-ime-align: auto) {
+  .grid {
+    display: -ms-grid;
+    -ms-grid-columns: 1fr 1fr 1fr;
+  }
+  
+  .grid.compact {
+    -ms-grid-columns: 1fr 1fr 1fr 1fr 1fr;
+  }
+  
+  .list {
+    display: -ms-grid;
+    -ms-grid-columns: 1fr 1fr;
+  }
+}
+
+/* Better handling of viewport units on mobile browsers */
+@supports (height: 100dvh) {
+  html, body {
+    height: 100dvh;
+  }
+  
+  .hero {
+    min-height: 100dvh;
+  }
+}
+
+/* Fix for Chrome's address bar hiding on scroll */
+@media screen and (max-width: 768px) and (orientation: portrait) {
+  .hero {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
+  
+  body {
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* Fix for iOS Safari input zooming */
+@media screen and (-webkit-min-device-pixel-ratio: 2) and (max-width: 768px) {
+  input[type="search"] {
+    font-size: 16px;
+  }
+  
+  select {
+    font-size: 16px;
+  }
+}
+
+/* Better handling of text rendering on different platforms */
+@media screen and (-webkit-min-device-pixel-ratio: 2) {
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Fix for Windows High Contrast Mode */
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+  .card {
+    border: 1px solid windowText;
+  }
+  
+  .list-item {
+    border: 1px solid windowText;
+  }
+  
+  .btn {
+    border: 1px solid windowText;
+  }
+  
+  .cat-item {
+    border: 1px solid windowText;
+  }
+}
+
+/* Print styles */
+@media print {
+  .bg-layer {
+    display: none;
+  }
+  
+  .top-actions {
+    display: none;
+  }
+  
+  .sidebar {
+    display: none;
+  }
+  
+  .header-actions {
+    display: none;
+  }
+  
+  .site-footer {
+    display: none;
+  }
+  
+  body {
+    background: #ffffff;
+    color: #000000;
+  }
+  
+  .card {
+    border: 1px solid #000000;
+    box-shadow: none;
+    break-inside: avoid;
+  }
+  
+  .list-item {
+    border: 1px solid #000000;
+    box-shadow: none;
+    break-inside: avoid;
+  }
+  
+  a {
+    color: #000000;
+    text-decoration: underline;
+  }
+}
+
+/* Fix for orientation change on mobile devices */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+  .hero {
+    padding: 20px 0;
+  }
+  
+  .clock {
+    font-size: 42px;
+  }
+  
+  .clock-date {
+    font-size: 13px;
+  }
+  
+  .searchbox {
+    width: 70vw;
+  }
+  
+  .appwrap {
+    flex-direction: row;
+  }
+  
+  .sidebar {
+    position: sticky;
+    top: 12px;
+    overflow-x: hidden;
+    white-space: normal;
+  }
+  
+  .cats {
+    flex-direction: column;
+  }
+  
+  .cat-item {
+    display: block;
+  }
+}
+
+/* Better handling of foldable devices */
+@supports (width: 100vw) and (height: 100vh) {
+  @media screen and (min-width: 800px) and (max-width: 1200px) {
+    .container {
+      max-width: 100%;
+    }
+    
+    .hero-inner {
+      max-width: 100%;
+    }
+    
+    .nav-inner {
+      max-width: 100%;
+    }
+  }
+}
+
+/* Fix for Samsung Internet browser */
+@supports (-webkit-appearance: none) and (stroke-color: transparent) {
+  .card:hover {
+    transform: translateY(0);
+  }
+  
+  .list-item:hover {
+    transform: translateY(0);
+  }
+}
+
+/* Better handling of system font changes */
+@media (prefers-contrast: high) {
+  :root {
+    --text: #000000;
+    --bg: #ffffff;
+    --panel: #f0f0f0;
+    --muted: #666666;
+    --border: #333333;
+  }
+  
+  body.theme-light {
+    --text: #000000;
+    --bg: #ffffff;
+    --panel: #f0f0f0;
+    --muted: #666666;
+    --border: #333333;
+  }
+  
+  .card {
+    border: 1px solid var(--border);
+  }
+  
+  .list-item {
+    border: 1px solid var(--border);
+  }
+}
+
+@media (prefers-contrast: low) {
+  :root {
+    --text: #cccccc;
+    --muted: #999999;
+    --border: #444444;
+  }
+  
+  body.theme-light {
+    --text: #333333;
+    --muted: #666666;
+    --border: #cccccc;
+  }
+}
+
+/* Fix for reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .clock-colon {
+    animation: none;
+  }
+  
+  .card, .list-item, .cat-item {
+    transition: none;
+  }
+  
+  .bg-layer {
+    transition: none;
+  }
+  
+  .toast {
+    transition: none;
+  }
+  
+  .modal {
+    transition: none;
+  }
+}
+
+/* Better handling of dark mode in different browsers */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b0c0f;
+    --panel: #0f1218;
+    --text: #f5f7fa;
+    --muted: #a8b3c1;
+    --border: #222634;
+  }
+  
+  .bg-layer {
+    filter: blur(var(--bg-blur, 12px)) brightness(0.7) saturate(0.9);
+  }
+  
+  .bg-layer::after {
+    background: linear-gradient(180deg, rgba(0,0,0,var(--bg-overlay)), rgba(0,0,0,var(--bg-overlay)));
+  }
+}
+
+/* Responsive images optimization */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.icon, .list-icon {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+/* Better handling of long words and URLs */
+.card .title, .list-title {
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.card .desc, .list-desc {
+  word-break: break-word;
+  hyphens: auto;
+}
+
+/* Fix for text overflow in small containers */
+.group-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Better handling of form elements on mobile */
+.searchbox, .search {
+  -webkit-appearance: none;
+  border-radius: 999px;
+}
+
+/* Fix for focus states on touch devices */
+.btn:focus, .cat-item:focus, .search:focus, select:focus {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* Better handling of scrollbars on different platforms */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(244,93,34,0.5);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--brand);
+}
+
+/* Custom scrollbar for Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(244,93,34,0.5) rgba(0,0,0,0.1);
+}
+
+/* Fix for modal positioning on mobile */
+.modal {
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-card {
+  max-height: 90vh;
+  overflow-y: auto;
+  margin: 5vh auto;
+}
+
+/* Better handling of z-index layers */
+.top-actions {
+  z-index: 1000;
+}
+
+.modal {
+  z-index: 3000;
+}
+
+.toast {
+  z-index: 2000;
+}
+
+/* Fix for background layer on different devices */
+.bg-layer {
+  -webkit-transform: translateZ(0);
+  -moz-transform: translateZ(0);
+  -ms-transform: translateZ(0);
+  -o-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* Better handling of CSS variables fallbacks */
+.card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent), var(--panel, #0f1218);
+}
+
+.card:hover {
+  border-color: var(--brand, #f45d22);
+}
+
+/* Fix for grid layouts on older browsers */
+@supports not (display: grid) {
+  .grid {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  
+  .grid > * {
+    flex: 1 1 260px;
+    margin: 7px;
+  }
+  
+  .grid.compact {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  
+  .grid.compact > * {
+    flex: 1 1 80px;
+    margin: 6px;
+  }
+  
+  .list {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  
+  .list > * {
+    flex: 1 1 300px;
+    margin: 2.5px;
+  }
+}
+
+/* Better handling of flexbox on older browsers */
+@supports not (display: flex) {
+  .appwrap {
+    display: block;
+  }
+  
+  .sidebar {
+    float: left;
+    width: 160px;
+  }
+  
+  .content {
+    margin-left: 176px;
+  }
+  
+  .hero-center {
+    text-align: center;
+  }
+  
+  .card-head {
+    display: table;
+    width: 100%;
+  }
+  
+  .card-head > * {
+    display: table-cell;
+    vertical-align: middle;
+  }
+}
+
+/* Fix for CSS transitions on older browsers */
+@supports not (transition: all 0.2s ease) {
+  .card, .list-item, .cat-item {
+    -webkit-transition: all 0.2s ease;
+    -moz-transition: all 0.2s ease;
+    -o-transition: all 0.2s ease;
+  }
+}
+
+/* Better handling of CSS transforms on older browsers */
+@supports not (transform: translateY(-2px)) {
+  .card:hover {
+    -webkit-transform: translateY(-2px);
+    -moz-transform: translateY(-2px);
+    -ms-transform: translateY(-2px);
+    -o-transform: translateY(-2px);
+  }
+  
+  .list-item:hover {
+    -webkit-transform: translateY(-3px);
+    -moz-transform: translateY(-3px);
+    -ms-transform: translateY(-3px);
+    -o-transform: translateY(-3px);
+  }
+}
+
+/* Fix for CSS filters on older browsers */
+@supports not (filter: blur(12px)) {
+  .bg-layer {
+    -webkit-filter: blur(12px);
+    -moz-filter: blur(12px);
+    -o-filter: blur(12px);
+    -ms-filter: blur(12px);
+  }
+}
+
+/* Better handling of CSS variables on older browsers */
+@supports not (--custom-property: value) {
+  .card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent), #0f1218;
+  }
+  
+  .card:hover {
+    border-color: #f45d22;
+  }
+  
+  body.theme-light .card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent), #ffffff;
+  }
+}
