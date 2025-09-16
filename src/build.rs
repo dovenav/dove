@@ -63,6 +63,14 @@ pub(crate) fn build(
         let dest_assets = site_dir.join("assets");
         if !dest_assets.exists() { fs::create_dir_all(&dest_assets)?; }
         crate::init::copy_dir_all(&theme_assets, &dest_assets)?;
+        
+        // Copy sw.js to dist directory if it exists
+        let sw_js_path = theme_assets.join("sw.js");
+        if sw_js_path.exists() {
+            let dist_sw_js_path = site_dir.join("sw.js");
+            std::fs::copy(&sw_js_path, &dist_sw_js_path)?;
+            println!("-> Copied sw.js to {}", dist_sw_js_path.display());
+        }
     }
 
     // 复制用户静态资源（最后复制以便覆盖主题）
