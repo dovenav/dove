@@ -179,7 +179,7 @@
       // Register service worker for offline support
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
-          navigator.serviceWorker.register('assets/sw.js')
+          navigator.serviceWorker.register('assets/sw.js', {scope: '/'})
             .then(function(registration) {
               console.log('ServiceWorker registration successful with scope: ', registration.scope);
             })
