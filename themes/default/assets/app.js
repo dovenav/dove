@@ -417,7 +417,7 @@
     }
 
   async function updateBg(){
-    ensureBgBuffers();
+    // ensureBgBuffers(); // 注释掉未定义的函数调用
     if(switching){ queued = true; return; }
     switching = true;
     try {
@@ -442,7 +442,7 @@
   // Init interval UI
   (function initBg(){ if(!bgLayer) return; // initial background
     // setup double buffer and default tone
-    ensureBgBuffers();
+    // ensureBgBuffers(); // 注释掉未定义的函数调用
     applyTone('dark');
     // initial load
     updateBg();
