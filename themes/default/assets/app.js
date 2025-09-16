@@ -321,6 +321,17 @@
   document.documentElement.style.setProperty('--bg-blur', `${blurValue}px`); 
   localStorage.setItem('dove-bg-blur', String(blurValue)); 
   }
+  
+  // 应用主题色调
+  function applyTone(tone){
+    // 移除现有的主题类
+    document.documentElement.classList.remove('light', 'dark');
+    // 添加新的主题类
+    document.documentElement.classList.add(tone);
+    // 保存主题选择到本地存储
+    localStorage.setItem('dove-theme', tone);
+  }
+  
   function preloadImage(url){
     return new Promise((resolve, reject)=>{
       const img = new Image();
@@ -440,7 +451,18 @@
   function applyBgBlur(px){ const n = Math.max(0, Number(px)||0); document.documentElement.style.setProperty('--bg-blur', `${n}px`); localStorage.setItem('dove-bg-blur', String(n)); }
 
   // Init interval UI
-  (function initBg(){ if(!bgLayer) return; // initial background
+  (function initBg(){ 
+    // 应用主题色调
+    function applyTone(tone){
+      // 移除现有的主题类
+      document.documentElement.classList.remove('light', 'dark');
+      // 添加新的主题类
+      document.documentElement.classList.add(tone);
+      // 保存主题选择到本地存储
+      localStorage.setItem('dove-theme', tone);
+    }
+    
+    if(!bgLayer) return; // initial background
     // setup double buffer and default tone
     // ensureBgBuffers(); // 注释掉未定义的函数调用
     applyTone('dark');
