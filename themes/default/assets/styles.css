@@ -444,7 +444,7 @@ a:focus { outline: none; box-shadow: 0 0 0 3px var(--ring); border-radius: 10px;
 }
 
 /* Add a subtle separator between list items */
-.list-item:not(:last-child) { 
+.list-item { 
   margin-bottom: 6px; 
 }
 
