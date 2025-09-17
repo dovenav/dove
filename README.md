@@ -659,6 +659,15 @@ groups:
 
 > 说明：Cloudflare Pages 默认并不会预装 Rust 工具链，不建议在 Pages 侧执行 `cargo` 构建。
 
+## 程序预览
+
+以下是程序界面的预览图：
+
+<div align="center">
+  <img src="themes/default/assets/dove-ui-0.png" alt="程序界面预览1"/>
+  <img src="themes/default/assets/dove-ui-1.png" alt="程序界面预览2"/>
+</div>
+
 ## 许可
 
 MIT
