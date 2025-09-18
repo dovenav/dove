@@ -520,6 +520,14 @@ a:focus { outline: none; box-shadow: 0 0 0 3px var(--ring); border-radius: 10px;
 .detail-main { min-width: 0; }
 .detail-header { padding: 0; margin-bottom: 16px; }
 .meta-row { display:flex; gap:10px; align-items:center; flex-wrap: wrap; color: var(--muted); font-size: 13px; margin: 4px 0 12px; }
+
+/* Limit the size of icons in the detail page header */
+.detail-header .icon {
+  max-width: 48px;
+  max-height: 48px;
+  width: auto;
+  height: auto;
+}
 .tldr { display:flex; gap:8px; align-items:flex-start; background: rgba(255,255,255,0.04); border:1px solid var(--border); border-radius: 12px; padding: 10px 12px; margin-top: 6px; color: var(--text); }
 .tldr strong { font-size: 12px; color: #ffb08f; letter-spacing: .2px; }
 .actions-row { display:flex; gap:8px; flex-wrap: wrap; margin-top: 10px; }
