@@ -4,9 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ link_name | escape }} · {{ site_title | escape }}</title>
-    {% if site_desc and site_desc != "" %}
-    <meta name="description" content="{{ site_desc | escape }}">
-    {% endif %}
+   
+    <meta name="description" content="{{ link_name | escape }}{% if link_intro and link_intro != "" %},{{ link_intro | escape }}{% endif %}{% if site_desc and site_desc != "" %},{{ site_desc | escape }}{% endif %}">
+    <meta name="keywords" content="{{ link_name | escape }} {% if link_keywords and link_keywords != "" %},{{ link_keywords | escape }}{% endif %}">
     <link rel="icon" href="../../assets/favicon-f.svg" type="image/svg+xml">
     <link rel="stylesheet" href="../../assets/styles.css">
   </head>
