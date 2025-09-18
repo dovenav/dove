@@ -396,6 +396,17 @@ fn render_link_details(
         ctx.insert("site_title", &site_title);
         ctx.insert("site_desc", &site_desc);
         ctx.insert("color_scheme", &scheme);
+        
+        // Open Graph相关变量
+        if let Some(ref base_url) = cfg.site.base_url {
+            ctx.insert("base_url", base_url);
+            // 构建详情页的完整URL
+            let detail_url = format!("{}/go/{}/", base_url.trim_end_matches('/'), d.slug);
+            ctx.insert("site_url", &detail_url);
+        }
+        if let Some(og) = og_image_url(cfg, true) {
+            ctx.insert("og_image", &og);
+        }
         ctx.insert("categories", &categories);
         ctx.insert("link_name", &d.name);
         ctx.insert("link_intro", &d.intro);

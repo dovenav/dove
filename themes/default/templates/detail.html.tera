@@ -7,6 +7,15 @@
    
     <meta name="description" content="{{ link_name | escape }}{% if link_intro and link_intro != "" %},{{ link_intro | escape }}{% endif %}{% if site_desc and site_desc != "" %},{{ site_desc | escape }}{% endif %}">
     <meta name="keywords" content="{{ link_name | escape }} {% if link_keywords and link_keywords != "" %},{{ link_keywords | escape }}{% endif %}">
+    
+    <!-- Open Graph Protocol -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{ link_name | escape }} · {{ site_title | escape }}">
+    <meta property="og:description" content="{{ link_name | escape }}{% if link_intro and link_intro != "" %} - {{ link_intro | escape }}{% endif %}">
+    {% if site_url %}<meta property="og:url" content="{{ site_url | escape }}">{% endif %}
+    <meta property="og:site_name" content="{{ site_title | escape }}">
+    {% if og_image %}<meta property="og:image" content="{{ og_image | escape }}">{% endif %}
+    
     <link rel="icon" href="../../assets/favicon-f.svg" type="image/svg+xml">
     <link rel="stylesheet" href="../../assets/styles.css">
   </head>

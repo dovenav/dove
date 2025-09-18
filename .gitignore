@@ -25,7 +25,7 @@ dist
 test-dist/
 test.yaml
 test-dist-*
-test-*
+test*
 dove.yaml
 AGENTS.md
 .preview.*
