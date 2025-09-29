@@ -535,6 +535,12 @@ fn render_one(
             if !intranet_dir.exists() {
                 fs::create_dir_all(&intranet_dir)?;
             }
+            let legacy_path = out_dir.join("intranet.html");
+            if legacy_path.exists() {
+                if let Err(err) = fs::remove_file(&legacy_path) {
+                    eprintln!("警告: 无法删除旧的 intranet.html: {}", err);
+                }
+            }
             (
                 intranet_dir.join("index.html"),
                 "intranet/index.html".to_string(),
