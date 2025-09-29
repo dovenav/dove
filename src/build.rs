@@ -337,7 +337,7 @@ fn render_one(
     let (asset_prefix, root_prefix, service_worker_path) = match mode {
         NetMode::External => (String::new(), String::new(), String::from("sw.js")),
         NetMode::Intranet => (
-            String::from("./"),
+            String::from("../"),
             String::from("../"),
             String::from("../sw.js"),
         ),
@@ -564,16 +564,6 @@ fn render_one(
                 if let Err(err) = fs::remove_file(&legacy_path) {
                     eprintln!("警告: 无法删除旧的 intranet.html: {}", err);
                 }
-            }
-            let src_assets = out_dir.join("assets");
-            if src_assets.exists() {
-                let intranet_assets = intranet_dir.join("assets");
-                if intranet_assets.exists() {
-                    fs::remove_dir_all(&intranet_assets).with_context(|| {
-                        format!("清理旧的内网资产目录失败: {}", intranet_assets.display())
-                    })?;
-                }
-                crate::init::copy_dir_all(&src_assets, &intranet_assets)?;
             }
             (
                 intranet_dir.join("index.html"),
