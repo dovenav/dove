@@ -334,12 +334,14 @@ fn render_one(
     // 是否生成中间页
     ctx.insert("generate_intermediate_page", &generate_intermediate_page);
     // 静态资源与根路径前缀
-    let asset_prefix = match mode {
-        NetMode::External => String::new(),
-        NetMode::Intranet => String::from("../"),
+    let (asset_prefix, root_prefix, service_worker_path) = match mode {
+        NetMode::External => (String::new(), String::new(), String::from("sw.js")),
+        NetMode::Intranet => (
+            String::from("./"),
+            String::from("../"),
+            String::from("../sw.js"),
+        ),
     };
-    let root_prefix = asset_prefix.clone();
-    let service_worker_path = format!("{}sw.js", root_prefix);
     ctx.insert("asset_prefix", &asset_prefix);
     ctx.insert("root_prefix", &root_prefix);
     ctx.insert("service_worker_path", &service_worker_path);
@@ -352,7 +354,13 @@ fn render_one(
     ctx.insert("mode_other_label", &mode_other_label);
 
     // 搜索引擎与默认项
-    let rengines: Vec<SearchEngine> = cfg.site.search_engines.clone().unwrap_or_default();
+    let mut rengines: Vec<SearchEngine> = cfg.site.search_engines.clone().unwrap_or_default();
+    for engine in rengines.iter_mut() {
+        if let Some(icon) = engine.icon.as_mut() {
+            let resolved = resolve_icon_for_page(icon.as_str(), &asset_prefix);
+            *icon = resolved;
+        }
+    }
     let mut default_engine: String = cfg.site.default_engine.clone().unwrap_or_default();
     if default_engine.is_empty() && !rengines.is_empty() {
         default_engine = rengines[0].name.clone();
@@ -556,6 +564,16 @@ fn render_one(
                 if let Err(err) = fs::remove_file(&legacy_path) {
                     eprintln!("警告: 无法删除旧的 intranet.html: {}", err);
                 }
+            }
+            let src_assets = out_dir.join("assets");
+            if src_assets.exists() {
+                let intranet_assets = intranet_dir.join("assets");
+                if intranet_assets.exists() {
+                    fs::remove_dir_all(&intranet_assets).with_context(|| {
+                        format!("清理旧的内网资产目录失败: {}", intranet_assets.display())
+                    })?;
+                }
+                crate::init::copy_dir_all(&src_assets, &intranet_assets)?;
             }
             (
                 intranet_dir.join("index.html"),
