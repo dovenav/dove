@@ -333,6 +333,16 @@ fn render_one(
     ctx.insert("has_intranet", &has_intranet);
     // 是否生成中间页
     ctx.insert("generate_intermediate_page", &generate_intermediate_page);
+    // 静态资源与根路径前缀
+    let asset_prefix = match mode {
+        NetMode::External => String::new(),
+        NetMode::Intranet => String::from("../"),
+    };
+    let root_prefix = asset_prefix.clone();
+    let service_worker_path = format!("{}sw.js", root_prefix);
+    ctx.insert("asset_prefix", &asset_prefix);
+    ctx.insert("root_prefix", &root_prefix);
+    ctx.insert("service_worker_path", &service_worker_path);
     // 内/外网切换链接与标签
     let (network_switch_href, mode_other_label) = match mode {
         NetMode::External => ("intranet/", "内网"),
@@ -446,7 +456,10 @@ fn render_one(
                     } else {
                         final_url.clone()
                     };
-                    let icon_res = l.icon.as_ref().map(|s| resolve_icon_for_page(s));
+                    let icon_res = l
+                        .icon
+                        .as_ref()
+                        .map(|s| resolve_icon_for_page(s, &asset_prefix));
                     rlinks.push(RLink {
                         name: l.name.clone(),
                         href: href.clone(),
@@ -494,7 +507,10 @@ fn render_one(
                         continue;
                     }
                     let host = hostname_from_url(&href).unwrap_or_default();
-                    let icon_res = l.icon.as_ref().map(|s| resolve_icon_for_page(s));
+                    let icon_res = l
+                        .icon
+                        .as_ref()
+                        .map(|s| resolve_icon_for_page(s, &asset_prefix));
                     let display_url = href.clone();
                     rlinks.push(RLink {
                         name: l.name.clone(),
@@ -913,7 +929,7 @@ fn resolve_icon_for_detail(icon: &str) -> String {
     }
 }
 
-fn resolve_icon_for_page(icon: &str) -> String {
+fn resolve_icon_for_page(icon: &str, asset_prefix: &str) -> String {
     let s = icon.trim();
     let lower = s.to_ascii_lowercase();
     if lower.starts_with("http://")
@@ -923,9 +939,17 @@ fn resolve_icon_for_page(icon: &str) -> String {
     {
         s.to_string()
     } else if s.starts_with('/') {
-        // 将站点根相对路径转为页面相对（首页位于站点根）
-        s.trim_start_matches('/').to_string()
-    } else {
+        let trimmed = s.trim_start_matches('/');
+        if asset_prefix.is_empty() {
+            trimmed.to_string()
+        } else {
+            format!("{}{}", asset_prefix, trimmed)
+        }
+    } else if s.starts_with("../") || s.starts_with("./") {
         s.to_string()
+    } else if asset_prefix.is_empty() {
+        s.to_string()
+    } else {
+        format!("{}{}", asset_prefix, s)
     }
 }

@@ -16,8 +16,8 @@
     {% if canonical_url %}<meta property="og:url" content="{{ canonical_url }}">{% endif %}
     <meta property="og:site_name" content="{{ site_title | escape }}">
     {% if og_image %}<meta property="og:image" content="{{ og_image }}">{% endif %}
-    <link rel="icon" href="assets/favicon-f.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="assets/styles.css">
+    <link rel="icon" href="{{ asset_prefix }}assets/favicon-f.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="{{ asset_prefix }}assets/styles.css">
     <meta name="theme-color" content="#f45d22">
     <script type="application/ld+json">
     {
@@ -122,7 +122,7 @@
                 {% if l.icon %}
                 <img class="icon" src="{{ l.icon | escape }}" alt="">
                 {% else %}
-                <img class="icon" src="assets/dove.PNG" alt="">
+                <img class="icon" src="{{ asset_prefix }}assets/dove.PNG" alt="">
                 {% endif %}
                 <div class="title">{{ l.name | escape }}</div>
               </div>
@@ -173,13 +173,13 @@
       </div>
     </main>
 
-    <footer class="site-footer">Made with ❤ by <a href="https://github.com/dovenav/dove" target="_blank" rel="noopener">dove</a> · <a href="sitemap.xml">Sitemap</a> · <a href="robots.txt">Robots</a> · v{{ build_version | escape }} ({{ build_time | escape }})</footer>
-    <script src="assets/app.js"></script>
+    <footer class="site-footer">Made with ❤ by <a href="https://github.com/dovenav/dove" target="_blank" rel="noopener">dove</a> · <a href="{{ root_prefix }}sitemap.xml">Sitemap</a> · <a href="{{ root_prefix }}robots.txt">Robots</a> · v{{ build_version | escape }} ({{ build_time | escape }})</footer>
+    <script src="{{ asset_prefix }}assets/app.js"></script>
     <script>
       // Register service worker for offline support
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
-          navigator.serviceWorker.register('sw.js')
+          navigator.serviceWorker.register('{{ service_worker_path }}')
             .then(function(registration) {
               console.log('ServiceWorker registration successful with scope: ', registration.scope);
             })
