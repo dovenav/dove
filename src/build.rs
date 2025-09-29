@@ -257,6 +257,12 @@ fn render_with_theme(
             build_version,
             build_time,
         )?;
+    } else {
+        let go_root = out_dir.join("go");
+        if go_root.exists() {
+            fs::remove_dir_all(&go_root)
+                .with_context(|| format!("清理旧的 go/ 目录失败: {}", go_root.display()))?;
+        }
     }
     if generate_intranet {
         let _internals = render_one(
@@ -588,6 +594,12 @@ fn render_link_details(
     build_version: &str,
     build_time: &str,
 ) -> Result<()> {
+    let go_root = out_dir.join("go");
+    if go_root.exists() {
+        fs::remove_dir_all(&go_root)
+            .with_context(|| format!("清理旧的 go/ 目录失败: {}", go_root.display()))?;
+    }
+
     let site_title = title_override.unwrap_or(&cfg.site.title);
     let site_desc = desc_override.unwrap_or(&cfg.site.description);
     let scheme = match color_scheme_override.unwrap_or(cfg.site.color_scheme) {
