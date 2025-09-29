@@ -184,7 +184,7 @@ pub(crate) fn build(
     let build_time = chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
 
     // 渲染 HTML via Tera 到 site_dir
-    let externals = render_with_theme(
+    let detail_records = render_with_theme(
         &config,
         &theme_dir,
         &site_dir,
@@ -203,7 +203,7 @@ pub(crate) fn build(
         &site_dir,
         &config.site,
         base_path_effective.as_deref(),
-        &externals,
+        &detail_records,
         &build_time,
     )?;
 
@@ -232,7 +232,7 @@ fn render_with_theme(
     // 渲染外网(index.html)，按需渲染内网(intranet/index.html)
     let title_ref = title_override.as_deref();
     let desc_ref = desc_override.as_deref();
-    let externals = render_one(
+    let external_details = render_one(
         &tera,
         cfg,
         out_dir,
@@ -245,12 +245,12 @@ fn render_with_theme(
         build_version,
         build_time,
     )?;
-    if !externals.is_empty() && generate_intermediate_page {
+    if !external_details.is_empty() {
         render_link_details(
             &tera,
             cfg,
             out_dir,
-            &externals,
+            &external_details,
             color_scheme_override,
             title_ref,
             desc_ref,
@@ -273,7 +273,7 @@ fn render_with_theme(
             build_time,
         )?;
     }
-    Ok(externals)
+    Ok(external_details)
 }
 
 #[derive(Clone, Copy)]
@@ -443,27 +443,56 @@ fn render_one(
                         }
                     };
                     let host = hostname_from_url(&final_url).unwrap_or_default();
-                    let base_slug = if let Some(user_slug) = &l.slug {
-                        slugify(user_slug)
-                    } else {
-                        // 默认：按 name 生成；若 name 重复，则使用 name+host 组合
-                        let key = l.name.to_lowercase();
-                        let entry = name_counts.entry(key).or_insert(0);
-                        *entry += 1;
-                        if *entry == 1 {
-                            slugify(&l.name)
-                        } else if !host.is_empty() {
-                            slugify(&format!("{}-{}", l.name, host))
+                    let link_intermediate =
+                        l.intermediate_page.unwrap_or(generate_intermediate_page);
+                    let mut href = final_url.clone();
+                    if link_intermediate {
+                        let base_slug = if let Some(user_slug) = &l.slug {
+                            slugify(user_slug)
                         } else {
-                            slugify(&l.name)
-                        }
-                    };
-                    let slug = unique_slug(&base_slug, &mut used_slugs);
-                    let href = if generate_intermediate_page {
-                        format!("/go/{}/", slug)
-                    } else {
-                        final_url.clone()
-                    };
+                            // 默认：按 name 生成；若 name 重复，则使用 name+host 组合
+                            let key = l.name.to_lowercase();
+                            let entry = name_counts.entry(key).or_insert(0);
+                            *entry += 1;
+                            if *entry == 1 {
+                                slugify(&l.name)
+                            } else if !host.is_empty() {
+                                slugify(&format!("{}-{}", l.name, host))
+                            } else {
+                                slugify(&l.name)
+                            }
+                        };
+                        let slug = unique_slug(&base_slug, &mut used_slugs);
+                        href = format!("/go/{}/", slug);
+                        let delay = cfg
+                            .site
+                            .redirect
+                            .as_ref()
+                            .and_then(|r| r.delay_seconds)
+                            .unwrap_or(0);
+                        let risk = l
+                            .risk
+                            .or_else(|| cfg.site.redirect.as_ref().and_then(|r| r.default_risk));
+                        let utm = l
+                            .utm
+                            .clone()
+                            .or_else(|| cfg.site.redirect.as_ref().and_then(|r| r.utm.clone()));
+                        details.push(LinkDetail {
+                            slug,
+                            name: l.name.clone(),
+                            intro: l.intro.clone(),
+                            details: l.details.clone(),
+                            icon: l.icon.clone(),
+                            host: host.clone(),
+                            final_url: final_url.clone(),
+                            risk,
+                            delay_seconds: delay,
+                            utm,
+                            s_lastmod: l.lastmod.clone(),
+                            s_changefreq: l.changefreq,
+                            s_priority: l.priority,
+                        });
+                    }
                     let icon_res = l
                         .icon
                         .as_ref()
@@ -475,34 +504,6 @@ fn render_one(
                         desc: l.intro.clone(),
                         icon: icon_res,
                         host: host.clone(),
-                    });
-                    let delay = cfg
-                        .site
-                        .redirect
-                        .as_ref()
-                        .and_then(|r| r.delay_seconds)
-                        .unwrap_or(0);
-                    let risk = l
-                        .risk
-                        .or_else(|| cfg.site.redirect.as_ref().and_then(|r| r.default_risk));
-                    let utm = l
-                        .utm
-                        .clone()
-                        .or_else(|| cfg.site.redirect.as_ref().and_then(|r| r.utm.clone()));
-                    details.push(LinkDetail {
-                        slug,
-                        name: l.name.clone(),
-                        intro: l.intro.clone(),
-                        details: l.details.clone(),
-                        icon: l.icon.clone(),
-                        host,
-                        final_url,
-                        risk,
-                        delay_seconds: delay,
-                        utm,
-                        s_lastmod: l.lastmod.clone(),
-                        s_changefreq: l.changefreq,
-                        s_priority: l.priority,
                     });
                 }
                 NetMode::Intranet => {

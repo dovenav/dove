@@ -96,6 +96,7 @@ groups:
         url: https://github.com/dovenav/dove-private/blob/main/dove.yaml
         intro: 用 Rust 构建的静态导航站点生成器
         icon: assets/favicon-f.svg
+        intermediate_page: false
       
   # 常用分类下的多个二级分组
   - category: 常用

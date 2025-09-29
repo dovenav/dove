@@ -111,6 +111,9 @@ pub(crate) struct Link {
     /// 可选：内网地址
     #[serde(default)]
     pub(crate) intranet: Option<String>,
+    /// 是否生成跳转中间页（优先级高于全局设置）
+    #[serde(default, alias = "generate_intermediate_page")]
+    pub(crate) intermediate_page: Option<bool>,
     /// 可选：风险等级（low|medium|high），用于外网跳转页提示。若未配置，回退到 site.redirect.default_risk
     #[serde(default)]
     pub(crate) risk: Option<RiskLevel>,

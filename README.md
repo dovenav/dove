@@ -118,6 +118,7 @@ groups:
 - `icon` 可为相对路径或外链 URL。若不设置，也可不显示图标。
 - `links[].intranet` 可选，配置后会在“内网版页面”使用该地址；未配置时会回退到外网地址。
 - `links[].intro` 简介；兼容旧字段名 `desc`。`links[].details` 为可选富文本 HTML，仅在详情页展示；未设置时回退显示简介文本。
+- `links[].intermediate_page` 可选：布尔值，控制该链接是否生成跳转中间页；若设置则覆盖全局 `generate_intermediate_page`/`DOVE_GENERATE_INTERMEDIATE_PAGE`。
 - `links[].slug` 可选：显式指定外网中间页路径 `go/<slug>/` 的目录名；若未指定，则：
   - 默认用 `name` 生成 slug；
   - 当同名重复时，重复项将改用 `name+host` 组合生成 slug；
@@ -127,7 +128,7 @@ groups:
   - `default_risk` 默认风险等级（low|medium|high）。
   - `utm` 站点级 UTM 参数（source/medium/campaign/term/content）。
 
-注意：中间页的生成可以通过命令行参数 `--generate-intermediate-page=false` 或环境变量 `DOVE_GENERATE_INTERMEDIATE_PAGE=false` 来禁用。禁用后，链接将直接跳转到目标地址，不会生成 `go/<slug>/index.html` 中间页。
+注意：中间页的生成可以通过命令行参数 `--generate-intermediate-page=false` 或环境变量 `DOVE_GENERATE_INTERMEDIATE_PAGE=false` 来禁用。禁用后，链接默认直接跳转目标地址；如需为个别链接保留/关闭中间页，可在该链接上设置 `intermediate_page: true|false` 覆盖全局行为。
 - `site.sitemap` 站点地图默认设置：
   - `default_changefreq` 默认变更频率：`always|hourly|daily|weekly|monthly|yearly|never`
   - `default_priority` 默认优先级：`0.0 - 1.0`
