@@ -6,9 +6,7 @@ const p = (rel) => ROOT + String(rel).replace(/^\/+/,'');
 const OFFLINE_URL = p('assets/offline.html');
 const urlsToCache = [
   p(''),
-  p('index.html'),
   p('intranet/'),
-  p('intranet/index.html'),
   p('assets/styles.css'),
   p('assets/app.js'),
   p('assets/qrcode.min.js'),

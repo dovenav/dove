@@ -51,7 +51,7 @@ pub(crate) enum Command {
         /// 指定站点根路径，覆盖配置中的 site.base_path
         #[arg(long, value_name = "PATH")]
         base_path: Option<String>,
-        /// 仅生成外网页面（不生成 intranet/index.html）
+        /// 仅生成外网页面（不生成 intranet/）
         #[arg(long)]
         no_intranet: bool,
         /// 覆盖页面配色方案（auto|light|dark）

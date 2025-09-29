@@ -395,11 +395,7 @@ fn render_one(
     // Canonical 与 OG image（仅外网）
     if matches!(mode, NetMode::External) {
         if let Some(base) = cfg.site.base_url.as_deref() {
-            let page = match mode {
-                NetMode::External => "index.html",
-                NetMode::Intranet => "intranet/index.html",
-            };
-            let canon = build_page_url(Some(base), cfg.site.base_path.as_deref(), page);
+            let canon = build_page_url(Some(base), cfg.site.base_path.as_deref(), "");
             ctx.insert("canonical_url", &canon);
         }
         if let Some(og) = og_image_url(cfg, false) {
@@ -797,10 +793,26 @@ fn write_sitemap(
             // 相对路径
             let mut out = String::new();
             if let Some(bp) = base_path {
-                out.push_str(bp.trim_matches('/'));
-                out.push('/');
+                let bp_trim = bp.trim_matches('/');
+                if !bp_trim.is_empty() {
+                    out.push_str(bp_trim);
+                    out.push('/');
+                }
             }
-            out.push_str(sub.trim_matches('/'));
+            let trimmed = sub.trim_matches('/');
+            if trimmed.is_empty() {
+                if out.is_empty() {
+                    out.push('/');
+                }
+            } else {
+                out.push_str(trimmed);
+                if sub.ends_with('/') {
+                    out.push('/');
+                }
+            }
+            if !out.starts_with('/') {
+                out.insert(0, '/');
+            }
             out
         }
     }
@@ -809,20 +821,20 @@ fn write_sitemap(
     type UrlEntry = (String, Option<String>, Option<ChangeFreq>, Option<f32>);
     let mut urls: Vec<UrlEntry> = Vec::new();
     urls.push((
-        url_join(site.base_url.as_deref(), base_path, "index.html"),
+        url_join(site.base_url.as_deref(), base_path, ""),
         None,
         site.sitemap.as_ref().and_then(|s| s.default_changefreq),
         site.sitemap.as_ref().and_then(|s| s.default_priority),
     ));
     urls.push((
-        url_join(site.base_url.as_deref(), base_path, "intranet/index.html"),
+        url_join(site.base_url.as_deref(), base_path, "intranet/"),
         None,
         site.sitemap.as_ref().and_then(|s| s.default_changefreq),
         site.sitemap.as_ref().and_then(|s| s.default_priority),
     ));
     // 详情页
     for d in details {
-        let sub = format!("go/{}/index.html", d.slug);
+        let sub = format!("go/{}/", d.slug);
         urls.push((
             url_join(site.base_url.as_deref(), base_path, &sub),
             d.s_lastmod.clone(),

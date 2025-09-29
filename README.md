@@ -31,7 +31,7 @@
 
   `cargo run -- preview --build-first`
 
-生成完成后，打开 `dist/index.html`（外网版）或 `dist/intranet/index.html`（内网版）预览即可；若配置了 `base_path`，则文件位于 `dist/<base_path>/` 下，或直接访问 `/intranet/` 实现切换。页头可相互切换。
+生成完成后，可直接访问 `dist/`（外网版）或 `dist/intranet/`（内网版）预览；若配置了 `base_path`，则页面位于 `dist/<base_path>/` 下，或直接访问 `/intranet/` 实现切换。页头可相互切换。
 
 如需“本地仅保留模板、配置放在 Gist”：不放置 `dove.yaml`，用 `--input-url` 或环境变量 `DOVE_INPUT_URL`/`DOVE_GIST_ID` 指定远程配置。
 注意：远程加载功能位于可选特性 `remote` 中，默认未启用；请使用 `--features remote`。
@@ -111,7 +111,7 @@ groups:
 
 - `site.color_scheme` 控制颜色模式（自动/明亮/深色），也可在网页右上角按钮切换并记忆。
 - `site.theme_dir` 指向主题目录。主题目录需包含 `templates/` 与 `assets/`。
-- `site.base_path` 可选：将站点输出到 `dist/<base_path>/`，部署后访问路径形如 `https://domain/<base_path>/index.html`。
+- `site.base_path` 可选：将站点输出到 `dist/<base_path>/`，部署后访问路径形如 `https://domain/<base_path>/`。
 - `site.base_url`、`site.og_image` 可选：用于 SEO/canonical/OG。未设置 `base_url` 时，sitemap 使用相对地址且 `og_image` 仅在为绝对地址时输出。
 - `site.layout` 可选：`default|ntp`，控制首页布局。
 - `site.category_display` 可选：按“分类名”控制显示样式，支持 `standard|compact|list|text`；另可用 `site.default_category_display` 设默认样式。
@@ -158,10 +158,10 @@ groups:
 
 ### 输出说明
 
-- `index.html` 外网版导航（若设置 `base_path`，在 `dist/<base_path>/index.html`）
-- `intranet/index.html` 内网版导航（同上；若 `--no-intranet` 则不生成且页面不显示切换按钮）
-- `go/<slug>/index.html` 每个链接的详情/跳转提示页（仅外网版生成；导航页会将链接指向这些中间页；若 `--generate-intermediate-page=false` 则不生成且链接直接跳转目标地址）
-- `sitemap.xml` 站点地图：包含 `index.html` 与所有外网详情页（带 `lastmod`、`changefreq`、`priority`）。
+- 站点根目录（若设置 `base_path`，在 `dist/<base_path>/`）
+- `intranet/` 内网版导航（同上；若 `--no-intranet` 则不生成且页面不显示切换按钮）
+- `go/<slug>/` 每个链接的详情/跳转提示页（仅外网版生成；导航页会将链接指向这些中间页；若 `--generate-intermediate-page=false` 则不生成且链接直接跳转目标地址）
+- `sitemap.xml` 站点地图：包含站点根路径与所有外网详情页（带 `lastmod`、`changefreq`、`priority`）。
 - `robots.txt` 基础抓取策略（默认 Allow: /）。
 - `assets/sw.js` Service Worker 文件，用于实现离线功能
 - `assets/offline.html` 离线页面，当用户离线时显示
@@ -170,7 +170,7 @@ groups:
 
 Dove 生成的网页支持离线使用。当用户首次访问网站时，Service Worker 会缓存所有必要的资源，包括：
 
-- HTML 文件（index.html, go/\*/index.html）
+- HTML 文件（站点根与 `go/` 子目录下的 `index.html`）
 - CSS 样式表（assets/styles.css）
 - JavaScript 脚本（assets/app.js, assets/qrcode.min.js）
 - 图片资源（favicon 等）
@@ -223,7 +223,7 @@ cargo run --features remote -- preview --build-first \
 - `--static-dir` 指定额外静态资源目录，递归拷贝到输出目录，可覆盖主题资源。
 - `--theme` 指定主题目录，优先级高于 `site.theme_dir`。
 - `--base-path` 指定站点根路径（相对子路径），优先级高于 `site.base_path`。
-- `--no-intranet` 仅生成外网版本页面（不生成 `intranet/index.html`，且页面不显示切换按钮）。
+- `--no-intranet` 仅生成外网版本页面（不生成 `intranet/`，且页面不显示切换按钮）。
 - `--generate-intermediate-page` 是否生成中间页（默认生成）。如果设置为 false，则链接直接跳转目标地址。
 - 预览命令（preview）：
   - `--build-first` 启动前先构建一次。
