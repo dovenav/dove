@@ -31,7 +31,7 @@
 
   `cargo run -- preview --build-first`
 
-生成完成后，打开 `dist/index.html`（外网版）或 `dist/intranet.html`（内网版）预览即可；若配置了 `base_path`，则文件位于 `dist/<base_path>/` 下。页头可相互切换。
+生成完成后，打开 `dist/index.html`（外网版）或 `dist/intranet/index.html`（内网版）预览即可；若配置了 `base_path`，则文件位于 `dist/<base_path>/` 下，或直接访问 `/intranet/` 实现切换。页头可相互切换。
 
 如需“本地仅保留模板、配置放在 Gist”：不放置 `dove.yaml`，用 `--input-url` 或环境变量 `DOVE_INPUT_URL`/`DOVE_GIST_ID` 指定远程配置。
 注意：远程加载功能位于可选特性 `remote` 中，默认未启用；请使用 `--features remote`。
@@ -158,7 +158,7 @@ groups:
 ### 输出说明
 
 - `index.html` 外网版导航（若设置 `base_path`，在 `dist/<base_path>/index.html`）
-- `intranet.html` 内网版导航（同上；若 `--no-intranet` 则不生成且页面不显示切换按钮）
+- `intranet/index.html` 内网版导航（同上；若 `--no-intranet` 则不生成且页面不显示切换按钮）
 - `go/<slug>/index.html` 每个链接的详情/跳转提示页（仅外网版生成；导航页会将链接指向这些中间页；若 `--generate-intermediate-page=false` 则不生成且链接直接跳转目标地址）
 - `sitemap.xml` 站点地图：包含 `index.html` 与所有外网详情页（带 `lastmod`、`changefreq`、`priority`）。
 - `robots.txt` 基础抓取策略（默认 Allow: /）。
@@ -222,7 +222,7 @@ cargo run --features remote -- preview --build-first \
 - `--static-dir` 指定额外静态资源目录，递归拷贝到输出目录，可覆盖主题资源。
 - `--theme` 指定主题目录，优先级高于 `site.theme_dir`。
 - `--base-path` 指定站点根路径（相对子路径），优先级高于 `site.base_path`。
-- `--no-intranet` 仅生成外网版本页面（不生成 `intranet.html`，且页面不显示切换按钮）。
+- `--no-intranet` 仅生成外网版本页面（不生成 `intranet/index.html`，且页面不显示切换按钮）。
 - `--generate-intermediate-page` 是否生成中间页（默认生成）。如果设置为 false，则链接直接跳转目标地址。
 - 预览命令（preview）：
   - `--build-first` 启动前先构建一次。

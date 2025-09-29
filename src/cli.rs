@@ -1,8 +1,8 @@
 //! CLI 定义模块：仅负责命令行参数结构体与解析
 //! 将 clap 的声明与业务逻辑解耦，便于在其它模块中复用参数。
 
-use std::path::PathBuf;
 use clap::{Parser, Subcommand};
+use std::path::PathBuf;
 
 /// 顶层 CLI 入口
 #[derive(Parser, Debug)]
@@ -51,7 +51,7 @@ pub(crate) enum Command {
         /// 指定站点根路径，覆盖配置中的 site.base_path
         #[arg(long, value_name = "PATH")]
         base_path: Option<String>,
-        /// 仅生成外网页面（不生成 intranet.html）
+        /// 仅生成外网页面（不生成 intranet/index.html）
         #[arg(long)]
         no_intranet: bool,
         /// 覆盖页面配色方案（auto|light|dark）
@@ -82,7 +82,7 @@ pub(crate) enum Command {
         #[arg(long)]
         force: bool,
         /// 目标目录（默认当前目录）
-        #[arg(value_name = "DIR")] 
+        #[arg(value_name = "DIR")]
         dir: Option<PathBuf>,
     },
     /// 预览生成结果（本地静态文件服务）
@@ -153,4 +153,3 @@ pub(crate) enum Command {
         generate_intermediate_page: bool,
     },
 }
-
