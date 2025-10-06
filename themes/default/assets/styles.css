@@ -654,9 +654,7 @@ a:focus { outline: none; box-shadow: 0 0 0 3px var(--ring); border-radius: 10px;
   .card.tile.compact .card-head.compact .icon { width: 36px; height: 36px; }
   .card.tile.compact .card-head.compact .title { font-size: 11px; }
   /* Modal adjustments */
-  .modal-card { width: min(280px, 92vw); padding: 12px; }
-  .qr-box { padding: 8px; }
-  .modal-actions { margin-top: 8px; }
+  .modal-card { width: min(300px, 92vw); }
 }
 
 @media (max-width: 480px) {
@@ -719,9 +717,7 @@ a:focus { outline: none; box-shadow: 0 0 0 3px var(--ring); border-radius: 10px;
   .card.tile.compact .card-head.compact .icon { width: 32px; height: 32px; }
   .card.tile.compact .card-head.compact .title { font-size: 10px; }
   /* Modal adjustments */
-  .modal-card { width: min(260px, 92vw); padding: 10px; }
-  .qr-box { padding: 6px; }
-  .modal-actions { margin-top: 6px; }
+  .modal-card { width: min(260px, 92vw); }
   .engine-menu { min-width: 150px; }
   .engine-menu li { padding: 6px 8px; gap: 6px; }
   .engine-icon { width: 14px; height: 14px; }
@@ -1481,25 +1477,105 @@ img {
   scrollbar-color: rgba(244,93,34,0.5) rgba(0,0,0,0.1);
 }
 
-/* Fix for modal positioning on mobile */
+/* Modal layout */
 .modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(8, 10, 16, 0.55);
+  backdrop-filter: blur(12px);
+  z-index: 3000;
+  transition: opacity 0.2s ease;
+}
+
+.modal[hidden] {
+  display: none;
+}
+
+.modal-card {
+  width: min(320px, 92vw);
+  max-height: 90vh;
+  overflow-y: auto;
+  margin: 0 auto;
+  background: var(--panel);
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 22px 48px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.04);
+  padding: 24px 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.modal .side-title {
+  font-size: 14px;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+.qr-box {
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.05);
+  border: 1px dashed rgba(255,255,255,0.12);
+  display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.modal-card {
-  max-height: 90vh;
-  overflow-y: auto;
-  margin: 5vh auto;
+.qr-box #qrImg {
+  width: 208px;
+  height: 208px;
+}
+
+.modal .meta {
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+  word-break: break-all;
+}
+
+.modal-actions {
+  margin-top: 12px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.modal-actions .btn {
+  min-width: 104px;
+}
+
+@media (max-width: 480px) {
+  .modal {
+    padding: 16px;
+  }
+  .modal-card {
+    width: min(280px, 92vw);
+    padding: 18px 16px;
+    gap: 12px;
+  }
+  .qr-box {
+    padding: 10px;
+  }
+  .qr-box #qrImg {
+    width: 176px;
+    height: 176px;
+  }
+  .modal-actions .btn {
+    min-width: 96px;
+  }
 }
 
 /* Better handling of z-index layers */
 .top-actions {
   z-index: 1000;
-}
-
-.modal {
-  z-index: 3000;
 }
 
 .toast {
