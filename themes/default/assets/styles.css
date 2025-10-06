@@ -186,7 +186,7 @@ body[data-img-tone="light"] .clock, body[data-img-tone="light"] .clock-date { te
 .appwrap { display:flex; align-items:flex-start; gap: 16px; }
 .sidebar { position: sticky; top: 12px; min-width: 160px; padding-top: 6px; }
 .cats { list-style: none; margin: 0; padding: 0; display:flex; flex-direction: column; gap:6px; }
-.cat-item { padding: 8px 10px; border-radius: 8px; color: var(--muted); cursor: pointer; border: 1px solid transparent; }
+.cat-item { display:flex; align-items:center; padding: 8px 10px; border-radius: 8px; color: var(--muted); cursor: pointer; border: 1px solid transparent; line-height: 1; }
 .cat-item:hover, .cat-item:focus { background: rgba(255,255,255,0.04); color: var(--text); outline: none; }
 .cat-item.active { background: rgba(244,93,34,0.12); color: #ffb08f; border-color: rgba(244,93,34,0.25); }
 
@@ -214,7 +214,7 @@ body[data-img-tone="light"] .clock, body[data-img-tone="light"] .clock-date { te
   .content { width: 100%; }
   .sidebar { position: static; overflow-x: auto; white-space: nowrap; }
   .cats { flex-direction: row; gap: 8px; }
-  .cat-item { display: inline-block; }
+  .cat-item { display: inline-flex; align-items: center; justify-content: center; }
 }
 
 /* Standard mode card layout */
@@ -676,7 +676,7 @@ a:focus { outline: none; box-shadow: 0 0 0 3px var(--ring); border-radius: 10px;
   .appwrap { gap: 10px; flex-direction: column; }
   .sidebar { position: static; overflow-x: auto; white-space: nowrap; padding: 8px 0; }
   .cats { flex-direction: row; gap: 6px; }
-  .cat-item { display: inline-block; padding: 4px 8px; font-size: 12px; }
+  .cat-item { display: inline-flex; align-items: center; justify-content: center; padding: 4px 8px; font-size: 12px; }
   .group-title { font-size: 10px; margin: 6px 2px 3px; }
   .container { padding: 0 10px 8px; }
   .site-footer { padding: 0 10px; font-size: 10px; }
