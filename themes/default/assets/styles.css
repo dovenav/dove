@@ -1165,10 +1165,15 @@ a:focus { outline: none; box-shadow: 0 0 0 3px var(--ring); border-radius: 10px;
 }
 
 /* Fix for Chrome's address bar hiding on scroll */
+@media screen and (max-width: 768px) {
+  body.layout-ntp .hero {
+    padding: 64px 0 16px;
+  }
+}
+
 @media screen and (max-width: 768px) and (orientation: portrait) {
   .hero {
-    min-height: 100vh;
-    min-height: -webkit-fill-available;
+    min-height: auto;
   }
   
   body {
