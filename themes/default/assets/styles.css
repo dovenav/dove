@@ -94,11 +94,12 @@ body.theme-light .bg-layer::after { background: linear-gradient(180deg, rgba(255
 
 .hero { background: none; padding: 10px 0; }
 .hero-inner { max-width: 1100px; margin: 0 auto; padding: 0 16px; display:flex; align-items:center; justify-content: center; gap:16px; position: relative; flex-direction: column; }
-.top-actions { position: absolute; right: 12px; top: 8px; display:flex; gap:8px; z-index: 1000; }
+.top-actions { position: absolute; right: 12px; top: 8px; display:flex; align-items:center; gap:8px; z-index: 1000; flex-wrap: nowrap; }
 .top-actions .btn { padding: 6px 10px; font-size: 12px; border-radius: 999px; background: transparent; color: var(--muted); border: none; box-shadow: none; }
 .top-actions .btn:hover { color: #fff; background: rgba(255,255,255,0.04); border: none; }
 .top-actions .btn:active { transform: scale(0.95); }
-.top-actions .top-link { font-size: 13px; color: var(--muted); padding: 4px 6px; border-radius: 6px; }
+.top-actions .top-link { display:inline-flex; align-items:center; justify-content:center; font-size: 13px; color: var(--muted); padding: 6px 10px; border-radius: 999px; border: 1px solid transparent; background: transparent; white-space: nowrap; line-height: 1; }
+.top-actions .top-link:active { transform: scale(0.97); }
 .top-actions .top-link:hover { color: var(--text); background: rgba(255,255,255,0.04); }
 /* Background interval selector, compact */
 .top-actions .bg-select { padding: 6px 10px; font-size: 12px; border-radius: 999px; background: transparent; color: var(--muted); border: none; box-shadow: none; }
