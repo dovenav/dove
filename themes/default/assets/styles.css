@@ -597,7 +597,7 @@ a:focus { outline: none; box-shadow: 0 0 0 3px var(--ring); border-radius: 10px;
 @media (max-width: 768px) {
   .hero { padding: 20px 0 12px; }
   .hero-inner { padding: 0 12px; }
-  .searchbox { width: 92vw; grid-template-columns: 20px 1fr auto; }
+  .searchbox { width: 92vw; grid-template-columns: 18px minmax(0, 1fr) max-content max-content; column-gap: 8px; }
   .sb-icon { font-size: 14px; }
   .sb-input { font-size: 16px; /* Prevent zoom on iOS */ }
   .sb-engine-btn { max-width: 100px; font-size: 13px; padding: 6px 8px; }
@@ -661,7 +661,7 @@ a:focus { outline: none; box-shadow: 0 0 0 3px var(--ring); border-radius: 10px;
   .hero { padding: 16px 0 10px; }
   .clock { font-size: 36px; }
   .clock-date { font-size: 12px; }
-  .searchbox { grid-template-columns: 18px 1fr auto; }
+  .searchbox { grid-template-columns: 16px minmax(0, 1fr) max-content max-content; column-gap: 6px; }
   .sb-icon { font-size: 12px; }
   .sb-input { font-size: 16px; }
   .sb-engine-btn { max-width: 80px; font-size: 12px; padding: 4px 6px; }
