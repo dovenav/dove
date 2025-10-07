@@ -61,7 +61,7 @@
       <div class="hero-inner">
         <div class="hero-center">
           <div id="clock" class="clock">--:--</div>
-          <a id="clock-date" class="clock-date" href="https://www.51wnl.com/webcalandar/index.html" target="_blank" rel="noopener"></a>
+          <a id="clock-date" class="clock-date" href="https://www.51wnl.com/webcalandar/index.html" target="_blank" rel="noopener noreferrer"></a>
         </div>
         <div class="searchbox">
           <span class="sb-icon" aria-hidden="true">🔎</span>
@@ -173,7 +173,7 @@
       </div>
     </main>
 
-    <footer class="site-footer">Made with ❤ by <a href="https://github.com/dovenav/dove" target="_blank" rel="noopener">dove</a> · <a href="{{ root_prefix }}sitemap.xml">Sitemap</a> · <a href="{{ root_prefix }}robots.txt">Robots</a> · v{{ build_version | escape }} ({{ build_time | escape }})</footer>
+    <footer class="site-footer">Made with ❤ by <a href="https://github.com/dovenav/dove" target="_blank" rel="noopener noreferrer">dove</a> · <a href="{{ root_prefix }}sitemap.xml">Sitemap</a> · <a href="{{ root_prefix }}robots.txt">Robots</a> · v{{ build_version | escape }} ({{ build_time | escape }})</footer>
     <script src="{{ asset_prefix }}assets/app.js"></script>
     <script>
       // Register service worker for offline support

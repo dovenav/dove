@@ -71,7 +71,7 @@
     const v = (q && q.value || '').trim();
     if (!v) return;
     const url = currentEngineUrl(v);
-    if (url) window.open(url, '_blank', 'noopener');
+    if (url) window.open(url, '_blank', 'noopener,noreferrer');
   }
   doSearch && doSearch.addEventListener('click', externalSearch);
 
@@ -81,7 +81,7 @@
       if (!v) { return; }
       const visible = cards.filter(c => c.style.display !== 'none');
       if (ev.shiftKey) { externalSearch(); return; }
-      if (visible.length > 0) { const href = visible[0].getAttribute('href'); if (href) window.open(href, '_blank', 'noopener'); }
+      if (visible.length > 0) { const href = visible[0].getAttribute('href'); if (href) window.open(href, '_blank', 'noopener,noreferrer'); }
       else { externalSearch(); }
     }
   });
