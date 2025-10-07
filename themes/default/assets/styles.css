@@ -155,7 +155,7 @@ body[data-img-tone="light"] .clock, body[data-img-tone="light"] .clock-date { te
 .engine-select { appearance: none; -webkit-appearance: none; padding: 10px 14px; border-radius: 999px; background: var(--panel); color: var(--text); border: 1px solid var(--border); }
 .engine-select:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--ring); outline: none; }
 .engine { position: relative; }
-.engine-menu { position: absolute; top: 120%; right: 0; min-width: 180px; margin: 4px 0 0; padding: 6px; list-style: none; background: var(--panel); border: none; border-radius: 12px; box-shadow: var(--shadow); }
+.engine-menu { position: absolute; top: 120%; right: 0; min-width: 180px; margin: 4px 0 0; padding: 6px; list-style: none; background: var(--panel); border: none; border-radius: 12px; box-shadow: var(--shadow); z-index: 2500; }
 .engine-menu li { display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius: 8px; cursor: pointer; }
 .engine-menu li:hover, .engine-menu li:focus { background: rgba(255,255,255,0.06); outline: none; }
 .engine-icon { width:16px; height:16px; border-radius: 50%; }
