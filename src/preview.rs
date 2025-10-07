@@ -2,11 +2,24 @@
 //! - 监视主题/静态/本地配置变更并增量重建
 //! - 内置极简 HTTP 静态文件服务器，支持热刷新
 
-use std::{fs, path::{Path, PathBuf}, sync::{Arc, atomic::{AtomicBool, AtomicU64, Ordering}}, thread, time::Duration};
 use anyhow::Result;
-use notify::{RecommendedWatcher, Watcher, RecursiveMode};
+use notify::{RecommendedWatcher, RecursiveMode, Watcher};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+    sync::{
+        atomic::{AtomicBool, AtomicU64, Ordering},
+        Arc,
+    },
+    thread,
+    time::Duration,
+};
 
-use crate::{build::build, config::{Config, load_config, describe_source}, config::ColorScheme};
+use crate::{
+    build::build,
+    config::ColorScheme,
+    config::{describe_source, load_config, Config},
+};
 
 /// 监视并服务指定目录，按需重建与热刷新
 #[allow(clippy::too_many_arguments)]
@@ -33,10 +46,14 @@ pub(crate) fn preview_watch_and_serve(
     icon_dir: Option<String>,
     icon_threads: Option<usize>,
 ) -> Result<()> {
-    if !root.exists() { anyhow::bail!("预览目录不存在: {}", root.display()); }
+    if !root.exists() {
+        anyhow::bail!("预览目录不存在: {}", root.display());
+    }
     println!("🔎 预览目录: {}", root.display());
     println!("🚀 访问: http://{}", addr);
-    if open { let _ = webbrowser::open(&format!("http://{}", addr)); }
+    if open {
+        let _ = webbrowser::open(&format!("http://{}", addr));
+    }
 
     // 版本号与变更标记
     let version = Arc::new(AtomicU64::new(0));
@@ -45,11 +62,22 @@ pub(crate) fn preview_watch_and_serve(
     // 监视（主题目录、静态目录、本地配置文件）
     {
         let dirty = dirty.clone();
-        let mut watcher: RecommendedWatcher = notify::recommended_watcher(move |res: notify::Result<notify::Event>| {
-            if res.is_ok() { dirty.store(true, Ordering::SeqCst); }
-        })?;
-        if let Some(td) = theme_dir.as_ref() { if td.exists() { watcher.watch(td, RecursiveMode::Recursive)?; } }
-        if let Some(sd) = static_dir.as_ref() { if sd.exists() { watcher.watch(sd, RecursiveMode::Recursive)?; } }
+        let mut watcher: RecommendedWatcher =
+            notify::recommended_watcher(move |res: notify::Result<notify::Event>| {
+                if res.is_ok() {
+                    dirty.store(true, Ordering::SeqCst);
+                }
+            })?;
+        if let Some(td) = theme_dir.as_ref() {
+            if td.exists() {
+                watcher.watch(td, RecursiveMode::Recursive)?;
+            }
+        }
+        if let Some(sd) = static_dir.as_ref() {
+            if sd.exists() {
+                watcher.watch(sd, RecursiveMode::Recursive)?;
+            }
+        }
         if let Some(ip) = input.as_ref() {
             if ip.exists() {
                 let watch_target = if ip.is_dir() {
@@ -57,7 +85,9 @@ pub(crate) fn preview_watch_and_serve(
                 } else {
                     ip.parent().unwrap_or(Path::new(".")).to_path_buf()
                 };
-                if watch_target.exists() { watcher.watch(&watch_target, RecursiveMode::Recursive)?; }
+                if watch_target.exists() {
+                    watcher.watch(&watch_target, RecursiveMode::Recursive)?;
+                }
             }
         }
         // 保持 watcher 活到生命周期末尾
@@ -76,12 +106,35 @@ pub(crate) fn preview_watch_and_serve(
                 if dirty.swap(false, Ordering::SeqCst) {
                     // 重新加载配置并构建
                     if let Ok(loaded) = load_config(
-                        input.as_deref(), input_url.as_deref(), gist_id.as_deref(), gist_file.as_deref(), token.as_deref(), auth_scheme.as_deref(),
+                        input.as_deref(),
+                        input_url.as_deref(),
+                        gist_id.as_deref(),
+                        gist_file.as_deref(),
+                        token.as_deref(),
+                        auth_scheme.as_deref(),
                     ) {
                         if let Ok(cfg) = serde_yaml::from_str::<Config>(&loaded.text) {
-                            let _ = build(cfg, &out, static_dir.as_deref(), theme_dir.as_deref(), base_path.clone(), no_intranet, generate_intermediate_page, color_scheme, title.clone(), desc.clone(), build_version.clone(), icon_dir.clone(), icon_threads);
+                            let _ = build(
+                                cfg,
+                                &out,
+                                static_dir.as_deref(),
+                                theme_dir.as_deref(),
+                                base_path.clone(),
+                                no_intranet,
+                                generate_intermediate_page,
+                                color_scheme,
+                                title.clone(),
+                                desc.clone(),
+                                build_version.clone(),
+                                icon_dir.clone(),
+                                icon_threads,
+                            );
                             version.fetch_add(1, Ordering::SeqCst);
-                            println!("🔁 已重建，version = {} · 配置来源: {}", version.load(Ordering::SeqCst), describe_source(&loaded.source));
+                            println!(
+                                "🔁 已重建，version = {} · 配置来源: {}",
+                                version.load(Ordering::SeqCst),
+                                describe_source(&loaded.source)
+                            );
                         }
                     }
                 }
@@ -94,7 +147,8 @@ pub(crate) fn preview_watch_and_serve(
 }
 
 fn serve_with_reload(root: &Path, addr: &str, version: Arc<AtomicU64>) -> Result<()> {
-    let server = tiny_http::Server::http(addr).map_err(|e| anyhow::anyhow!("绑定地址失败: {}: {}", addr, e))?;
+    let server = tiny_http::Server::http(addr)
+        .map_err(|e| anyhow::anyhow!("绑定地址失败: {}: {}", addr, e))?;
     for rq in server.incoming_requests() {
         let url = rq.url();
         if url == "/__dove__/version" {
@@ -104,26 +158,50 @@ fn serve_with_reload(root: &Path, addr: &str, version: Arc<AtomicU64>) -> Result
         }
         let path_only = url.split('?').next().unwrap_or("/");
         let mut segs = Vec::new();
-        for s in path_only.split('/') { let t = s.trim(); if t.is_empty() || t=="." || t==".." { continue; } segs.push(t); }
+        for s in path_only.split('/') {
+            let t = s.trim();
+            if t.is_empty() || t == "." || t == ".." {
+                continue;
+            }
+            segs.push(t);
+        }
         let mut fpath = root.to_path_buf();
-        for s in &segs { fpath.push(s); }
+        for s in &segs {
+            fpath.push(s);
+        }
         let is_dir_req = path_only.ends_with('/') || segs.is_empty();
-        if is_dir_req { fpath.push("index.html"); }
+        if is_dir_req {
+            fpath.push("index.html");
+        }
         let mut status = 200;
-        if !fpath.exists() || fpath.is_dir() { status = 404; }
+        if !fpath.exists() || fpath.is_dir() {
+            status = 404;
+        }
         let content_type = content_type_for_path(&fpath);
         let resp = if status == 200 {
             if content_type.starts_with("text/html") {
                 match fs::read_to_string(&fpath) {
                     Ok(mut s) => {
                         s.push_str("\n<script>(function(){var c=null;async function t(){try{var r=await fetch('/__dove__/version',{cache:'no-store'});var v=await r.text();if(c===null)c=v;else if(v!==c) location.reload();}catch(e){} setTimeout(t,1000);} t();})();</script>\n");
-                        tiny_http::Response::from_string(s).with_header(tiny_http::Header::from_bytes(&b"Content-Type"[..], content_type.as_bytes()).unwrap())
+                        tiny_http::Response::from_string(s).with_header(
+                            tiny_http::Header::from_bytes(
+                                &b"Content-Type"[..],
+                                content_type.as_bytes(),
+                            )
+                            .unwrap(),
+                        )
                     }
-                    Err(_) => tiny_http::Response::from_string("Not Found").with_status_code(404)
+                    Err(_) => tiny_http::Response::from_string("Not Found").with_status_code(404),
                 }
             } else {
                 match fs::read(&fpath) {
-                    Ok(bytes) => tiny_http::Response::from_data(bytes).with_header(tiny_http::Header::from_bytes(&b"Content-Type"[..], content_type.as_bytes()).unwrap()),
+                    Ok(bytes) => tiny_http::Response::from_data(bytes).with_header(
+                        tiny_http::Header::from_bytes(
+                            &b"Content-Type"[..],
+                            content_type.as_bytes(),
+                        )
+                        .unwrap(),
+                    ),
                     Err(_) => tiny_http::Response::from_string("Not Found").with_status_code(404),
                 }
             }
@@ -136,7 +214,13 @@ fn serve_with_reload(root: &Path, addr: &str, version: Arc<AtomicU64>) -> Result
 }
 
 fn content_type_for_path(p: &Path) -> String {
-    match p.extension().and_then(|e| e.to_str()).unwrap_or("").to_ascii_lowercase().as_str() {
+    match p
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("")
+        .to_ascii_lowercase()
+        .as_str()
+    {
         "html" => "text/html; charset=utf-8".into(),
         "css" => "text/css; charset=utf-8".into(),
         "js" => "application/javascript; charset=utf-8".into(),

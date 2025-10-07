@@ -3,11 +3,14 @@
 //! - 提供 `load_config` 支持本地文件/URL/Gist（三者按优先级）
 //! - 暴露配置来源信息，便于日志打印
 
-use std::{fs, path::{Path, PathBuf}};
-use std::collections::{BTreeSet, HashSet};
-use anyhow::{Result, Context, bail};
+use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
 use serde_yaml::{Mapping, Value};
+use std::collections::{BTreeSet, HashSet};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 #[cfg(feature = "remote")]
 use ureq::Response;
@@ -76,7 +79,9 @@ pub(crate) enum ColorScheme {
     Dark,
 }
 
-pub(crate) fn default_color_scheme() -> ColorScheme { ColorScheme::Auto }
+pub(crate) fn default_color_scheme() -> ColorScheme {
+    ColorScheme::Auto
+}
 
 #[derive(Debug, Deserialize)]
 pub(crate) struct Group {
@@ -133,7 +138,11 @@ pub(crate) struct Link {
 
 #[derive(Debug, Deserialize, Clone, Copy)]
 #[serde(rename_all = "lowercase")]
-pub(crate) enum RiskLevel { Low, Medium, High }
+pub(crate) enum RiskLevel {
+    Low,
+    Medium,
+    High,
+}
 
 #[derive(Debug, Deserialize, Clone, Default)]
 pub(crate) struct RedirectSettings {
@@ -150,11 +159,16 @@ pub(crate) struct RedirectSettings {
 
 #[derive(Debug, Deserialize, Clone, Default)]
 pub(crate) struct UtmParams {
-    #[serde(default)] pub(crate) source: Option<String>,
-    #[serde(default)] pub(crate) medium: Option<String>,
-    #[serde(default)] pub(crate) campaign: Option<String>,
-    #[serde(default)] pub(crate) term: Option<String>,
-    #[serde(default)] pub(crate) content: Option<String>,
+    #[serde(default)]
+    pub(crate) source: Option<String>,
+    #[serde(default)]
+    pub(crate) medium: Option<String>,
+    #[serde(default)]
+    pub(crate) campaign: Option<String>,
+    #[serde(default)]
+    pub(crate) term: Option<String>,
+    #[serde(default)]
+    pub(crate) content: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
@@ -167,13 +181,26 @@ pub(crate) struct SearchEngine {
 
 #[derive(Debug, Deserialize, Clone, Copy)]
 #[serde(rename_all = "lowercase")]
-pub(crate) enum Layout { Default, Ntp }
+pub(crate) enum Layout {
+    Default,
+    Ntp,
+}
 
-pub(crate) fn default_layout() -> Layout { Layout::Default }
+pub(crate) fn default_layout() -> Layout {
+    Layout::Default
+}
 
 #[derive(Debug, Deserialize, Clone, Copy)]
 #[serde(rename_all = "lowercase")]
-pub(crate) enum ChangeFreq { Always, Hourly, Daily, Weekly, Monthly, Yearly, Never }
+pub(crate) enum ChangeFreq {
+    Always,
+    Hourly,
+    Daily,
+    Weekly,
+    Monthly,
+    Yearly,
+    Never,
+}
 
 #[derive(Debug, Deserialize, Clone, Default)]
 pub(crate) struct SitemapSettings {
@@ -193,12 +220,19 @@ pub(crate) enum ConfigSource {
     #[cfg(feature = "remote")]
     Url(String),
     #[cfg(feature = "remote")]
-    Gist { id: String, file: Option<String>, raw_url: String },
+    Gist {
+        id: String,
+        file: Option<String>,
+        raw_url: String,
+    },
 }
 
 /// 加载后的配置文本及其来源
 #[derive(Debug, Clone)]
-pub(crate) struct LoadedConfig { pub(crate) text: String, pub(crate) source: ConfigSource }
+pub(crate) struct LoadedConfig {
+    pub(crate) text: String,
+    pub(crate) source: ConfigSource,
+}
 
 /// 人类可读的来源描述
 pub(crate) fn describe_source(src: &ConfigSource) -> String {
@@ -208,28 +242,34 @@ pub(crate) fn describe_source(src: &ConfigSource) -> String {
         #[cfg(feature = "remote")]
         ConfigSource::Url(u) => format!("远程 URL: {}", u),
         #[cfg(feature = "remote")]
-        ConfigSource::Gist { id, file, raw_url } => {
-            match file {
-                Some(f) => format!("Gist {} / {} (raw: {})", id, f, raw_url),
-                None => format!("Gist {} (raw: {})", id, raw_url),
-            }
-        }
+        ConfigSource::Gist { id, file, raw_url } => match file {
+            Some(f) => format!("Gist {} / {} (raw: {})", id, f, raw_url),
+            None => format!("Gist {} (raw: {})", id, raw_url),
+        },
     }
 }
 
 // 自动发现本地配置：dove.yaml / dove.yml / config.yaml / config.yml
 fn _resolve_local_config_path(explicit: Option<&Path>) -> Option<PathBuf> {
-    if let Some(p) = explicit { if p.exists() { return Some(p.to_path_buf()); } }
+    if let Some(p) = explicit {
+        if p.exists() {
+            return Some(p.to_path_buf());
+        }
+    }
     for cand in ["dove.yaml", "dove.yml", "config.yaml", "config.yml"] {
         let p = Path::new(cand);
-        if p.exists() { return Some(p.to_path_buf()); }
+        if p.exists() {
+            return Some(p.to_path_buf());
+        }
     }
     // 兼容在工作区根目录运行：尝试 dove/ 子目录中寻找
     let dove_dir = Path::new("dove");
     if dove_dir.is_dir() {
         for cand in ["dove.yaml", "dove.yml", "config.yaml", "config.yml"] {
             let p = dove_dir.join(cand);
-            if p.exists() { return Some(p); }
+            if p.exists() {
+                return Some(p);
+            }
         }
     }
     None
@@ -254,33 +294,63 @@ pub(crate) fn load_config(
 ) -> Result<LoadedConfig> {
     // 1) 显式本地路径（仅当明确提供）
     if let Some(path) = _resolve_explicit_config_path(input_path) {
-        let raw = fs::read_to_string(&path).with_context(|| format!("读取配置失败: {}", path.display()))?;
+        let raw = fs::read_to_string(&path)
+            .with_context(|| format!("读取配置失败: {}", path.display()))?;
         let text = expand_includes_text(&raw, Some(&path), None, token, auth_scheme)
             .with_context(|| format!("展开 include 失败: {}", path.display()))?;
-        return Ok(LoadedConfig { text, source: ConfigSource::LocalExplicit(path.display().to_string()) });
+        return Ok(LoadedConfig {
+            text,
+            source: ConfigSource::LocalExplicit(path.display().to_string()),
+        });
     }
     // 2) URL
     if let Some(url) = input_url {
-        let raw = http_get_text(url, token, auth_scheme).with_context(|| format!("下载配置失败: {}", url))?;
+        let raw = http_get_text(url, token, auth_scheme)
+            .with_context(|| format!("下载配置失败: {}", url))?;
         let text = expand_includes_text(&raw, None, Some(url), token, auth_scheme)
             .with_context(|| format!("展开 include 失败: {}", url))?;
-        return Ok(LoadedConfig { text, source: ConfigSource::Url(url.to_string()) });
+        return Ok(LoadedConfig {
+            text,
+            source: ConfigSource::Url(url.to_string()),
+        });
     }
     // 3) Gist by ID（若提供则优先于本地自动发现）
     if let Some(id) = gist_id {
         let (raw_url, chosen) = gist_resolve_raw_url(id, gist_file, token, auth_scheme)?;
-        let raw = http_get_text(&raw_url, token, auth_scheme)
-            .with_context(|| format!("下载配置失败: Gist {} 文件 {}", id, chosen.as_deref().unwrap_or("<auto>")))?;
+        let raw = http_get_text(&raw_url, token, auth_scheme).with_context(|| {
+            format!(
+                "下载配置失败: Gist {} 文件 {}",
+                id,
+                chosen.as_deref().unwrap_or("<auto>")
+            )
+        })?;
         let text = expand_includes_text(&raw, None, Some(&raw_url), token, auth_scheme)
-            .with_context(|| format!("展开 include 失败: Gist {} 文件 {}", id, chosen.as_deref().unwrap_or("<auto>")))?;
-        return Ok(LoadedConfig { text, source: ConfigSource::Gist { id: id.to_string(), file: chosen, raw_url } });
+            .with_context(|| {
+                format!(
+                    "展开 include 失败: Gist {} 文件 {}",
+                    id,
+                    chosen.as_deref().unwrap_or("<auto>")
+                )
+            })?;
+        return Ok(LoadedConfig {
+            text,
+            source: ConfigSource::Gist {
+                id: id.to_string(),
+                file: chosen,
+                raw_url,
+            },
+        });
     }
     // 4) 本地自动查找
     if let Some(path) = _resolve_local_config_path(None) {
-        let raw = fs::read_to_string(&path).with_context(|| format!("读取配置失败: {}", path.display()))?;
+        let raw = fs::read_to_string(&path)
+            .with_context(|| format!("读取配置失败: {}", path.display()))?;
         let text = expand_includes_text(&raw, Some(&path), None, token, auth_scheme)
             .with_context(|| format!("展开 include 失败: {}", path.display()))?;
-        return Ok(LoadedConfig { text, source: ConfigSource::LocalAuto(path.display().to_string()) });
+        return Ok(LoadedConfig {
+            text,
+            source: ConfigSource::LocalAuto(path.display().to_string()),
+        });
     }
     bail!("未找到配置：请提供 --input 或 --input-url，或设置 DOVE_INPUT/DOVE_INPUT_URL/DOVE_GIST_ID，或在当前目录放置 dove.yaml");
 }
@@ -295,16 +365,24 @@ pub(crate) fn load_config(
     _auth_scheme: Option<&str>,
 ) -> Result<LoadedConfig> {
     if let Some(path) = _resolve_explicit_config_path(input_path) {
-        let raw = fs::read_to_string(&path).with_context(|| format!("读取配置失败: {}", path.display()))?;
+        let raw = fs::read_to_string(&path)
+            .with_context(|| format!("读取配置失败: {}", path.display()))?;
         let text = expand_includes_text(&raw, Some(&path), None)
             .with_context(|| format!("展开 include 失败: {}", path.display()))?;
-        return Ok(LoadedConfig { text, source: ConfigSource::LocalExplicit(path.display().to_string()) });
+        return Ok(LoadedConfig {
+            text,
+            source: ConfigSource::LocalExplicit(path.display().to_string()),
+        });
     }
     if let Some(path) = _resolve_local_config_path(None) {
-        let raw = fs::read_to_string(&path).with_context(|| format!("读取配置失败: {}", path.display()))?;
+        let raw = fs::read_to_string(&path)
+            .with_context(|| format!("读取配置失败: {}", path.display()))?;
         let text = expand_includes_text(&raw, Some(&path), None)
             .with_context(|| format!("展开 include 失败: {}", path.display()))?;
-        return Ok(LoadedConfig { text, source: ConfigSource::LocalAuto(path.display().to_string()) });
+        return Ok(LoadedConfig {
+            text,
+            source: ConfigSource::LocalAuto(path.display().to_string()),
+        });
     }
     bail!("未找到本地配置：在禁用 remote 功能时，无法使用 URL/Gist。请启用 feature `remote` 或在当前目录提供 dove.yaml");
 }
@@ -313,7 +391,10 @@ pub(crate) fn load_config(
 fn http_get_text(url: &str, token: Option<&str>, auth_scheme: Option<&str>) -> Result<String> {
     let mut req = ureq::get(url).set("User-Agent", "dove/0.1");
     if let Some(t) = token {
-        let scheme = auth_scheme.map(|s| s.trim()).filter(|s| !s.is_empty()).unwrap_or("token");
+        let scheme = auth_scheme
+            .map(|s| s.trim())
+            .filter(|s| !s.is_empty())
+            .unwrap_or("token");
         req = req.set("Authorization", &format!("{} {}", scheme, t));
     }
     let resp = ensure_success(req.call(), url)?;
@@ -330,20 +411,31 @@ fn ensure_success(resp: Result<Response, ureq::Error>, url: &str) -> Result<Resp
 }
 
 #[cfg(feature = "remote")]
-fn gist_resolve_raw_url(id: &str, file_name: Option<&str>, token: Option<&str>, auth_scheme: Option<&str>) -> Result<(String, Option<String>)> {
+fn gist_resolve_raw_url(
+    id: &str,
+    file_name: Option<&str>,
+    token: Option<&str>,
+    auth_scheme: Option<&str>,
+) -> Result<(String, Option<String>)> {
     let api = format!("https://api.github.com/gists/{}", id);
     let mut req = ureq::get(&api)
         .set("User-Agent", "dove/0.1")
         .set("Accept", "application/vnd.github+json");
     if let Some(t) = token {
-        let scheme = auth_scheme.map(|s| s.trim()).filter(|s| !s.is_empty()).unwrap_or("token");
+        let scheme = auth_scheme
+            .map(|s| s.trim())
+            .filter(|s| !s.is_empty())
+            .unwrap_or("token");
         req = req.set("Authorization", &format!("{} {}", scheme, t));
     }
     let resp = ensure_success(req.call(), &api)?;
     let v: serde_json::Value = resp.into_json().context("解析 Gist API 响应失败")?;
-    let files = v.get("files").and_then(|x| x.as_object()).ok_or_else(|| anyhow::anyhow!("Gist 无文件"))?;
+    let files = v
+        .get("files")
+        .and_then(|x| x.as_object())
+        .ok_or_else(|| anyhow::anyhow!("Gist 无文件"))?;
     if let Some(target) = file_name {
-        if let Some(file_obj) = files.get(target) { 
+        if let Some(file_obj) = files.get(target) {
             if let Some(raw) = file_obj.get("raw_url").and_then(|r| r.as_str()) {
                 return Ok((raw.to_string(), Some(target.to_string())));
             }
@@ -406,32 +498,50 @@ fn mapping_remove_includes(m: &mut Mapping) -> Option<Vec<String>> {
         let k = Value::String(key.to_string());
         if let Some(v) = m.remove(&k) {
             match v {
-                Value::String(s) => { if !s.trim().is_empty() { includes.push(s); } }
+                Value::String(s) => {
+                    if !s.trim().is_empty() {
+                        includes.push(s);
+                    }
+                }
                 Value::Sequence(arr) => {
                     for item in arr.into_iter() {
-                        if let Value::String(s) = item { if !s.trim().is_empty() { includes.push(s); } }
+                        if let Value::String(s) = item {
+                            if !s.trim().is_empty() {
+                                includes.push(s);
+                            }
+                        }
                     }
                 }
                 _ => {}
             }
         }
     }
-    if includes.is_empty() { None } else { Some(includes) }
+    if includes.is_empty() {
+        None
+    } else {
+        Some(includes)
+    }
 }
 
 #[cfg(feature = "remote")]
 fn value_dir_of_url(url: &str) -> String {
     match url.rfind('/') {
-        Some(idx) => url[..idx+1].to_string(),
+        Some(idx) => url[..idx + 1].to_string(),
         None => url.to_string(),
     }
 }
 
 #[cfg(feature = "remote")]
 fn join_url(base: &str, rel: &str) -> String {
-    if is_url_like(rel) { return rel.to_string(); }
+    if is_url_like(rel) {
+        return rel.to_string();
+    }
     let has_slash = base.ends_with('/');
-    if has_slash { format!("{}{}", base, rel) } else { format!("{}/{}", base, rel) }
+    if has_slash {
+        format!("{}{}", base, rel)
+    } else {
+        format!("{}/{}", base, rel)
+    }
 }
 
 fn expand_includes_value(
@@ -456,7 +566,9 @@ fn expand_includes_value(
                         let pattern_str = pattern_path.to_string_lossy().to_string();
                         let mut matched: BTreeSet<String> = BTreeSet::new();
                         if let Ok(paths) = glob::glob(&pattern_str) {
-                            for p in paths.flatten() { matched.insert(p.to_string_lossy().to_string()); }
+                            for p in paths.flatten() {
+                                matched.insert(p.to_string_lossy().to_string());
+                            }
                         }
                         // 若未匹配通配，则按普通文件处理
                         if matched.is_empty() {
@@ -465,21 +577,29 @@ fn expand_includes_value(
                         }
                         for p_str in matched {
                             let p = PathBuf::from(&p_str);
-                            if !p.exists() { bail!("include 文件不存在: {}", p.display()); }
+                            if !p.exists() {
+                                bail!("include 文件不存在: {}", p.display());
+                            }
                             let abs = p.canonicalize().unwrap_or(p.clone());
                             let key = format!("local::{}", abs.display());
-                            if !visited.insert(key.clone()) { bail!("检测到循环 include: {}", abs.display()); }
+                            if !visited.insert(key.clone()) {
+                                bail!("检测到循环 include: {}", abs.display());
+                            }
                             let text = fs::read_to_string(&abs)
                                 .with_context(|| format!("读取 include 失败: {}", abs.display()))?;
                             let mut v: Value = serde_yaml::from_str(&text)
                                 .with_context(|| format!("解析 YAML 失败: {}", abs.display()))?;
-                            let new_base = IncludeBase::LocalDir(abs.parent().unwrap_or(Path::new(".")).to_path_buf());
+                            let new_base = IncludeBase::LocalDir(
+                                abs.parent().unwrap_or(Path::new(".")).to_path_buf(),
+                            );
                             v = expand_includes_value(
                                 v,
                                 &new_base,
                                 visited,
-                                #[cfg(feature = "remote")] token,
-                                #[cfg(feature = "remote")] auth_scheme,
+                                #[cfg(feature = "remote")]
+                                token,
+                                #[cfg(feature = "remote")]
+                                auth_scheme,
                             )?;
                             // 若 include 根是序列，视为 groups 片段
                             if let Value::Sequence(seq) = v {
@@ -492,21 +612,21 @@ fn expand_includes_value(
                     }
                     #[cfg(feature = "remote")]
                     IncludeBase::UrlBase(base_url) => {
-                        let target = if is_url_like(inc) { inc.to_string() } else { join_url(base_url, inc) };
+                        let target = if is_url_like(inc) {
+                            inc.to_string()
+                        } else {
+                            join_url(base_url, inc)
+                        };
                         let key = format!("url::{}", target);
-                        if !visited.insert(key.clone()) { bail!("检测到循环 include: {}", target); }
+                        if !visited.insert(key.clone()) {
+                            bail!("检测到循环 include: {}", target);
+                        }
                         let text = http_get_text(&target, token, auth_scheme)
                             .with_context(|| format!("下载 include 失败: {}", target))?;
                         let mut v: Value = serde_yaml::from_str(&text)
                             .with_context(|| format!("解析 YAML 失败: {}", target))?;
                         let new_base = IncludeBase::UrlBase(value_dir_of_url(&target));
-                        v = expand_includes_value(
-                            v,
-                            &new_base,
-                            visited,
-                            token,
-                            auth_scheme,
-                        )?;
+                        v = expand_includes_value(v, &new_base, visited, token, auth_scheme)?;
                         if let Value::Sequence(seq) = v {
                             let mut m = Mapping::new();
                             m.insert(Value::String("groups".to_string()), Value::Sequence(seq));
@@ -556,8 +676,10 @@ fn expand_includes_text(
         v,
         &base,
         &mut visited,
-        #[cfg(feature = "remote")] token,
-        #[cfg(feature = "remote")] auth_scheme,
+        #[cfg(feature = "remote")]
+        token,
+        #[cfg(feature = "remote")]
+        auth_scheme,
     )?;
     let s = serde_yaml::to_string(&v)?;
     Ok(s)

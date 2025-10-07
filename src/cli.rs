@@ -73,8 +73,14 @@ pub(crate) enum Command {
         #[arg(long, value_name = "N")]
         icon_threads: Option<usize>,
         /// 是否生成中间页（默认生成）。如果设置为 false，则链接直接跳转目标地址
-        #[arg(long, default_value = "true", action = clap::ArgAction::Set)]
-        generate_intermediate_page: bool,
+        #[arg(
+            long,
+            value_name = "BOOL",
+            num_args = 0..=1,
+            default_missing_value = "true",
+            action = clap::ArgAction::Set
+        )]
+        generate_intermediate_page: Option<bool>,
     },
     /// 初始化示例配置与静态资源
     Init {
@@ -149,7 +155,13 @@ pub(crate) enum Command {
         #[arg(long, value_name = "N")]
         icon_threads: Option<usize>,
         /// 是否生成中间页（默认生成）。如果设置为 false，则链接直接跳转目标地址
-        #[arg(long, default_value = "true", action = clap::ArgAction::Set)]
-        generate_intermediate_page: bool,
+        #[arg(
+            long,
+            value_name = "BOOL",
+            num_args = 0..=1,
+            default_missing_value = "true",
+            action = clap::ArgAction::Set
+        )]
+        generate_intermediate_page: Option<bool>,
     },
 }

@@ -3,18 +3,24 @@
 //! - 安全的子路径处理、URL 主机名提取
 //! - 文本到枚举的解析工具
 
-use std::{env, path::PathBuf};
 use crate::config::ColorScheme;
+use std::{env, path::PathBuf};
 
 /// 将字符串转为安全子路径（过滤 `.` / `..` 等危险片段）。
 pub(crate) fn safe_subpath(s: &str) -> Option<PathBuf> {
     let mut p = PathBuf::new();
     for seg in s.split('/') {
         let t = seg.trim();
-        if t.is_empty() || t == "." || t == ".." { continue; }
+        if t.is_empty() || t == "." || t == ".." {
+            continue;
+        }
         p.push(t);
     }
-    if p.components().next().is_none() { None } else { Some(p) }
+    if p.components().next().is_none() {
+        None
+    } else {
+        Some(p)
+    }
 }
 
 /// 可选读取 PATH 环境变量为 PathBuf。
@@ -24,7 +30,10 @@ pub(crate) fn env_opt_path(key: &str) -> Option<PathBuf> {
 
 /// 可选读取 String 环境变量。
 pub(crate) fn env_opt_string(key: &str) -> Option<String> {
-    env::var(key).ok().map(|s| s.trim().to_string()).filter(|s| !s.is_empty())
+    env::var(key)
+        .ok()
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
 }
 
 /// 可选读取 usize 环境变量。
@@ -34,13 +43,17 @@ pub(crate) fn env_opt_usize(key: &str) -> Option<usize> {
 
 /// 读取布尔环境变量的真值（1/true/on/yes/y）。
 pub(crate) fn env_bool_truthy(key: &str) -> Option<bool> {
-    env::var(key).ok().map(|v| {
-        match v.to_ascii_lowercase().as_str() {
-            "1" | "true" | "on" | "yes" | "y" => true,
-            "0" | "false" | "off" | "no" | "n" => false,
-            _ => false,
-        }
-    })
+    let raw = env::var(key).ok()?;
+    let trimmed = raw.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+    let normalized = trimmed.to_ascii_lowercase();
+    match normalized.as_str() {
+        "1" | "true" | "on" | "yes" | "y" => Some(true),
+        "0" | "false" | "off" | "no" | "n" => Some(false),
+        _ => None,
+    }
 }
 
 /// 将字符串解析为 ColorScheme。
