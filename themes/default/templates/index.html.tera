@@ -117,7 +117,7 @@
         {% elif g.display == "compact" %}
           <div class="grid compact">
             {% for l in g.links %}
-            <a class="card tile compact" href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer" data-name="{{ l.name | escape }}" data-host="{{ l.host | escape }}">
+            <a class="card tile compact" href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer" data-name="{{ l.name | escape }}" data-host="{{ l.host | escape }}" data-desc="{{ l.desc | default(value="") | escape }}">
               <div class="card-head compact">
                 {% if l.icon %}
                 <img class="icon" src="{{ l.icon | escape }}" alt="">
@@ -133,7 +133,7 @@
           <ul class="list">
             {% for l in g.links %}
             <li class="list-item">
-              <a href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer">
+              <a href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer" data-name="{{ l.name | escape }}" data-host="{{ l.host | default(value="") | escape }}" data-desc="{{ l.desc | default(value="") | escape }}">
                 {% if l.icon %}<img class="list-icon" src="{{ l.icon | escape }}" alt="">{% endif %}
                 <div class="list-content">
                   <div class="list-title">{{ l.name | escape }}</div>
@@ -148,7 +148,7 @@
             <div class="text-row">
             {% for l in g.links %}
               
-              <a class="text-url" href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer"><span class="text-title">{{ l.name | escape }}</span></a>
+              <a class="text-url" href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer" data-name="{{ l.name | escape }}" data-host="{{ l.host | default(value="") | escape }}" data-desc="{{ l.desc | default(value="") | escape }}"><span class="text-title">{{ l.name | escape }}</span></a>
 
             {% endfor %}
             </div>
@@ -173,6 +173,11 @@
       </div>
     </main>
 
+    <div id="linkPreview" class="link-preview" role="status" aria-live="polite" hidden>
+      <div id="linkPreviewName" class="link-preview-title"></div>
+      <div id="linkPreviewDesc" class="link-preview-desc"></div>
+      <div id="linkPreviewHost" class="link-preview-meta"></div>
+    </div>
     <footer class="site-footer">Made with ❤ by <a href="https://github.com/dovenav/dove" target="_blank" rel="noopener noreferrer">dove</a> · <a href="{{ root_prefix }}sitemap.xml">Sitemap</a> · <a href="{{ root_prefix }}robots.txt">Robots</a> · v{{ build_version | escape }} ({{ build_time | escape }})</footer>
     <script src="{{ asset_prefix }}assets/app.js"></script>
     <script>

@@ -10,6 +10,257 @@
   const catList = document.getElementById('cats');
   const sidebar = document.getElementById('sidebar');
   const sections = Array.from(document.querySelectorAll('section.group'));
+  const previewContainer = document.getElementById('linkPreview');
+  const previewNameEl = document.getElementById('linkPreviewName');
+  const previewDescEl = document.getElementById('linkPreviewDesc');
+  const previewHostEl = document.getElementById('linkPreviewHost');
+
+  const PREVIEW_DELAY_MS = 700;
+  let previewTimer = null;
+  let hideTimer = null;
+  let activePreviewLink = null;
+  const pointerPosition = { x: typeof window !== 'undefined' ? window.innerWidth - 48 : 0, y: typeof window !== 'undefined' ? window.innerHeight - 160 : 0 };
+  let hasPointerPosition = false;
+
+  function setPointerPosition(x, y) {
+    if (typeof x !== 'number' || typeof y !== 'number') return;
+    pointerPosition.x = x;
+    pointerPosition.y = y;
+    hasPointerPosition = true;
+  }
+
+  function setPointerFromLink(link) {
+    if (!link) return;
+    const rect = link.getBoundingClientRect();
+    pointerPosition.x = rect.right;
+    pointerPosition.y = rect.top + rect.height / 2;
+    hasPointerPosition = false;
+  }
+
+  function positionPreview(x, y) {
+    if (!previewContainer) return;
+    const margin = 16;
+    const offset = 18;
+    const width = previewContainer.offsetWidth || 0;
+    const height = previewContainer.offsetHeight || 0;
+
+    let nextX = x + offset;
+    let nextY = y + offset;
+
+    const maxX = window.innerWidth - width - margin;
+    const maxY = window.innerHeight - height - margin;
+
+    if (nextX > maxX) {
+      nextX = Math.max(margin, x - offset - width);
+    }
+    if (nextX < margin) {
+      nextX = margin;
+    }
+
+    if (nextY > maxY) {
+      nextY = Math.max(margin, y - offset - height);
+    }
+    if (nextY < margin) {
+      nextY = margin;
+    }
+
+    previewContainer.style.transform = `translate3d(${Math.round(nextX)}px, ${Math.round(nextY)}px, 0)`;
+  }
+
+  function positionPreviewForLink(link) {
+    if (!previewContainer) return;
+    if (!hasPointerPosition && link) {
+      setPointerFromLink(link);
+    }
+    positionPreview(pointerPosition.x, pointerPosition.y);
+  }
+
+  function isPreviewVisible() {
+    return !!(previewContainer && previewContainer.classList.contains('is-visible'));
+  }
+
+  function clearPreviewTimer() {
+    if (previewTimer) {
+      clearTimeout(previewTimer);
+      previewTimer = null;
+    }
+  }
+
+  function hidePreview(link) {
+    if (!previewContainer) return;
+    if (link && activePreviewLink && link !== activePreviewLink) return;
+    activePreviewLink = null;
+    clearPreviewTimer();
+    previewContainer.classList.remove('is-visible');
+    if (hideTimer) {
+      clearTimeout(hideTimer);
+    }
+    hideTimer = setTimeout(() => {
+      if (!previewContainer.classList.contains('is-visible')) {
+        previewContainer.setAttribute('hidden', '');
+        previewContainer.style.transform = 'translate3d(-9999px, -9999px, 0)';
+      }
+      hideTimer = null;
+    }, 260);
+  }
+
+  function showPreview(link) {
+    if (!previewContainer || !previewNameEl || !previewDescEl) return;
+    const name = (link.getAttribute('data-name') || link.textContent || '').trim();
+    const desc = (link.getAttribute('data-desc') || '').trim();
+    const host = (link.getAttribute('data-host') || '').trim();
+    previewNameEl.textContent = name;
+    if (desc) {
+      previewDescEl.textContent = desc;
+      previewDescEl.style.display = '';
+    } else {
+      previewDescEl.textContent = '';
+      previewDescEl.style.display = 'none';
+    }
+    if (previewHostEl) {
+      if (host) {
+        previewHostEl.textContent = `来源：${host}`;
+        previewHostEl.style.display = '';
+      } else {
+        previewHostEl.textContent = '';
+        previewHostEl.style.display = 'none';
+      }
+    }
+    activePreviewLink = link;
+    if (hideTimer) {
+      clearTimeout(hideTimer);
+      hideTimer = null;
+    }
+    if (previewContainer.hasAttribute('hidden')) {
+      previewContainer.removeAttribute('hidden');
+    }
+    positionPreviewForLink(link);
+    requestAnimationFrame(() => {
+      positionPreviewForLink(link);
+      previewContainer.classList.add('is-visible');
+    });
+  }
+
+  function schedulePreview(link) {
+    if (!previewContainer) return;
+    clearPreviewTimer();
+    previewTimer = setTimeout(() => {
+      showPreview(link);
+    }, PREVIEW_DELAY_MS);
+  }
+
+  let hoveredPreviewLink = null;
+
+  function handleHoverEnter(link) {
+    if (!link || link === hoveredPreviewLink) return;
+    const parentGroup = link.closest && link.closest('section.group');
+    if (parentGroup && parentGroup.classList.contains('display-standard')) {
+      handleHoverLeave(link);
+      return;
+    }
+    hoveredPreviewLink = link;
+    if (!hasPointerPosition) {
+      setPointerFromLink(link);
+    }
+    schedulePreview(link);
+  }
+
+  function handleHoverLeave(link) {
+    if (!link) return;
+    if (hoveredPreviewLink === link) {
+      hoveredPreviewLink = null;
+    }
+    clearPreviewTimer();
+    hidePreview(link);
+  }
+
+  if (previewContainer) {
+    const supportsPointer = typeof window !== 'undefined' && 'PointerEvent' in window;
+
+    const onPointerOver = (ev) => {
+      if (ev.pointerType && ev.pointerType !== 'mouse') return;
+      const link = ev.target.closest('a[data-name]');
+      if (!link) return;
+      setPointerPosition(ev.clientX, ev.clientY);
+      handleHoverEnter(link);
+    };
+
+    const onPointerOut = (ev) => {
+      const link = ev.target.closest('a[data-name]');
+      if (!link) return;
+      if (ev.relatedTarget && link.contains(ev.relatedTarget)) return;
+      handleHoverLeave(link);
+    };
+
+    if (supportsPointer) {
+      document.addEventListener('pointerover', onPointerOver);
+      document.addEventListener('pointerout', onPointerOut);
+      document.addEventListener('pointercancel', (ev) => {
+        const link = ev.target && ev.target.closest ? ev.target.closest('a[data-name]') : null;
+        if (link) {
+          handleHoverLeave(link);
+        }
+      });
+      document.addEventListener('pointermove', (ev) => {
+        if (!hoveredPreviewLink) return;
+        if (ev.pointerType && ev.pointerType !== 'mouse') return;
+        setPointerPosition(ev.clientX, ev.clientY);
+        if (isPreviewVisible()) {
+          positionPreview(pointerPosition.x, pointerPosition.y);
+        }
+      }, { passive: true });
+    } else {
+      document.addEventListener('mouseover', (ev) => {
+        const link = ev.target.closest('a[data-name]');
+        if (!link) return;
+        setPointerPosition(ev.clientX, ev.clientY);
+        handleHoverEnter(link);
+      });
+      document.addEventListener('mouseout', (ev) => {
+        const link = ev.target.closest('a[data-name]');
+        if (!link) return;
+        if (ev.relatedTarget && link.contains(ev.relatedTarget)) return;
+        handleHoverLeave(link);
+      });
+      document.addEventListener('mousemove', (ev) => {
+        if (!hoveredPreviewLink) return;
+        setPointerPosition(ev.clientX, ev.clientY);
+        if (isPreviewVisible()) {
+          positionPreview(pointerPosition.x, pointerPosition.y);
+        }
+      }, { passive: true });
+    }
+
+    document.addEventListener('focusin', (ev) => {
+      const link = ev.target.closest && ev.target.closest('a[data-name]');
+      if (!link) return;
+      setPointerFromLink(link);
+      handleHoverEnter(link);
+    });
+
+    document.addEventListener('focusout', (ev) => {
+      const link = ev.target.closest && ev.target.closest('a[data-name]');
+      if (!link) return;
+      handleHoverLeave(link);
+    });
+
+    document.addEventListener('click', (ev) => {
+      const link = ev.target.closest && ev.target.closest('a[data-name]');
+      if (!link) return;
+      handleHoverLeave(link);
+    });
+  }
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', () => {
+      if (!isPreviewVisible()) return;
+      if (activePreviewLink) {
+        positionPreviewForLink(activePreviewLink);
+      } else {
+        positionPreview(pointerPosition.x, pointerPosition.y);
+      }
+    }, { passive: true });
+  }
 
   function filter() {
     const v = (q && q.value || '').toLowerCase().trim();
