@@ -178,7 +178,7 @@
       <div id="linkPreviewDesc" class="link-preview-desc"></div>
       <div id="linkPreviewHost" class="link-preview-meta"></div>
     </div>
-    <footer class="site-footer">Made with ❤ by <a href="https://github.com/dovenav/dove" target="_blank" rel="noopener noreferrer">dove</a> · <a href="{{ root_prefix }}sitemap.xml">Sitemap</a> · <a href="{{ root_prefix }}robots.txt">Robots</a> · v{{ build_version | escape }} ({{ build_time | escape }})</footer>
+    <footer class="site-footer">Made with ❤ by <a href="https://github.com/dovenav/dove" target="_blank" rel="noopener noreferrer">dove</a>{% if sitemap_enabled %} · <a href="{{ root_prefix }}sitemap.xml">Sitemap</a>{% endif %} · <a href="{{ root_prefix }}robots.txt">Robots</a> · v{{ build_version | escape }} ({{ build_time | escape }})</footer>
     <script src="{{ asset_prefix }}assets/app.js"></script>
     <script>
       // Register service worker for offline support

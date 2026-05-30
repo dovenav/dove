@@ -70,9 +70,12 @@ site:
   layout: ntp
   # 站点地图默认设置（可选）
   sitemap:
+    # enabled: true             # 设为 false 时不生成 sitemap.xml
     default_changefreq: weekly   # always|hourly|daily|weekly|monthly|yearly|never
     default_priority: 0.5        # 0.0 - 1.0
     # lastmod: 2025-09-09        # 不设置则用构建时间
+  # 可选：覆盖页面 robots meta；包含 noindex 时 robots.txt 会写为 Disallow: /
+  # meta_robots: noindex,nofollow
   # 搜索引擎（可选）
   search_engines:
     - name: Google
@@ -130,9 +133,11 @@ groups:
 
 注意：中间页的生成可以通过命令行参数 `--generate-intermediate-page=false` 或环境变量 `DOVE_GENERATE_INTERMEDIATE_PAGE=false` 来禁用。禁用后，链接默认直接跳转目标地址；如需为个别链接保留/关闭中间页，可在该链接上设置 `intermediate_page: true|false` 覆盖全局行为。
 - `site.sitemap` 站点地图默认设置：
+  - `enabled` 是否生成 `sitemap.xml`；默认 `true`，设为 `false` 时会删除旧的 `sitemap.xml`
   - `default_changefreq` 默认变更频率：`always|hourly|daily|weekly|monthly|yearly|never`
   - `default_priority` 默认优先级：`0.0 - 1.0`
   - `lastmod` 站点级最近更新时间（不设置则用构建时间）
+- `site.meta_robots` 可选：覆盖页面 `<meta name="robots">`；若包含 `noindex`，生成的 `robots.txt` 会使用 `Disallow: /`。
 - `links[].lastmod`、`links[].changefreq`、`links[].priority`：覆盖单个链接的站点地图字段。
 - `links[].risk` 可选：覆盖默认风险等级。
 - `links[].utm` 可选：覆盖站点级 UTM 参数。
@@ -147,7 +152,7 @@ groups:
   - `groups`：分组数组；每个分组包含 `name`、`category` 与 `links`
   - `links`：每个链接包含 `name`、`href`、`desc`、`icon`、`host`
   - `search_engines`、`engine_default`：搜索引擎选项与默认项
-  - `meta_robots`：内网页会注入 `noindex,nofollow`
+  - `meta_robots`：外网页默认 `index,follow`，内网页默认 `noindex,nofollow`；可由 `site.meta_robots` 覆盖
   - `canonical_url`、`og_image`：仅外网页面可用
 - `templates/detail.html.tera`：链接详情/跳转提示页（仅外网生成）。可访问变量：
   - `site_title`、`site_desc`、`color_scheme`
@@ -161,8 +166,8 @@ groups:
 - 站点根目录（若设置 `base_path`，在 `dist/<base_path>/`）
 - `intranet/` 内网版导航（同上；若 `--no-intranet` 则不生成且页面不显示切换按钮）
 - `go/<slug>/` 每个链接的详情/跳转提示页（仅外网版生成；导航页会将链接指向这些中间页；若 `--generate-intermediate-page=false` 则不生成且链接直接跳转目标地址）
-- `sitemap.xml` 站点地图：包含站点根路径与所有外网详情页（带 `lastmod`、`changefreq`、`priority`）。
-- `robots.txt` 基础抓取策略（默认 Allow: /）。
+- `sitemap.xml` 站点地图：包含站点根路径与所有外网详情页（带 `lastmod`、`changefreq`、`priority`）；`site.sitemap.enabled: false` 时不生成。
+- `robots.txt` 基础抓取策略（默认 Allow: /；`site.meta_robots` 包含 `noindex` 时为 Disallow: /）。
 - `assets/sw.js` Service Worker 文件，用于实现离线功能
 - `assets/offline.html` 离线页面，当用户离线时显示
 

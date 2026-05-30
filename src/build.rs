@@ -198,11 +198,12 @@ pub(crate) fn build(
     )?;
 
     // 生成 robots.txt 与 sitemap.xml（若提供 base_url 则写绝对 URL）
-    write_robots(&site_dir)?;
+    write_robots(&site_dir, &config.site)?;
     write_sitemap(
         &site_dir,
         &config.site,
         base_path_effective.as_deref(),
+        !no_intranet,
         &detail_records,
         &build_time,
     )?;
@@ -335,6 +336,9 @@ fn render_one(
         ColorScheme::Dark => "dark",
     };
     ctx.insert("color_scheme", &scheme);
+    let meta_robots = meta_robots_for_mode(&cfg.site, mode);
+    ctx.insert("meta_robots", &meta_robots);
+    ctx.insert("sitemap_enabled", &sitemap_enabled(&cfg.site));
     // 是否存在内网
     ctx.insert("has_intranet", &has_intranet);
     // 是否生成中间页
@@ -631,6 +635,10 @@ fn render_link_details(
         ctx.insert("site_title", &site_title);
         ctx.insert("site_desc", &site_desc);
         ctx.insert("color_scheme", &scheme);
+        if let Some(meta_robots) = normalized_meta_robots(cfg.site.meta_robots.as_deref()) {
+            ctx.insert("meta_robots", &meta_robots);
+        }
+        ctx.insert("sitemap_enabled", &sitemap_enabled(&cfg.site));
 
         // Open Graph相关变量
         if let Some(ref base_url) = cfg.site.base_url {
@@ -764,8 +772,42 @@ fn risk_meta(r: Option<RiskLevel>) -> (String, String) {
     }
 }
 
-fn write_robots(root: &Path) -> Result<()> {
-    let content = "User-agent: *\nAllow: /\n";
+fn normalized_meta_robots(value: Option<&str>) -> Option<String> {
+    value
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(ToOwned::to_owned)
+}
+
+fn meta_robots_for_mode(site: &Site, mode: NetMode) -> String {
+    if let Some(v) = normalized_meta_robots(site.meta_robots.as_deref()) {
+        return v;
+    }
+    match mode {
+        NetMode::External => "index,follow".to_string(),
+        NetMode::Intranet => "noindex,nofollow".to_string(),
+    }
+}
+
+fn sitemap_enabled(site: &Site) -> bool {
+    site.sitemap.as_ref().and_then(|s| s.enabled).unwrap_or(true)
+}
+
+fn blocks_indexing(site: &Site) -> bool {
+    normalized_meta_robots(site.meta_robots.as_deref())
+        .map(|v| {
+            v.split(|c: char| c == ',' || c.is_whitespace())
+                .any(|token| token.eq_ignore_ascii_case("noindex"))
+        })
+        .unwrap_or(false)
+}
+
+fn write_robots(root: &Path, site: &Site) -> Result<()> {
+    let content = if blocks_indexing(site) {
+        "User-agent: *\nDisallow: /\n"
+    } else {
+        "User-agent: *\nAllow: /\n"
+    };
     fs::write(root.join("robots.txt"), content.as_bytes()).context("写入 robots.txt 失败")?;
     Ok(())
 }
@@ -774,9 +816,18 @@ fn write_sitemap(
     root: &Path,
     site: &Site,
     base_path: Option<&str>,
+    include_intranet: bool,
     details: &[LinkDetail],
     build_time: &str,
 ) -> Result<()> {
+    if !sitemap_enabled(site) {
+        let path = root.join("sitemap.xml");
+        if path.exists() {
+            fs::remove_file(&path).context("删除旧 sitemap.xml 失败")?;
+        }
+        return Ok(());
+    }
+
     // Helper to join base_url + base_path + subpath
     fn url_join(base_url: Option<&str>, base_path: Option<&str>, sub: &str) -> String {
         if let Some(b) = base_url {
@@ -826,12 +877,14 @@ fn write_sitemap(
         site.sitemap.as_ref().and_then(|s| s.default_changefreq),
         site.sitemap.as_ref().and_then(|s| s.default_priority),
     ));
-    urls.push((
-        url_join(site.base_url.as_deref(), base_path, "intranet/"),
-        None,
-        site.sitemap.as_ref().and_then(|s| s.default_changefreq),
-        site.sitemap.as_ref().and_then(|s| s.default_priority),
-    ));
+    if include_intranet {
+        urls.push((
+            url_join(site.base_url.as_deref(), base_path, "intranet/"),
+            None,
+            site.sitemap.as_ref().and_then(|s| s.default_changefreq),
+            site.sitemap.as_ref().and_then(|s| s.default_priority),
+        ));
+    }
     // 详情页
     for d in details {
         let sub = format!("go/{}/", d.slug);

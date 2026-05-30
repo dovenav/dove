@@ -16,9 +16,13 @@ site:
 
   # 站点地图默认设置
   sitemap:
+    # enabled: true              # 设为 false 时不生成 sitemap.xml
     default_changefreq: weekly   # 默认变更频率：always/hourly/daily/weekly/monthly/yearly/never
     default_priority: 0.5        # 默认优先级（0.0 - 1.0）
     # lastmod: 2025-09-09        # 可选：站点级最后修改时间（不设置则用构建时间）
+
+  # 可选：覆盖页面 robots meta，例如 noindex,nofollow
+  # meta_robots: noindex,nofollow
 
   # 搜索引擎配置
   search_engines:

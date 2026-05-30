@@ -7,6 +7,7 @@
    
     <meta name="description" content="{{ link_name | escape }}{% if link_intro and link_intro != "" %},{{ link_intro | escape }}{% endif %}{% if site_desc and site_desc != "" %},{{ site_desc | escape }}{% endif %}">
     <meta name="keywords" content="{{ link_name | escape }} {% if link_keywords and link_keywords != "" %},{{ link_keywords | escape }}{% endif %}">
+    <meta name="robots" content="{{ meta_robots | default(value="index,follow") }}">
     
     <!-- Open Graph Protocol -->
     <meta property="og:type" content="website">
@@ -106,7 +107,7 @@
       </div>
     </main>
 
-    <footer class="site-footer">Made with ❤ by <a href="https://github.com/dovenav/dove" target="_blank" rel="noopener noreferrer">dove</a> · <a href="../../sitemap.xml">Sitemap</a> · <a href="../../robots.txt">Robots</a> · v{{ build_version | escape }} ({{ build_time | escape }})</footer>
+    <footer class="site-footer">Made with ❤ by <a href="https://github.com/dovenav/dove" target="_blank" rel="noopener noreferrer">dove</a>{% if sitemap_enabled %} · <a href="../../sitemap.xml">Sitemap</a>{% endif %} · <a href="../../robots.txt">Robots</a> · v{{ build_version | escape }} ({{ build_time | escape }})</footer>
 
     <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
     <div id="qrModal" class="modal" hidden>

@@ -6,10 +6,7 @@
 use std::{collections::HashMap, path::Path};
 
 #[cfg(feature = "remote")]
-use std::{fs, io::Read};
-
-#[cfg(feature = "remote")]
-use crate::config::load_config; // not used directly; keep feature parity
+use std::io::Read;
 
 #[cfg(feature = "remote")]
 use anyhow::Result;

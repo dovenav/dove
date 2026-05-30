@@ -45,6 +45,9 @@ pub(crate) struct Site {
     /// 可选：用于社交分享的图片地址（相对或绝对）。缺省使用 `assets/favicon.svg`。
     #[serde(default)]
     pub(crate) og_image: Option<String>,
+    /// 可选：覆盖页面 robots meta，例如 `noindex,nofollow`。
+    #[serde(default)]
+    pub(crate) meta_robots: Option<String>,
     /// 站点地图默认设置
     #[serde(default)]
     pub(crate) sitemap: Option<SitemapSettings>,
@@ -204,6 +207,9 @@ pub(crate) enum ChangeFreq {
 
 #[derive(Debug, Deserialize, Clone, Default)]
 pub(crate) struct SitemapSettings {
+    /// 是否生成 sitemap.xml，默认生成。
+    #[serde(default)]
+    pub(crate) enabled: Option<bool>,
     #[serde(default)]
     pub(crate) default_changefreq: Option<ChangeFreq>,
     #[serde(default)]
