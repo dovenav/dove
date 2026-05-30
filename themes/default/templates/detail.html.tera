@@ -22,7 +22,7 @@
   </head>
   <body class="theme-{{ color_scheme }} page-detail">
     <div class="top-actions">
-      <button id="toggleTheme" class="btn ghost" title="切换主题">🌓</button>
+      <button id="toggleTheme" class="btn ghost" title="切换主题" aria-label="切换主题">◐</button>
     </div>
     <header class="navbar">
       <div class="nav-inner">

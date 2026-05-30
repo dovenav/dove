@@ -41,8 +41,8 @@
       {% if has_intranet %}
       <a class="top-link" id="toggleNet" href="{{ network_switch_href }}" title="切换内/外网">{{ mode_other_label }}</a>
       {% endif %}
-      <button id="toggleTheme" class="btn ghost" title="切换主题">🌓</button>
-      <button id="bgNext" class="btn ghost" title="切换背景">🖼️</button>
+      <button id="toggleTheme" class="btn ghost" title="切换主题" aria-label="切换主题">◐</button>
+      <button id="bgNext" class="btn ghost" title="切换背景" aria-label="切换背景">↻</button>
       <select id="bgInterval" class="bg-select" title="自动切换">
         <option value="0">不自动</option>
         <option value="30">30秒</option>
@@ -64,7 +64,7 @@
           <a id="clock-date" class="clock-date" href="https://www.51wnl.com/webcalandar/index.html" target="_blank" rel="noopener noreferrer"></a>
         </div>
         <div class="searchbox">
-          <span class="sb-icon" aria-hidden="true">🔎</span>
+          <span class="sb-icon" aria-hidden="true">⌕</span>
           <input id="q" class="search sb-input" type="search" placeholder="搜索站点、域名、描述..." aria-label="搜索">
           <div class="engine sb-engine">
             <button id="engineBtn" class="sb-engine-btn" aria-haspopup="listbox" aria-expanded="false"><span id="engineLabel">{{ engine_default }}</span> ▾</button>
@@ -95,7 +95,7 @@
       <div class="content" id="content">
       {% for g in groups %}
       <section class="group display-{{ g.display }}" data-cat="{{ g.category }}" id="cat-{{ g.category | replace(from=" ", to="-") }}">
-        <h2 class="group-title">{{ g.name | escape }}</h2>
+        <h2 class="group-title"><span>{{ g.name | escape }}</span><span class="group-count">{{ g.links | length }}</span></h2>
         {% if g.display == "standard" %}
           <div class="grid">
             {% for l in g.links %}
@@ -108,6 +108,9 @@
                   <div class="title">{{ l.name | escape }}</div>
                   {% if l.desc and l.desc != "" %}
                   <div class="desc">{{ l.desc | escape }}</div>
+                  {% endif %}
+                  {% if l.host and l.host != "" %}
+                  <div class="card-meta">{{ l.host | escape }}</div>
                   {% endif %}
                 </div>
               </div>

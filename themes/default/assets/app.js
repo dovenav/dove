@@ -1,6 +1,6 @@
 (function () {
   const q = document.getElementById('q');
-  const cards = Array.from(document.querySelectorAll('.card'));
+  const cards = Array.from(document.querySelectorAll('a[data-name]'));
   const engineBtn = document.getElementById('engineBtn');
   const engineMenu = document.getElementById('engineMenu');
   const doSearch = document.getElementById('doSearch');
@@ -269,14 +269,14 @@
       const host = (c.getAttribute('data-host') || '').toLowerCase();
       const desc = (c.getAttribute('data-desc') || '').toLowerCase();
       const t = `${name} ${host} ${desc}`;
-      c.style.display = v ? (t.includes(v) ? '' : 'none') : '';
+      setLinkVisible(c, !v || t.includes(v));
     });
     // 搜索时：仅显示含有匹配结果的分组与分类；清空时恢复当前分类筛选
     if (v) {
       // 逐分组统计是否有可见卡片
       const hasVisibleByCat = {};
       sections.forEach(sec => {
-        const visible = Array.from(sec.querySelectorAll('.card')).some(x => x.style.display !== 'none');
+        const visible = Array.from(sec.querySelectorAll('a[data-name]')).some(isLinkVisible);
         sec.style.display = visible ? '' : 'none';
         const cat = sec.getAttribute('data-cat') || '';
         if (visible) { hasVisibleByCat[cat] = true; }
@@ -304,6 +304,20 @@
   }
   q && q.addEventListener('input', filter);
 
+  function linkContainer(link) {
+    return link.closest('.list-item') || link;
+  }
+
+  function setLinkVisible(link, visible) {
+    const target = linkContainer(link);
+    target.style.display = visible ? '' : 'none';
+  }
+
+  function isLinkVisible(link) {
+    const target = linkContainer(link);
+    return target.style.display !== 'none';
+  }
+
   function engines() {
     if (!engineMenu) return [];
     return Array.from(engineMenu.querySelectorAll('li')).map(li => ({ name: li.dataset.name, tpl: li.dataset.template, el: li }));
@@ -330,7 +344,7 @@
     if (ev.key === 'Enter') {
       const v = (q && q.value || '').trim();
       if (!v) { return; }
-      const visible = cards.filter(c => c.style.display !== 'none');
+      const visible = cards.filter(isLinkVisible);
       if (ev.shiftKey) { externalSearch(); return; }
       if (visible.length > 0) { const href = visible[0].getAttribute('href'); if (href) window.open(href, '_blank', 'noopener,noreferrer'); }
       else { externalSearch(); }
@@ -575,12 +589,8 @@
 
   // 应用主题色调
   function applyTone(tone) {
-    // 移除现有的主题类
-    document.documentElement.classList.remove('light', 'dark');
-    // 添加新的主题类
-    document.documentElement.classList.add(tone);
-    // 保存主题选择到本地存储
-    localStorage.setItem('dove-theme', tone);
+    if (!document.body) return;
+    document.body.setAttribute('data-img-tone', tone === 'light' ? 'light' : 'dark');
   }
 
   function preloadImage(url) {
@@ -618,7 +628,17 @@
     loadNextWithRetry().then(res => { preloaded = res; }).catch(() => {/* ignore */ });
   }
 
+  function ensureBgBuffers() {
+    if (!bgLayer || bgPrimary) return;
+    bgPrimary = bgLayer;
+    bgBuffer = bgLayer.cloneNode(false);
+    bgBuffer.id = 'bgLayerBuffer';
+    bgBuffer.classList.add('fade');
+    bgLayer.insertAdjacentElement('afterend', bgBuffer);
+  }
+
   function crossfadeTo(img, url) {
+    ensureBgBuffers();
     if (!bgPrimary || !bgBuffer) return;
 
     // 确保新背景在隐藏状态下设置
@@ -679,7 +699,7 @@
   }
 
   async function updateBg() {
-    // ensureBgBuffers(); // 注释掉未定义的函数调用
+    ensureBgBuffers();
     if (switching) { queued = true; return; }
     switching = true;
     try {
@@ -705,7 +725,7 @@
   (function initBg() {
     if (!bgLayer) return; // initial background
     // setup double buffer and default tone
-    // ensureBgBuffers(); // 注释掉未定义的函数调用
+    ensureBgBuffers();
     applyTone('dark');
     // initial load
     updateBg();
