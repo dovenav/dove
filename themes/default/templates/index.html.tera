@@ -17,7 +17,7 @@
     <meta property="og:site_name" content="{{ site_title | escape }}">
     {% if og_image %}<meta property="og:image" content="{{ og_image }}">{% endif %}
     <link rel="icon" href="{{ asset_prefix }}assets/favicon-f.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="{{ asset_prefix }}assets/styles.css">
+    <link rel="stylesheet" href="{{ asset_prefix }}assets/styles.css?v={{ build_time | escape }}">
     <meta name="theme-color" content="#f45d22">
     <script type="application/ld+json">
     {

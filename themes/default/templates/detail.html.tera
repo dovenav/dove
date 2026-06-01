@@ -18,7 +18,7 @@
     {% if og_image %}<meta property="og:image" content="{{ og_image | escape }}">{% endif %}
     
     <link rel="icon" href="../../assets/favicon-f.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="../../assets/styles.css">
+    <link rel="stylesheet" href="../../assets/styles.css?v={{ build_time | escape }}">
   </head>
   <body class="theme-{{ color_scheme }} page-detail">
     <div class="top-actions">

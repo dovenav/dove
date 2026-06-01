@@ -326,6 +326,14 @@ body[data-img-tone="light"] .clock-date {
   caret-color: var(--brand-2);
 }
 
+.search:focus,
+.search:focus-visible,
+.sb-input:focus,
+.sb-input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
 .sb-input {
   padding: 0;
   font-size: 16px;
