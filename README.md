@@ -124,6 +124,7 @@ groups:
 - `links[].embed` 可选：设为 `true` 时，该链接在导航页中用站内浮窗 iframe 打开，不新开标签页；浮窗支持关闭、拖动，并提供右上角新标签页打开按钮。部分网站会通过 `X-Frame-Options`/CSP 禁止被嵌入，此时需使用新标签页打开。
 - `links[].embed_url` 可选：浮窗 iframe 实际加载的地址；未设置时使用 `url`（内网页使用 `intranet` 回退后的地址）。兼容别名 `iframe_url`、`window_url`、`popup_url`。
 - `links[].intermediate_page` 可选：布尔值，控制该链接是否生成跳转中间页；若设置则覆盖全局 `generate_intermediate_page`/`DOVE_GENERATE_INTERMEDIATE_PAGE`。
+- 自定义字段透传：`site`、`groups[]`、`links[]` 中未被内置配置使用的字段会保留给主题模板读取。例如链接中写 `badge: 常用` 后，主题可用 `{{ l.badge }}` 读取；站点级字段可用 `{{ site.hero_image }}` 或 `{{ site_extra.hero_image }}` 读取；详情页当前链接的自定义字段可用 `{{ link_extra.badge }}` 读取。自定义字段不要与模板内置字段（如 `name`、`href`、`links`、`display`）重名。
 - `links[].slug` 可选：显式指定外网中间页路径 `go/<slug>/` 的目录名；若未指定，则：
   - 默认用 `name` 生成 slug；
   - 当同名重复时，重复项将改用 `name+host` 组合生成 slug；
@@ -149,16 +150,18 @@ groups:
 
 - `templates/index.html.tera`：首页模板（Tera）。可访问变量（常用）：
   - `site_title`、`site_desc`、`color_scheme`（`auto|light|dark`）、`layout`
+  - `site`、`site_extra`、`config_extra`：配置中的站点对象、自定义站点字段、顶层自定义字段
   - `mode`（`external|intranet`）、`mode_other_label`（`外网|内网`）、`network_switch_href`、`has_intranet`
   - `categories`：分类列表（侧边栏）
   - `groups`：分组数组；每个分组包含 `name`、`category` 与 `links`
-  - `links`：每个链接包含 `name`、`href`、`desc`、`icon`、`host`
+  - `links`：每个链接包含 `name`、`href`、`desc`、`icon`、`host`；自定义字段会直接透传为 `l.<字段名>`
   - `search_engines`、`engine_default`：搜索引擎选项与默认项
   - `meta_robots`：外网页默认 `index,follow`，内网页默认 `noindex,nofollow`；可由 `site.meta_robots` 覆盖
   - `canonical_url`、`og_image`：仅外网页面可用
 - `templates/detail.html.tera`：链接详情/跳转提示页（仅外网生成）。可访问变量：
   - `site_title`、`site_desc`、`color_scheme`
   - `link_name`、`link_intro`、`link_details_html`、`link_icon`、`link_host`、`link_url`
+  - `site`、`site_extra`、`config_extra`、`link_extra`：供详情页读取自定义配置字段
   - `risk_class`（low|medium|high）、`risk_label`（低/中/高风险）
   - `has_delay`（bool）、`delay_seconds`（数字）
 - `assets/`：静态资源（CSS/JS/图标等），会复制到输出目录的 `assets/`。
@@ -453,14 +456,16 @@ groups:
 首页模板 `templates/index.html.tera` 可访问（部分）：
 
 - 站点信息：`site_title`、`site_desc`、`color_scheme`、`layout`
+- 配置对象：`site`、`site_extra`、`config_extra`
 - 搜索引擎：`search_engines`、`engine_default`
-- 列表数据：`groups`（含 `name/category/links`）、`categories`
+- 列表数据：`groups`（含 `name/category/links`）、`categories`；分组和链接自定义字段可用 `g.<字段名>` / `l.<字段名>` 读取
 - 其它：`build_version`、`generate_intermediate_page`、`has_intranet`
 - 内/外网切换：`network_switch_href`、`mode_other_label`
 
 详情页模板 `templates/detail.html.tera` 可访问：
 
 - `link_name`、`link_intro`、`link_details_html`、`link_icon`、`link_host`、`link_url`
+- 自定义字段：`site`、`site_extra`、`config_extra`、`link_extra`
 - 风险与跳转：`risk_class`、`risk_label`、`has_delay`、`delay_seconds`
 
 若新增模板变量，请在 `src/build.rs` 的渲染上下文中补充对应字段。

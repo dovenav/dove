@@ -4,8 +4,9 @@
 //! - 处理 slug/UTM/风险标签等
 
 use anyhow::{bail, Context, Result};
+use serde_yaml::Value;
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeMap, HashMap, HashSet},
     fs,
     path::{Path, PathBuf},
 };
@@ -304,7 +305,20 @@ struct LinkDetail {
     s_lastmod: Option<String>,
     s_changefreq: Option<ChangeFreq>,
     s_priority: Option<f32>,
+    extra: BTreeMap<String, Value>,
 }
+
+const LINK_TEMPLATE_KEYS: &[&str] = &[
+    "name",
+    "href",
+    "embed",
+    "embed_url",
+    "display_url",
+    "desc",
+    "icon",
+    "host",
+];
+const GROUP_TEMPLATE_KEYS: &[&str] = &["name", "category", "display", "links"];
 
 #[allow(clippy::too_many_arguments)]
 fn render_one(
@@ -324,6 +338,9 @@ fn render_one(
     // Build/version info from caller (CI/CLI), already resolved
     ctx.insert("build_version", &build_version);
     ctx.insert("build_time", &build_time);
+    ctx.insert("site", &cfg.site);
+    ctx.insert("site_extra", &cfg.site.extra);
+    ctx.insert("config_extra", &cfg.extra);
 
     let site_title = title_override.unwrap_or(&cfg.site.title);
     let site_desc = desc_override.unwrap_or(&cfg.site.description);
@@ -418,6 +435,8 @@ fn render_one(
         desc: String,
         icon: Option<String>,
         host: String,
+        #[serde(flatten)]
+        extra: BTreeMap<String, Value>,
     }
     #[derive(Serialize)]
     struct RGroup {
@@ -425,6 +444,8 @@ fn render_one(
         category: String,
         display: String,
         links: Vec<RLink>,
+        #[serde(flatten)]
+        extra: BTreeMap<String, Value>,
     }
 
     let mut used_slugs: HashSet<String> = HashSet::new();
@@ -499,6 +520,7 @@ fn render_one(
                             s_lastmod: l.lastmod.clone(),
                             s_changefreq: l.changefreq,
                             s_priority: l.priority,
+                            extra: filtered_template_extra(&l.extra, LINK_TEMPLATE_KEYS),
                         });
                     }
                     let icon_res = l
@@ -519,6 +541,7 @@ fn render_one(
                         desc: l.intro.clone(),
                         icon: icon_res,
                         host: host.clone(),
+                        extra: filtered_template_extra(&l.extra, LINK_TEMPLATE_KEYS),
                     });
                 }
                 NetMode::Intranet => {
@@ -550,6 +573,7 @@ fn render_one(
                         desc: l.intro.clone(),
                         icon: icon_res,
                         host,
+                        extra: filtered_template_extra(&l.extra, LINK_TEMPLATE_KEYS),
                     });
                 }
             }
@@ -566,6 +590,7 @@ fn render_one(
                 category: cat,
                 display: disp,
                 links: rlinks,
+                extra: filtered_template_extra(&g.extra, GROUP_TEMPLATE_KEYS),
             });
         }
     }
@@ -648,6 +673,9 @@ fn render_link_details(
         let mut ctx = TContext::new();
         ctx.insert("build_version", &build_version);
         ctx.insert("build_time", &build_time);
+        ctx.insert("site", &cfg.site);
+        ctx.insert("site_extra", &cfg.site.extra);
+        ctx.insert("config_extra", &cfg.extra);
         ctx.insert("site_title", &site_title);
         ctx.insert("site_desc", &site_desc);
         ctx.insert("color_scheme", &scheme);
@@ -669,6 +697,7 @@ fn render_link_details(
         ctx.insert("categories", &categories);
         ctx.insert("link_name", &d.name);
         ctx.insert("link_intro", &d.intro);
+        ctx.insert("link_extra", &d.extra);
         // 详情 HTML：若配置了 details，用原样 HTML；否则使用简介文本（将在模板中 escape）
         let details_html: Option<String> = d.details.clone();
         ctx.insert("link_details_html", &details_html);
@@ -778,6 +807,17 @@ fn apply_utm(url_str: &str, utm: Option<&UtmParams>) -> String {
     } else {
         url_str.to_string()
     }
+}
+
+fn filtered_template_extra(
+    extra: &BTreeMap<String, Value>,
+    reserved: &[&str],
+) -> BTreeMap<String, Value> {
+    extra
+        .iter()
+        .filter(|(key, _)| !reserved.contains(&key.as_str()))
+        .map(|(key, value)| (key.clone(), value.clone()))
+        .collect()
 }
 
 fn risk_meta(r: Option<RiskLevel>) -> (String, String) {

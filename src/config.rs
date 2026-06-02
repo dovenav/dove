@@ -6,7 +6,7 @@
 use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
 use serde_yaml::{Mapping, Value};
-use std::collections::{BTreeSet, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -19,9 +19,12 @@ use ureq::Response;
 pub(crate) struct Config {
     pub(crate) site: Site,
     pub(crate) groups: Vec<Group>,
+    /// 顶层自定义字段，供主题模板读取。
+    #[serde(flatten)]
+    pub(crate) extra: BTreeMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub(crate) struct Site {
     pub(crate) title: String,
     #[serde(default)]
@@ -72,9 +75,12 @@ pub(crate) struct Site {
     /// 可选：默认分类显示模式（未显式配置的分类使用），可取：standard|compact|list|text
     #[serde(default)]
     pub(crate) default_category_display: Option<String>,
+    /// 站点级自定义字段，供主题模板读取。
+    #[serde(flatten)]
+    pub(crate) extra: BTreeMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize, Clone, Copy)]
+#[derive(Debug, Deserialize, Serialize, Clone, Copy)]
 #[serde(rename_all = "lowercase")]
 pub(crate) enum ColorScheme {
     Auto,
@@ -97,6 +103,9 @@ pub(crate) struct Group {
     /// 可选：分组显示模式（优先级高于 site.category_display），standard|compact|list|text；也接受中文别名
     #[serde(default, alias = "display_mode")]
     pub(crate) display: Option<String>,
+    /// 分组级自定义字段，供主题模板读取。
+    #[serde(flatten)]
+    pub(crate) extra: BTreeMap<String, Value>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -148,9 +157,12 @@ pub(crate) struct Link {
     /// 站点地图：优先级（0.0 - 1.0）
     #[serde(default)]
     pub(crate) priority: Option<f32>,
+    /// 链接级自定义字段，供主题模板读取。
+    #[serde(flatten)]
+    pub(crate) extra: BTreeMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize, Clone, Copy)]
+#[derive(Debug, Deserialize, Serialize, Clone, Copy)]
 #[serde(rename_all = "lowercase")]
 pub(crate) enum RiskLevel {
     Low,
@@ -158,7 +170,7 @@ pub(crate) enum RiskLevel {
     High,
 }
 
-#[derive(Debug, Deserialize, Clone, Default)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
 pub(crate) struct RedirectSettings {
     /// 跳转延迟秒数（为 0 或缺省则不自动跳转）
     #[serde(default)]
@@ -171,7 +183,7 @@ pub(crate) struct RedirectSettings {
     pub(crate) utm: Option<UtmParams>,
 }
 
-#[derive(Debug, Deserialize, Clone, Default)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
 pub(crate) struct UtmParams {
     #[serde(default)]
     pub(crate) source: Option<String>,
@@ -193,7 +205,7 @@ pub(crate) struct SearchEngine {
     pub(crate) icon: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Clone, Copy)]
+#[derive(Debug, Deserialize, Serialize, Clone, Copy)]
 #[serde(rename_all = "lowercase")]
 pub(crate) enum Layout {
     Default,
@@ -204,7 +216,7 @@ pub(crate) fn default_layout() -> Layout {
     Layout::Default
 }
 
-#[derive(Debug, Deserialize, Clone, Copy)]
+#[derive(Debug, Deserialize, Serialize, Clone, Copy)]
 #[serde(rename_all = "lowercase")]
 pub(crate) enum ChangeFreq {
     Always,
@@ -216,7 +228,7 @@ pub(crate) enum ChangeFreq {
     Never,
 }
 
-#[derive(Debug, Deserialize, Clone, Default)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
 pub(crate) struct SitemapSettings {
     /// 是否生成 sitemap.xml，默认生成。
     #[serde(default)]
