@@ -279,6 +279,8 @@ body.layout-ntp .hero {
   width: 0.35em;
   height: 0.56em;
   margin: 0 0.04em;
+  overflow: hidden;
+  text-indent: -999px;
   transform: translateY(-0.035em);
   transition: opacity 140ms ease;
 }
