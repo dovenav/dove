@@ -121,6 +121,8 @@ groups:
 - `icon` 可为相对路径或外链 URL。若不设置，也可不显示图标。
 - `links[].intranet` 可选，配置后会在“内网版页面”使用该地址；未配置时会回退到外网地址。
 - `links[].intro` 简介；兼容旧字段名 `desc`。`links[].details` 为可选富文本 HTML，仅在详情页展示；未设置时回退显示简介文本。
+- `links[].embed` 可选：设为 `true` 时，该链接在导航页中用站内浮窗 iframe 打开，不新开标签页；浮窗支持关闭、拖动，并提供右上角新标签页打开按钮。部分网站会通过 `X-Frame-Options`/CSP 禁止被嵌入，此时需使用新标签页打开。
+- `links[].embed_url` 可选：浮窗 iframe 实际加载的地址；未设置时使用 `url`（内网页使用 `intranet` 回退后的地址）。兼容别名 `iframe_url`、`window_url`、`popup_url`。
 - `links[].intermediate_page` 可选：布尔值，控制该链接是否生成跳转中间页；若设置则覆盖全局 `generate_intermediate_page`/`DOVE_GENERATE_INTERMEDIATE_PAGE`。
 - `links[].slug` 可选：显式指定外网中间页路径 `go/<slug>/` 的目录名；若未指定，则：
   - 默认用 `name` 生成 slug；

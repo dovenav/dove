@@ -99,7 +99,7 @@
         {% if g.display == "standard" %}
           <div class="grid">
             {% for l in g.links %}
-            <a class="card tile" href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer" data-name="{{ l.name | escape }}" data-host="{{ l.host | escape }}" data-desc="{{ l.desc | escape }}">
+            <a class="card tile" href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer" data-name="{{ l.name | escape }}" data-host="{{ l.host | escape }}" data-desc="{{ l.desc | escape }}"{% if l.embed %} data-window="true" data-window-url="{{ l.embed_url | escape }}"{% endif %}>
               <div class="card-head">
                 {% if l.icon %}
                 <img class="icon" src="{{ l.icon | escape }}" alt="">
@@ -120,7 +120,7 @@
         {% elif g.display == "compact" %}
           <div class="grid compact">
             {% for l in g.links %}
-            <a class="card tile compact" href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer" data-name="{{ l.name | escape }}" data-host="{{ l.host | escape }}" data-desc="{{ l.desc | default(value="") | escape }}">
+            <a class="card tile compact" href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer" data-name="{{ l.name | escape }}" data-host="{{ l.host | escape }}" data-desc="{{ l.desc | default(value="") | escape }}"{% if l.embed %} data-window="true" data-window-url="{{ l.embed_url | escape }}"{% endif %}>
               <div class="card-head compact">
                 {% if l.icon %}
                 <img class="icon" src="{{ l.icon | escape }}" alt="">
@@ -136,7 +136,7 @@
           <ul class="list">
             {% for l in g.links %}
             <li class="list-item">
-              <a href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer" data-name="{{ l.name | escape }}" data-host="{{ l.host | default(value="") | escape }}" data-desc="{{ l.desc | default(value="") | escape }}">
+              <a href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer" data-name="{{ l.name | escape }}" data-host="{{ l.host | default(value="") | escape }}" data-desc="{{ l.desc | default(value="") | escape }}"{% if l.embed %} data-window="true" data-window-url="{{ l.embed_url | escape }}"{% endif %}>
                 {% if l.icon %}<img class="list-icon" src="{{ l.icon | escape }}" alt="">{% endif %}
                 <div class="list-content">
                   <div class="list-title">{{ l.name | escape }}</div>
@@ -151,7 +151,7 @@
             <div class="text-row">
             {% for l in g.links %}
               
-              <a class="text-url" href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer" data-name="{{ l.name | escape }}" data-host="{{ l.host | default(value="") | escape }}" data-desc="{{ l.desc | default(value="") | escape }}"><span class="text-title">{{ l.name | escape }}</span></a>
+              <a class="text-url" href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer" data-name="{{ l.name | escape }}" data-host="{{ l.host | default(value="") | escape }}" data-desc="{{ l.desc | default(value="") | escape }}"{% if l.embed %} data-window="true" data-window-url="{{ l.embed_url | escape }}"{% endif %}><span class="text-title">{{ l.name | escape }}</span></a>
 
             {% endfor %}
             </div>
@@ -160,7 +160,7 @@
           {# fallback to standard #}
           <div class="grid">
             {% for l in g.links %}
-            <a class="card tile" href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer">
+            <a class="card tile" href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer" data-name="{{ l.name | escape }}" data-host="{{ l.host | default(value="") | escape }}" data-desc="{{ l.desc | default(value="") | escape }}"{% if l.embed %} data-window="true" data-window-url="{{ l.embed_url | escape }}"{% endif %}>
               <div class="card-head">
                 {% if l.icon %}
                 <img class="icon" src="{{ l.icon | escape }}" alt="">
@@ -180,6 +180,17 @@
       <div id="linkPreviewName" class="link-preview-title"></div>
       <div id="linkPreviewDesc" class="link-preview-desc"></div>
       <div id="linkPreviewHost" class="link-preview-meta"></div>
+    </div>
+    <div id="appWindow" class="app-window" role="dialog" aria-labelledby="appWindowTitle" aria-modal="false" tabindex="-1" hidden>
+      <div class="app-window-bar" id="appWindowBar">
+        <div class="app-window-title" id="appWindowTitle">窗口</div>
+        <div class="app-window-actions">
+          <a class="app-window-btn" id="appWindowExternal" href="#" target="_blank" rel="noopener noreferrer" title="新标签页打开">↗</a>
+          <button class="app-window-btn" id="appWindowClose" type="button" title="关闭">×</button>
+        </div>
+      </div>
+      <iframe id="appWindowFrame" class="app-window-frame" title="内嵌页面" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      <div class="app-window-status" id="appWindowStatus">页面若无法显示，可使用右上角按钮打开。</div>
     </div>
     <footer class="site-footer">Made with ❤ by <a href="https://github.com/dovenav/dove" target="_blank" rel="noopener noreferrer">dove</a>{% if sitemap_enabled %} · <a href="{{ root_prefix }}sitemap.xml">Sitemap</a>{% endif %} · <a href="{{ root_prefix }}robots.txt">Robots</a> · v{{ build_version | escape }} ({{ build_time | escape }})</footer>
     <script src="{{ asset_prefix }}assets/app.js?v={{ build_time | escape }}"></script>

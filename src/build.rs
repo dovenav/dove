@@ -412,6 +412,8 @@ fn render_one(
     struct RLink {
         name: String,
         href: String,
+        embed: bool,
+        embed_url: String,
         display_url: String,
         desc: String,
         icon: Option<String>,
@@ -450,7 +452,7 @@ fn render_one(
                     };
                     let host = hostname_from_url(&final_url).unwrap_or_default();
                     let link_intermediate =
-                        l.intermediate_page.unwrap_or(generate_intermediate_page);
+                        !l.embed && l.intermediate_page.unwrap_or(generate_intermediate_page);
                     let mut href = final_url.clone();
                     if link_intermediate {
                         let base_slug = if let Some(user_slug) = &l.slug {
@@ -506,6 +508,13 @@ fn render_one(
                     rlinks.push(RLink {
                         name: l.name.clone(),
                         href: href.clone(),
+                        embed: l.embed,
+                        embed_url: l
+                            .embed_url
+                            .as_ref()
+                            .filter(|s| !s.trim().is_empty())
+                            .cloned()
+                            .unwrap_or_else(|| final_url.clone()),
                         display_url: final_url.clone(),
                         desc: l.intro.clone(),
                         icon: icon_res,
@@ -530,6 +539,13 @@ fn render_one(
                     rlinks.push(RLink {
                         name: l.name.clone(),
                         href,
+                        embed: l.embed,
+                        embed_url: l
+                            .embed_url
+                            .as_ref()
+                            .filter(|s| !s.trim().is_empty())
+                            .cloned()
+                            .unwrap_or_else(|| display_url.clone()),
                         display_url,
                         desc: l.intro.clone(),
                         icon: icon_res,
@@ -790,7 +806,10 @@ fn meta_robots_for_mode(site: &Site, mode: NetMode) -> String {
 }
 
 fn sitemap_enabled(site: &Site) -> bool {
-    site.sitemap.as_ref().and_then(|s| s.enabled).unwrap_or(true)
+    site.sitemap
+        .as_ref()
+        .and_then(|s| s.enabled)
+        .unwrap_or(true)
 }
 
 fn blocks_indexing(site: &Site) -> bool {

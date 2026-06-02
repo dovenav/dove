@@ -122,6 +122,17 @@ pub(crate) struct Link {
     /// 是否生成跳转中间页（优先级高于全局设置）
     #[serde(default, alias = "generate_intermediate_page")]
     pub(crate) intermediate_page: Option<bool>,
+    /// 可选：点击链接时在站内浮窗中嵌入打开，而不是直接新标签页打开。
+    #[serde(default, alias = "window", alias = "popup", alias = "iframe")]
+    pub(crate) embed: bool,
+    /// 可选：浮窗 iframe 使用的地址；未设置时使用 url/intranet。
+    #[serde(
+        default,
+        alias = "iframe_url",
+        alias = "window_url",
+        alias = "popup_url"
+    )]
+    pub(crate) embed_url: Option<String>,
     /// 可选：风险等级（low|medium|high），用于外网跳转页提示。若未配置，回退到 site.redirect.default_risk
     #[serde(default)]
     pub(crate) risk: Option<RiskLevel>,

@@ -14,6 +14,13 @@
   const previewNameEl = document.getElementById('linkPreviewName');
   const previewDescEl = document.getElementById('linkPreviewDesc');
   const previewHostEl = document.getElementById('linkPreviewHost');
+  const appWindow = document.getElementById('appWindow');
+  const appWindowBar = document.getElementById('appWindowBar');
+  const appWindowTitle = document.getElementById('appWindowTitle');
+  const appWindowFrame = document.getElementById('appWindowFrame');
+  const appWindowExternal = document.getElementById('appWindowExternal');
+  const appWindowClose = document.getElementById('appWindowClose');
+  const appWindowStatus = document.getElementById('appWindowStatus');
 
   const PREVIEW_DELAY_MS = 700;
   let previewTimer = null;
@@ -262,6 +269,104 @@
     }, { passive: true });
   }
 
+  let appWindowMoved = false;
+
+  function clampAppWindow() {
+    if (!appWindow || appWindow.hidden) return;
+    const margin = 12;
+    const rect = appWindow.getBoundingClientRect();
+    const maxLeft = Math.max(margin, window.innerWidth - rect.width - margin);
+    const maxTop = Math.max(margin, window.innerHeight - rect.height - margin);
+    const nextLeft = Math.min(Math.max(rect.left, margin), maxLeft);
+    const nextTop = Math.min(Math.max(rect.top, margin), maxTop);
+    appWindow.style.left = `${Math.round(nextLeft)}px`;
+    appWindow.style.top = `${Math.round(nextTop)}px`;
+  }
+
+  function centerAppWindow() {
+    if (!appWindow) return;
+    const rect = appWindow.getBoundingClientRect();
+    const left = Math.max(12, (window.innerWidth - rect.width) / 2);
+    const top = Math.max(68, Math.min(108, (window.innerHeight - rect.height) / 2));
+    appWindow.style.left = `${Math.round(left)}px`;
+    appWindow.style.top = `${Math.round(top)}px`;
+  }
+
+  function openAppWindow(link) {
+    if (!appWindow || !appWindowFrame) return false;
+    const url = (link.getAttribute('data-window-url') || link.getAttribute('href') || '').trim();
+    if (!url) return false;
+    const title = (link.getAttribute('data-name') || link.textContent || '窗口').trim();
+    if (appWindowTitle) appWindowTitle.textContent = title;
+    if (appWindowExternal) appWindowExternal.href = url;
+    if (appWindowStatus) appWindowStatus.textContent = '页面若无法显示，可使用右上角按钮打开。';
+    appWindow.hidden = false;
+    if (!appWindowMoved) {
+      requestAnimationFrame(centerAppWindow);
+    } else {
+      requestAnimationFrame(clampAppWindow);
+    }
+    appWindowFrame.src = url;
+    appWindow.focus && appWindow.focus();
+    return true;
+  }
+
+  function closeAppWindow() {
+    if (!appWindow) return;
+    appWindow.hidden = true;
+    if (appWindowFrame) appWindowFrame.src = 'about:blank';
+  }
+
+  function openLink(link) {
+    if (!link) return;
+    if (link.getAttribute('data-window') === 'true' && openAppWindow(link)) return;
+    const href = link.getAttribute('href');
+    if (href) window.open(href, '_blank', 'noopener,noreferrer');
+  }
+
+  if (appWindow && appWindowBar) {
+    appWindowClose && appWindowClose.addEventListener('click', closeAppWindow);
+    document.addEventListener('click', (ev) => {
+      const link = ev.target.closest && ev.target.closest('a[data-window="true"]');
+      if (!link) return;
+      if (openAppWindow(link)) {
+        ev.preventDefault();
+      }
+    });
+
+    appWindowBar.addEventListener('pointerdown', (ev) => {
+      if (ev.target.closest && ev.target.closest('.app-window-actions')) return;
+      ev.preventDefault();
+      appWindowMoved = true;
+      const startRect = appWindow.getBoundingClientRect();
+      const startX = ev.clientX;
+      const startY = ev.clientY;
+      appWindow.classList.add('dragging');
+      appWindowBar.setPointerCapture && appWindowBar.setPointerCapture(ev.pointerId);
+
+      const move = (moveEv) => {
+        appWindow.style.left = `${Math.round(startRect.left + moveEv.clientX - startX)}px`;
+        appWindow.style.top = `${Math.round(startRect.top + moveEv.clientY - startY)}px`;
+      };
+      const done = () => {
+        appWindow.classList.remove('dragging');
+        appWindowBar.removeEventListener('pointermove', move);
+        appWindowBar.removeEventListener('pointerup', done);
+        appWindowBar.removeEventListener('pointercancel', done);
+        clampAppWindow();
+      };
+
+      appWindowBar.addEventListener('pointermove', move);
+      appWindowBar.addEventListener('pointerup', done);
+      appWindowBar.addEventListener('pointercancel', done);
+    });
+
+    window.addEventListener('resize', clampAppWindow, { passive: true });
+    document.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Escape' && !appWindow.hidden) closeAppWindow();
+    });
+  }
+
   function filter() {
     const v = (q && q.value || '').toLowerCase().trim();
     cards.forEach(c => {
@@ -346,7 +451,7 @@
       if (!v) { return; }
       const visible = cards.filter(isLinkVisible);
       if (ev.shiftKey) { externalSearch(); return; }
-      if (visible.length > 0) { const href = visible[0].getAttribute('href'); if (href) window.open(href, '_blank', 'noopener,noreferrer'); }
+      if (visible.length > 0) { openLink(visible[0]); }
       else { externalSearch(); }
     }
   });

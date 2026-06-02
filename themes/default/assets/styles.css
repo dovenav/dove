@@ -819,6 +819,113 @@ body.theme-light .card.tile.compact .title {
   overflow-wrap: anywhere;
 }
 
+.app-window {
+  position: fixed;
+  left: calc(50vw - 430px);
+  top: 92px;
+  z-index: 65;
+  display: grid;
+  grid-template-rows: 44px minmax(220px, 1fr) auto;
+  width: min(860px, calc(100vw - 36px));
+  height: min(620px, calc(100vh - 120px));
+  min-width: min(360px, calc(100vw - 24px));
+  min-height: 320px;
+  overflow: hidden;
+  resize: both;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  background: var(--surface-strong);
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(20px);
+}
+
+.app-window[hidden] {
+  display: none;
+}
+
+.app-window-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 8px 8px 14px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(16, 21, 28, 0.92);
+  color: #fff;
+  cursor: grab;
+  user-select: none;
+}
+
+.app-window.dragging .app-window-bar {
+  cursor: grabbing;
+}
+
+.app-window-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.app-window-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.app-window-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  cursor: pointer;
+}
+
+.app-window-btn:hover {
+  border-color: rgba(45, 212, 191, 0.34);
+  background: rgba(45, 212, 191, 0.16);
+}
+
+.app-window-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #fff;
+}
+
+.app-window-status {
+  padding: 7px 11px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+  background: var(--surface);
+}
+
+.tile[data-window="true"]::after,
+.text-url[data-window="true"]::after,
+.list-item a[data-window="true"]::after {
+  content: "窗口";
+  flex: 0 0 auto;
+  align-self: flex-start;
+  margin-left: auto;
+  padding: 2px 6px;
+  border: 1px solid rgba(45, 212, 191, 0.22);
+  border-radius: 8px;
+  color: var(--brand-2);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.3;
+  background: var(--teal-soft);
+}
+
 .site-footer {
   padding: 0 0 22px;
   color: rgba(255, 255, 255, 0.62);
@@ -1261,6 +1368,16 @@ body.theme-light .prose code {
 }
 
 @media (max-width: 760px) {
+  .app-window {
+    left: 12px;
+    top: 72px;
+    width: calc(100vw - 24px);
+    height: calc(100vh - 92px);
+    min-width: 0;
+    min-height: 300px;
+    resize: none;
+  }
+
   .top-actions {
     left: 12px;
     right: 12px;
