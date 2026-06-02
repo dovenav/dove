@@ -270,6 +270,7 @@
   }
 
   let appWindowMoved = false;
+  const appWindowStatusHint = '页面若无法显示，可使用右上角按钮打开。';
 
   function normalizeAppWindowSize(raw) {
     let value = (raw || '').trim();
@@ -302,6 +303,14 @@
     }
   }
 
+  function updateAppWindowStatus() {
+    if (!appWindow || !appWindowStatus || appWindow.hidden) return;
+    const rect = appWindow.getBoundingClientRect();
+    const width = Math.round(rect.width);
+    const height = Math.round(rect.height);
+    appWindowStatus.textContent = `${appWindowStatusHint} 当前尺寸：${width} × ${height} px`;
+  }
+
   function clampAppWindow() {
     if (!appWindow || appWindow.hidden) return;
     const margin = 12;
@@ -312,6 +321,7 @@
     const nextTop = Math.min(Math.max(rect.top, margin), maxTop);
     appWindow.style.left = `${Math.round(nextLeft)}px`;
     appWindow.style.top = `${Math.round(nextTop)}px`;
+    updateAppWindowStatus();
   }
 
   function centerAppWindow() {
@@ -321,6 +331,7 @@
     const top = Math.max(68, Math.min(108, (window.innerHeight - rect.height) / 2));
     appWindow.style.left = `${Math.round(left)}px`;
     appWindow.style.top = `${Math.round(top)}px`;
+    updateAppWindowStatus();
   }
 
   function openAppWindow(link) {
@@ -330,7 +341,7 @@
     const title = (link.getAttribute('data-name') || link.textContent || '窗口').trim();
     if (appWindowTitle) appWindowTitle.textContent = title;
     if (appWindowExternal) appWindowExternal.href = url;
-    if (appWindowStatus) appWindowStatus.textContent = '页面若无法显示，可使用右上角按钮打开。';
+    if (appWindowStatus) appWindowStatus.textContent = appWindowStatusHint;
     applyAppWindowSize(link);
     appWindow.hidden = false;
     if (!appWindowMoved) {
@@ -338,6 +349,7 @@
     } else {
       requestAnimationFrame(clampAppWindow);
     }
+    requestAnimationFrame(updateAppWindowStatus);
     appWindowFrame.src = url;
     appWindow.focus && appWindow.focus();
     return true;
@@ -394,6 +406,10 @@
     });
 
     window.addEventListener('resize', clampAppWindow, { passive: true });
+    if (typeof ResizeObserver !== 'undefined') {
+      const appWindowResizeObserver = new ResizeObserver(updateAppWindowStatus);
+      appWindowResizeObserver.observe(appWindow);
+    }
     document.addEventListener('keydown', (ev) => {
       if (ev.key === 'Escape' && !appWindow.hidden) closeAppWindow();
     });
