@@ -400,7 +400,7 @@
     const h = pad(now.getHours());
     const m = pad(now.getMinutes());
     const sec = now.getSeconds();
-    clockEl.innerHTML = `<span class="clock-part">${h}</span><span class="clock-colon${sec % 2 ? ' off' : ''}">:</span><span class="clock-part">${m}</span>`;
+    clockEl.innerHTML = `<span class="clock-part">${h}</span><span class="clock-colon${sec % 2 ? ' off' : ''}"><span class="clock-reader">:</span></span><span class="clock-part">${m}</span>`;
     clockEl.setAttribute('aria-label', `${h}:${m}`);
     if (clockDateEl) {
       const dateStr = fmtDateCN(now);
