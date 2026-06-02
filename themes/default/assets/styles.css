@@ -254,6 +254,9 @@ body.layout-ntp .hero {
 }
 
 .clock {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: #fff;
   font-size: clamp(46px, 8vw, 82px);
   font-weight: 750;
@@ -262,11 +265,33 @@ body.layout-ntp .hero {
   text-shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
 }
 
-.clock-colon {
-  display: inline-block;
-  width: 0.55ch;
+.clock-part {
+  min-width: 2ch;
+  line-height: 0.95;
   text-align: center;
+}
+
+.clock-colon {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.14em;
+  width: 0.35em;
+  height: 0.56em;
+  margin: 0 0.04em;
+  transform: translateY(-0.035em);
   transition: opacity 140ms ease;
+}
+
+.clock-colon::before,
+.clock-colon::after {
+  content: "";
+  display: block;
+  width: 0.12em;
+  height: 0.12em;
+  margin: 0 auto;
+  border-radius: 999px;
+  background: currentColor;
 }
 
 .clock-colon.off {
