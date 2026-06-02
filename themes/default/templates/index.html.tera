@@ -99,7 +99,7 @@
         {% if g.display == "standard" %}
           <div class="grid">
             {% for l in g.links %}
-            <a class="card tile" href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer" data-name="{{ l.name | escape }}" data-host="{{ l.host | escape }}" data-desc="{{ l.desc | escape }}"{% if l.embed %} data-window="true" data-window-url="{{ l.embed_url | escape }}"{% endif %}>
+            <a class="card tile" href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer" data-name="{{ l.name | escape }}" data-host="{{ l.host | escape }}" data-desc="{{ l.desc | escape }}"{% if l.embed %} data-window="true" data-window-url="{{ l.embed_url | escape }}"{% if l.embed_width %} data-window-width="{{ l.embed_width | as_str | escape }}"{% endif %}{% if l.embed_height %} data-window-height="{{ l.embed_height | as_str | escape }}"{% endif %}{% endif %}>
               <div class="card-head">
                 {% if l.icon %}
                 <img class="icon" src="{{ l.icon | escape }}" alt="">
@@ -120,7 +120,7 @@
         {% elif g.display == "compact" %}
           <div class="grid compact">
             {% for l in g.links %}
-            <a class="card tile compact" href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer" data-name="{{ l.name | escape }}" data-host="{{ l.host | escape }}" data-desc="{{ l.desc | default(value="") | escape }}"{% if l.embed %} data-window="true" data-window-url="{{ l.embed_url | escape }}"{% endif %}>
+            <a class="card tile compact" href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer" data-name="{{ l.name | escape }}" data-host="{{ l.host | escape }}" data-desc="{{ l.desc | default(value="") | escape }}"{% if l.embed %} data-window="true" data-window-url="{{ l.embed_url | escape }}"{% if l.embed_width %} data-window-width="{{ l.embed_width | as_str | escape }}"{% endif %}{% if l.embed_height %} data-window-height="{{ l.embed_height | as_str | escape }}"{% endif %}{% endif %}>
               <div class="card-head compact">
                 {% if l.icon %}
                 <img class="icon" src="{{ l.icon | escape }}" alt="">
@@ -136,7 +136,7 @@
           <ul class="list">
             {% for l in g.links %}
             <li class="list-item">
-              <a href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer" data-name="{{ l.name | escape }}" data-host="{{ l.host | default(value="") | escape }}" data-desc="{{ l.desc | default(value="") | escape }}"{% if l.embed %} data-window="true" data-window-url="{{ l.embed_url | escape }}"{% endif %}>
+              <a href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer" data-name="{{ l.name | escape }}" data-host="{{ l.host | default(value="") | escape }}" data-desc="{{ l.desc | default(value="") | escape }}"{% if l.embed %} data-window="true" data-window-url="{{ l.embed_url | escape }}"{% if l.embed_width %} data-window-width="{{ l.embed_width | as_str | escape }}"{% endif %}{% if l.embed_height %} data-window-height="{{ l.embed_height | as_str | escape }}"{% endif %}{% endif %}>
                 {% if l.icon %}<img class="list-icon" src="{{ l.icon | escape }}" alt="">{% endif %}
                 <div class="list-content">
                   <div class="list-title">{{ l.name | escape }}</div>
@@ -151,7 +151,7 @@
             <div class="text-row">
             {% for l in g.links %}
               
-              <a class="text-url" href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer" data-name="{{ l.name | escape }}" data-host="{{ l.host | default(value="") | escape }}" data-desc="{{ l.desc | default(value="") | escape }}"{% if l.embed %} data-window="true" data-window-url="{{ l.embed_url | escape }}"{% endif %}><span class="text-title">{{ l.name | escape }}</span></a>
+              <a class="text-url" href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer" data-name="{{ l.name | escape }}" data-host="{{ l.host | default(value="") | escape }}" data-desc="{{ l.desc | default(value="") | escape }}"{% if l.embed %} data-window="true" data-window-url="{{ l.embed_url | escape }}"{% if l.embed_width %} data-window-width="{{ l.embed_width | as_str | escape }}"{% endif %}{% if l.embed_height %} data-window-height="{{ l.embed_height | as_str | escape }}"{% endif %}{% endif %}><span class="text-title">{{ l.name | escape }}</span></a>
 
             {% endfor %}
             </div>
@@ -160,7 +160,7 @@
           {# fallback to standard #}
           <div class="grid">
             {% for l in g.links %}
-            <a class="card tile" href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer" data-name="{{ l.name | escape }}" data-host="{{ l.host | default(value="") | escape }}" data-desc="{{ l.desc | default(value="") | escape }}"{% if l.embed %} data-window="true" data-window-url="{{ l.embed_url | escape }}"{% endif %}>
+            <a class="card tile" href="{{ l.href | escape }}" target="_blank" rel="noopener noreferrer" data-name="{{ l.name | escape }}" data-host="{{ l.host | default(value="") | escape }}" data-desc="{{ l.desc | default(value="") | escape }}"{% if l.embed %} data-window="true" data-window-url="{{ l.embed_url | escape }}"{% if l.embed_width %} data-window-width="{{ l.embed_width | as_str | escape }}"{% endif %}{% if l.embed_height %} data-window-height="{{ l.embed_height | as_str | escape }}"{% endif %}{% endif %}>
               <div class="card-head">
                 {% if l.icon %}
                 <img class="icon" src="{{ l.icon | escape }}" alt="">

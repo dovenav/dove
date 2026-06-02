@@ -175,6 +175,8 @@ groups:
       - name: Wikipedia
         url: https://www.wikipedia.org
         embed: true
+        embed_width: 960
+        embed_height: 640
         intro: 自由百科
         details: |
           <p>自由协作的百科全书，多语言内容由社区共同维护与校对。</p>

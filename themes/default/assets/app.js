@@ -271,6 +271,37 @@
 
   let appWindowMoved = false;
 
+  function normalizeAppWindowSize(raw) {
+    let value = (raw || '').trim();
+    if (!value) return '';
+    if (/^\d+(\.\d+)?$/.test(value)) {
+      const numeric = Number(value);
+      return Number.isFinite(numeric) && numeric > 0 ? `${numeric}px` : '';
+    }
+    if (typeof CSS !== 'undefined' && CSS.supports && !CSS.supports('width', value)) {
+      return '';
+    }
+    return value;
+  }
+
+  function applyAppWindowSize(link) {
+    if (!appWindow) return;
+    const width = normalizeAppWindowSize(link.getAttribute('data-window-width'));
+    const height = normalizeAppWindowSize(link.getAttribute('data-window-height'));
+    appWindow.style.width = '';
+    appWindow.style.height = '';
+    if (width) {
+      appWindow.style.setProperty('--app-window-width', width);
+    } else {
+      appWindow.style.removeProperty('--app-window-width');
+    }
+    if (height) {
+      appWindow.style.setProperty('--app-window-height', height);
+    } else {
+      appWindow.style.removeProperty('--app-window-height');
+    }
+  }
+
   function clampAppWindow() {
     if (!appWindow || appWindow.hidden) return;
     const margin = 12;
@@ -300,6 +331,7 @@
     if (appWindowTitle) appWindowTitle.textContent = title;
     if (appWindowExternal) appWindowExternal.href = url;
     if (appWindowStatus) appWindowStatus.textContent = '页面若无法显示，可使用右上角按钮打开。';
+    applyAppWindowSize(link);
     appWindow.hidden = false;
     if (!appWindowMoved) {
       requestAnimationFrame(centerAppWindow);

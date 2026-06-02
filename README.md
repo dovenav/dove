@@ -123,6 +123,7 @@ groups:
 - `links[].intro` 简介；兼容旧字段名 `desc`。`links[].details` 为可选富文本 HTML，仅在详情页展示；未设置时回退显示简介文本。
 - `links[].embed` 可选：设为 `true` 时，该链接在导航页中用站内浮窗 iframe 打开，不新开标签页；浮窗支持关闭、拖动，并提供右上角新标签页打开按钮。部分网站会通过 `X-Frame-Options`/CSP 禁止被嵌入，此时需使用新标签页打开。
 - `links[].embed_url` 可选：浮窗 iframe 实际加载的地址；未设置时使用 `url`（内网页使用 `intranet` 回退后的地址）。兼容别名 `iframe_url`、`window_url`、`popup_url`。
+- `links[].embed_width` / `links[].embed_height` 可选：默认主题读取的链接级自定义字段，用于设置浮窗初始宽高。写数字时按 px 处理，也可以写 `960px`、`80vw`、`70vh` 等 CSS 长度。
 - `links[].intermediate_page` 可选：布尔值，控制该链接是否生成跳转中间页；若设置则覆盖全局 `generate_intermediate_page`/`DOVE_GENERATE_INTERMEDIATE_PAGE`。
 - 自定义字段透传：`site`、`groups[]`、`links[]` 中未被内置配置使用的字段会保留给主题模板读取。例如链接中写 `badge: 常用` 后，主题可用 `{{ l.badge }}` 读取；站点级字段可用 `{{ site.hero_image }}` 或 `{{ site_extra.hero_image }}` 读取；详情页当前链接的自定义字段可用 `{{ link_extra.badge }}` 读取。自定义字段不要与模板内置字段（如 `name`、`href`、`links`、`display`）重名。
 - `links[].slug` 可选：显式指定外网中间页路径 `go/<slug>/` 的目录名；若未指定，则：

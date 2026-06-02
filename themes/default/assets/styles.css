@@ -826,8 +826,8 @@ body.theme-light .card.tile.compact .title {
   z-index: 65;
   display: grid;
   grid-template-rows: 44px minmax(220px, 1fr) auto;
-  width: min(860px, calc(100vw - 36px));
-  height: min(620px, calc(100vh - 120px));
+  width: min(var(--app-window-width, 860px), calc(100vw - 36px));
+  height: min(var(--app-window-height, 620px), calc(100vh - 120px));
   min-width: min(360px, calc(100vw - 24px));
   min-height: 320px;
   overflow: hidden;
