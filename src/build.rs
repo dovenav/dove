@@ -492,7 +492,7 @@ fn render_one(
                             }
                         };
                         let slug = unique_slug(&base_slug, &mut used_slugs);
-                        href = format!("/go/{}/", slug);
+                        href = format!("go/{}/", slug);
                         let delay = cfg
                             .site
                             .redirect

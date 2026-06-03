@@ -20,7 +20,7 @@
     <link rel="icon" href="../../assets/favicon-f.svg" type="image/svg+xml">
     <link rel="stylesheet" href="../../assets/styles.css?v={{ build_time | escape }}">
   </head>
-  <body class="theme-{{ color_scheme }} page-detail">
+  <body class="theme-{{ color_scheme }} page-detail{% if color_scheme == "light" %} is-light-ui{% elif color_scheme == "dark" %} is-dark-ui{% endif %}">
     <div class="top-actions">
       <button id="toggleTheme" class="btn ghost" title="切换主题" aria-label="切换主题">◐</button>
     </div>

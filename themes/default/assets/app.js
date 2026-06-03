@@ -2,6 +2,7 @@
   const q = document.getElementById('q');
   const cards = Array.from(document.querySelectorAll('a[data-name]'));
   const engineBtn = document.getElementById('engineBtn');
+  const engineLabel = document.getElementById('engineLabel');
   const engineMenu = document.getElementById('engineMenu');
   const doSearch = document.getElementById('doSearch');
   const clockEl = document.getElementById('clock');
@@ -10,6 +11,7 @@
   const catList = document.getElementById('cats');
   const sidebar = document.getElementById('sidebar');
   const sections = Array.from(document.querySelectorAll('section.group'));
+  const emptyState = document.getElementById('emptyState');
   const previewContainer = document.getElementById('linkPreview');
   const previewNameEl = document.getElementById('linkPreviewName');
   const previewDescEl = document.getElementById('linkPreviewDesc');
@@ -417,6 +419,7 @@
 
   function filter() {
     const v = (q && q.value || '').toLowerCase().trim();
+    document.body.classList.toggle('is-searching', !!v);
     cards.forEach(c => {
       const name = (c.getAttribute('data-name') || '').toLowerCase();
       const host = (c.getAttribute('data-host') || '').toLowerCase();
@@ -428,12 +431,16 @@
     if (v) {
       // 逐分组统计是否有可见卡片
       const hasVisibleByCat = {};
+      let anyVisible = false;
       sections.forEach(sec => {
         const visible = Array.from(sec.querySelectorAll('a[data-name]')).some(isLinkVisible);
         sec.style.display = visible ? '' : 'none';
+        if (visible) anyVisible = true;
         const cat = sec.getAttribute('data-cat') || '';
         if (visible) { hasVisibleByCat[cat] = true; }
       });
+      if (emptyState) emptyState.hidden = anyVisible;
+      document.body.classList.toggle('is-empty-search', !anyVisible);
       // 侧边栏分类：仅显示仍有结果的分类；若全无结果则隐藏侧边栏
       if (catList) {
         const items = Array.from(catList.querySelectorAll('.cat-item'));
@@ -445,6 +452,8 @@
         if (sidebar) { sidebar.style.display = anyVisibleCat ? '' : 'none'; }
       }
     } else {
+      if (emptyState) emptyState.hidden = true;
+      document.body.classList.remove('is-empty-search');
       // 恢复当前分类视图
       setActiveCat(currentCat || (catList && catList.querySelector('.cat-item') && catList.querySelector('.cat-item').getAttribute('data-cat')) || '');
       // 恢复侧边栏分类可见性
@@ -475,15 +484,92 @@
     if (!engineMenu) return [];
     return Array.from(engineMenu.querySelectorAll('li')).map(li => ({ name: li.dataset.name, tpl: li.dataset.template, el: li }));
   }
-  function selectedEngineName() { return localStorage.getItem('dove-engine'); }
-  function setSelectedEngine(name) { if (!engineMenu) return; const list = engines(); const e = list.find(x => x.name === name) || list[0]; if (!e) return; localStorage.setItem('dove-engine', e.name); const label = document.getElementById('engineLabel'); if (label) label.textContent = e.name; list.forEach(x => x.el.setAttribute('aria-selected', x === e ? 'true' : 'false')); }
-  function currentEngineUrl(qs) { const list = engines(); let name = selectedEngineName(); let e = list.find(x => x.name === name) || list[0]; if (!e) return null; return (e.tpl || '').replace('{q}', encodeURIComponent(qs)); }
-  function toggleEngineMenu(force) { if (!engineMenu || !engineBtn) return; const open = force !== undefined ? force : engineMenu.hasAttribute('hidden'); if (open) { engineMenu.removeAttribute('hidden'); engineBtn.setAttribute('aria-expanded', 'true'); } else { engineMenu.setAttribute('hidden', ''); engineBtn.setAttribute('aria-expanded', 'false'); } }
-  function nextEngine(delta) { const list = engines(); if (list.length === 0) return; const name = selectedEngineName(); let idx = Math.max(0, list.findIndex(x => x.name === name)); idx = (idx + delta + list.length) % list.length; setSelectedEngine(list[idx].name); }
-  // init engine
-  (function initEngine() { const list = engines(); if (list.length === 0) return; const saved = selectedEngineName(); if (saved) { setSelectedEngine(saved); } else { setSelectedEngine(list[0].name); } list.forEach(x => { x.el.addEventListener('click', () => { setSelectedEngine(x.name); toggleEngineMenu(false); }); x.el.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); setSelectedEngine(x.name); toggleEngineMenu(false); } }); }); })();
-  engineBtn && engineBtn.addEventListener('click', () => toggleEngineMenu());
-  document.addEventListener('click', (ev) => { if (engineMenu && !engineMenu.hasAttribute('hidden')) { if (!engineMenu.contains(ev.target) && ev.target !== engineBtn) { toggleEngineMenu(false); } } });
+
+  function selectedEngineName() {
+    return localStorage.getItem('dove-engine');
+  }
+
+  function findEngine(name, list) {
+    return (list || engines()).find(x => x.name === name);
+  }
+
+  function setSelectedEngine(name) {
+    const list = engines();
+    const selected = findEngine(name, list) || list[0];
+    if (!selected) return;
+
+    localStorage.setItem('dove-engine', selected.name);
+    if (engineLabel) engineLabel.textContent = selected.name;
+    list.forEach(x => x.el.setAttribute('aria-selected', x === selected ? 'true' : 'false'));
+  }
+
+  function currentEngineUrl(qs) {
+    const engine = findEngine(selectedEngineName()) || engines()[0];
+    return engine ? (engine.tpl || '').replace('{q}', encodeURIComponent(qs)) : null;
+  }
+
+  function toggleEngineMenu(force) {
+    if (!engineMenu || !engineBtn) return;
+    const open = force !== undefined ? force : engineMenu.hasAttribute('hidden');
+    engineMenu.toggleAttribute('hidden', !open);
+    engineBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+
+  function nextEngine(delta) {
+    const list = engines();
+    if (list.length === 0) return;
+    const current = selectedEngineName();
+    const currentIndex = Math.max(0, list.findIndex(x => x.name === current));
+    setSelectedEngine(list[(currentIndex + delta + list.length) % list.length].name);
+  }
+
+  function focusSelectedEngine() {
+    if (!engineMenu) return;
+    const selected = engineMenu.querySelector('li[aria-selected="true"]') || engineMenu.querySelector('li');
+    selected && selected.focus();
+  }
+
+  (function initEngine() {
+    const list = engines();
+    if (list.length === 0) return;
+
+    setSelectedEngine(selectedEngineName() || list[0].name);
+    list.forEach(({ name, el }) => {
+      const choose = () => {
+        setSelectedEngine(name);
+        toggleEngineMenu(false);
+      };
+
+      el.addEventListener('click', choose);
+      el.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter' || ev.key === ' ') {
+          ev.preventDefault();
+          choose();
+        }
+      });
+    });
+  })();
+  engineBtn && engineBtn.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    toggleEngineMenu();
+  });
+  engineBtn && engineBtn.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter' || ev.key === ' ' || ev.key === 'ArrowDown') {
+      ev.preventDefault();
+      ev.stopPropagation();
+      toggleEngineMenu(true);
+      focusSelectedEngine();
+    } else if (ev.key === 'Escape') {
+      toggleEngineMenu(false);
+    }
+  });
+  document.addEventListener('click', (ev) => {
+    if (engineMenu && !engineMenu.hasAttribute('hidden')) {
+      if (!engineMenu.contains(ev.target) && !(engineBtn && engineBtn.contains(ev.target))) {
+        toggleEngineMenu(false);
+      }
+    }
+  });
 
   function externalSearch() {
     const v = (q && q.value || '').trim();
@@ -506,15 +592,37 @@
 
   // 主题切换保留
   const btn = document.getElementById('toggleTheme');
+  let currentImageTone = 'dark';
+
+  function currentTheme() {
+    if (document.body.classList.contains('theme-light')) return 'light';
+    if (document.body.classList.contains('theme-dark')) return 'dark';
+    return 'auto';
+  }
+
+  function syncThemeTone() {
+    const theme = currentTheme();
+    const lightUi = theme === 'light' || (theme === 'auto' && currentImageTone === 'light');
+    document.body.classList.toggle('is-light-ui', lightUi);
+    document.body.classList.toggle('is-dark-ui', !lightUi);
+    if (btn) {
+      btn.textContent = theme === 'light' ? '☼' : (theme === 'dark' ? '●' : '◐');
+      btn.title = theme === 'auto' ? '自动主题' : (theme === 'light' ? '亮色主题' : '暗色主题');
+      btn.setAttribute('aria-label', btn.title);
+    }
+  }
+
   function setTheme(t) {
+    const next = t === 'light' || t === 'dark' ? t : 'auto';
     document.body.classList.remove('theme-auto', 'theme-light', 'theme-dark');
-    document.body.classList.add('theme-' + t);
-    localStorage.setItem('dove-theme', t);
+    document.body.classList.add('theme-' + next);
+    localStorage.setItem('dove-theme', next);
+    syncThemeTone();
   }
   const saved = localStorage.getItem('dove-theme');
-  if (saved) { setTheme(saved); }
+  setTheme(saved || currentTheme());
   btn && btn.addEventListener('click', function () {
-    const cur = (localStorage.getItem('dove-theme') || 'auto');
+    const cur = currentTheme();
     const nxt = cur === 'auto' ? 'light' : (cur === 'light' ? 'dark' : 'auto');
     setTheme(nxt);
   });
@@ -586,6 +694,15 @@
     const saved = localStorage.getItem('dove-cat');
     let target = saved;
     const items = Array.from(catList.querySelectorAll('.cat-item'));
+    const countsByCat = sections.reduce((acc, sec) => {
+      const cat = sec.getAttribute('data-cat') || '';
+      acc[cat] = (acc[cat] || 0) + sec.querySelectorAll('a[data-name]').length;
+      return acc;
+    }, {});
+    items.forEach(it => {
+      const cat = it.getAttribute('data-cat') || '';
+      it.setAttribute('data-count', String(countsByCat[cat] || 0));
+    });
     if (!target || !items.some(it => it.getAttribute('data-cat') === target)) {
       target = items.length ? items[0].getAttribute('data-cat') : '';
     }
@@ -707,18 +824,25 @@
       ctx.drawImage(img, 0, 0, size, size);
       const data = ctx.getImageData(0, 0, size, size).data;
       let sum = 0;
-      const n = size * size;
+      let weightSum = 0;
       const toLin = (v) => {
         v /= 255;
         return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
       };
       for (let i = 0; i < data.length; i += 4) {
+        const pixel = i / 4;
+        const y = Math.floor(pixel / size);
+        const yRatio = size <= 1 ? 0 : y / (size - 1);
+        // The main controls sit in the upper half, so auto theme should bias
+        // toward the perceived brightness behind the clock, search, and nav.
+        const weight = yRatio < 0.58 ? 1.8 : 0.65;
         const r = toLin(data[i]), g = toLin(data[i + 1]), b = toLin(data[i + 2]);
         const L = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-        sum += L;
+        sum += L * weight;
+        weightSum += weight;
       }
-      const avg = sum / n;
-      return avg > 0.6 ? 'light' : 'dark';
+      const avg = weightSum ? sum / weightSum : 0;
+      return avg > 0.48 ? 'light' : 'dark';
     } catch (e) {
       return null;
     }
@@ -738,13 +862,16 @@
     }
 
     document.documentElement.style.setProperty('--bg-blur', `${blurValue}px`);
+    document.body.classList.toggle('is-bg-clear', blurValue === 0);
+    document.body.classList.toggle('is-bg-blurred', blurValue > 0);
     localStorage.setItem('dove-bg-blur', String(blurValue));
   }
 
   // 应用主题色调
   function applyTone(tone) {
     if (!document.body) return;
-    document.body.setAttribute('data-img-tone', tone === 'light' ? 'light' : 'dark');
+    currentImageTone = tone === 'light' ? 'light' : 'dark';
+    syncThemeTone();
   }
 
   function preloadImage(url) {
@@ -873,8 +1000,6 @@
 
   function applyBgInterval(seconds) { if (bgTimer) { clearInterval(bgTimer); bgTimer = null; } localStorage.setItem('dove-bg-interval', String(seconds || 0)); if (seconds > 0) { bgTimer = setInterval(updateBg, seconds * 1000); } }
 
-  function applyBgBlur(px) { const n = Math.max(0, Number(px) || 0); document.documentElement.style.setProperty('--bg-blur', `${n}px`); localStorage.setItem('dove-bg-blur', String(n)); }
-
   // Init interval UI
   (function initBg() {
     if (!bgLayer) return; // initial background
@@ -885,7 +1010,7 @@
     updateBg();
     if (bgNextBtn) { bgNextBtn.addEventListener('click', () => updateBg()); }
     if (bgIntervalSel) { const saved = parseInt(localStorage.getItem('dove-bg-interval') || '0', 10); if (!isNaN(saved)) { bgIntervalSel.value = String(saved); applyBgInterval(saved); } bgIntervalSel.addEventListener('change', () => { const val = parseInt(bgIntervalSel.value || '0', 10); applyBgInterval(isNaN(val) ? 0 : val); }); }
-    if (bgBlurSel) { const savedBlur = parseInt(localStorage.getItem('dove-bg-blur') || '12', 10); const v = isNaN(savedBlur) ? 12 : savedBlur; applyBgBlur(v); bgBlurSel.value = String(v); bgBlurSel.addEventListener('change', () => { const val = parseInt(bgBlurSel.value || '12', 10); applyBgBlur(isNaN(val) ? 12 : val); }); }
+    if (bgBlurSel) { const savedBlur = parseInt(localStorage.getItem('dove-bg-blur') || '0', 10); const v = isNaN(savedBlur) ? 0 : savedBlur; applyBgBlur(v); bgBlurSel.value = String(v); bgBlurSel.addEventListener('change', () => { const val = parseInt(bgBlurSel.value || '0', 10); applyBgBlur(isNaN(val) ? 0 : val); }); }
     // proactively warm up next image
     startProactivePreload();
   })();

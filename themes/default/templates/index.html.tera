@@ -35,8 +35,12 @@
     }
     </script>
   </head>
-  <body class="theme-{{ color_scheme }} layout-{{ layout }}">
-    <div id="bgLayer" class="bg-layer" style="background-image: url('https://picsum.photos/1280/1264');" aria-hidden="true"></div>
+  <body class="theme-{{ color_scheme }} layout-{{ layout }}{% if color_scheme == "light" %} is-light-ui{% elif color_scheme == "dark" %} is-dark-ui{% endif %}">
+    <div id="bgLayer" class="bg-layer" style="background-image: url('https://picsum.photos/1600/1000');" aria-hidden="true"></div>
+    <a class="brand-chip" href="{{ root_prefix }}" aria-label="{{ site_title | escape }}">
+      <img class="brand-chip-icon" src="{{ asset_prefix }}assets/favicon-f.svg" alt="">
+      <span>{{ site_title | escape }}</span>
+    </a>
     <div class="top-actions">
       {% if has_intranet %}
       <a class="top-link" id="toggleNet" href="{{ network_switch_href }}" title="切换内/外网">{{ mode_other_label }}</a>
@@ -50,9 +54,9 @@
         <option value="300">5分钟</option>
       </select>
       <select id="bgBlur" class="bg-select" title="模糊强度">
-        <option value="0">无模糊</option>
+        <option value="0" selected>无模糊</option>
         <option value="6">轻度</option>
-        <option value="12" selected>中等</option>
+        <option value="12">中等</option>
         <option value="18">较强</option>
         <option value="24">很强</option>
       </select>
@@ -63,7 +67,7 @@
           <div id="clock" class="clock">--:--</div>
           <a id="clock-date" class="clock-date" href="https://www.51wnl.com/webcalandar/index.html" target="_blank" rel="noopener noreferrer"></a>
         </div>
-        <div class="searchbox">
+        <div class="searchbox" role="search">
           <span class="sb-icon" aria-hidden="true">⌕</span>
           <input id="q" class="search sb-input" type="search" placeholder="搜索站点、域名、描述..." aria-label="搜索">
           <div class="engine sb-engine">
@@ -103,6 +107,8 @@
               <div class="card-head">
                 {% if l.icon %}
                 <img class="icon" src="{{ l.icon | escape }}" alt="">
+                {% else %}
+                <img class="icon" src="{{ asset_prefix }}assets/dove.PNG" alt="">
                 {% endif %}
                 <div class="card-content">
                   <div class="title">{{ l.name | escape }}</div>
@@ -164,6 +170,8 @@
               <div class="card-head">
                 {% if l.icon %}
                 <img class="icon" src="{{ l.icon | escape }}" alt="">
+                {% else %}
+                <img class="icon" src="{{ asset_prefix }}assets/dove.PNG" alt="">
                 {% endif %}
                 <div class="title">{{ l.name | escape }}</div>
               </div>
@@ -173,6 +181,10 @@
         {% endif %}
       </section>
       {% endfor %}
+      <div id="emptyState" class="empty-state" hidden>
+        <div class="empty-state-title">没有找到匹配站点</div>
+        <div class="empty-state-desc">换个关键词，或使用当前搜索引擎继续搜索。</div>
+      </div>
       </div>
     </main>
 
